@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from orchestrator import SecureAutoForgeRuntime, AutoForgeMultiAgentPipeline
@@ -179,6 +181,18 @@ async def generate_gtm(req: GTMRequest):
         "video_path": str(video_path),
         "headline": req.headline
     }
+
+# Serve frontend build from FastAPI directly on http://127.0.0.1:8000
+dist_dir = workspace_dir / "dist"
+if dist_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(dist_dir / "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = dist_dir / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(dist_dir / "index.html")
 
 if __name__ == "__main__":
     import uvicorn
