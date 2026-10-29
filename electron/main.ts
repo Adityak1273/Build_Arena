@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, WebContents } from 'electron';
+import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractSemanticNodes, verifyAndClickBackendNode, SemanticAXNode } from './semanticBrowser';
@@ -187,8 +187,20 @@ ipcMain.handle('browser:getVersion', async () => {
   return app.getVersion();
 });
 
-// App Lifecycle
-app.whenReady().then(createWindow);
+// App Lifecycle with header unblocking for external webview browsing
+app.whenReady().then(() => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (details.responseHeaders) {
+      delete details.responseHeaders['x-frame-options'];
+      delete details.responseHeaders['X-Frame-Options'];
+      delete details.responseHeaders['content-security-policy'];
+      delete details.responseHeaders['Content-Security-Policy'];
+    }
+    callback({ cancel: false, responseHeaders: details.responseHeaders });
+  });
+
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
