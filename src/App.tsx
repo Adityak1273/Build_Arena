@@ -42,6 +42,39 @@ export const App: React.FC = () => {
               setPendingIntent(parsed.data);
             } else if (parsed.type === 'APPROVAL_RESOLVED') {
               setPendingIntent(null);
+            } else if (parsed.type === 'BROWSER_ACTION') {
+              const { request_id, action, params } = parsed.data || {};
+              (async () => {
+                let outcome: any = { success: false, error: 'UNKNOWN_ACTION' };
+                try {
+                  const electronAPI = (window as any).electronAPI;
+                  if (electronAPI) {
+                    if (action === 'navigate') {
+                      outcome = await electronAPI.navigate(params?.url || 'https://news.ycombinator.com');
+                    } else if (action === 'capture_ax') {
+                      const tree = await electronAPI.captureAXTree();
+                      outcome = { success: true, nodes: tree, count: Array.isArray(tree) ? tree.length : 0 };
+                    } else if (action === 'click') {
+                      outcome = await electronAPI.clickBackendNode(params?.backendDOMNodeId);
+                    }
+                  } else {
+                    outcome = { success: false, error: 'NO_ELECTRON_ENVIRONMENT' };
+                  }
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                      type: 'BROWSER_ACTION_RESULT',
+                      data: { request_id, ...outcome }
+                    }));
+                  }
+                } catch (bridgeErr: any) {
+                  if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                      type: 'BROWSER_ACTION_RESULT',
+                      data: { request_id, success: false, error: bridgeErr.message }
+                    }));
+                  }
+                }
+              })();
             }
           } catch {
             addTelemetryEvent('RAW_MESSAGE', event.data);

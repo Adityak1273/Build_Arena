@@ -53,7 +53,8 @@ class AutonomousRunner:
         "audit_code_with_council": "Runs the 7-reviewer parallel rule-based council on supplied code.",
         "render_gtm_video": "Composites a 1080p video package using FFmpeg and Pillow.",
         "browser_navigate": "Navigates active browser session to target URL and verifies reachability.",
-        "browser_capture_ax": "Extracts semantic accessibility tree and interactive nodes."
+        "browser_capture_ax": "Extracts semantic accessibility tree and interactive nodes from the active CDP session.",
+        "http_probe": "Performs an HTTP GET probe to check network reachability and metadata without navigating the GUI browser."
     }
 
     _active_plans: Dict[str, bool] = {} # plan_id -> is_cancelled
@@ -66,28 +67,28 @@ class AutonomousRunner:
 
     @classmethod
     def cancel_plan(cls, plan_id: str) -> bool:
-        if plan_id in cls._active_plans:
-            cls._active_plans[plan_id] = True
-            return True
-        return False
+        cls._active_plans[plan_id] = True
+        return True
 
     @classmethod
     async def plan_task(cls, goal: str, context: Optional[Dict[str, Any]] = None) -> AutonomousPlanResult:
         """
         Plans structured steps for a user goal.
         Attempts genuine Gemini API call if GEMINI_API_KEY is configured.
-        Falls back cleanly and transparently to a deterministic planner if key is unset or API call fails.
+        Initializes planner state upfront and handles missing credentials, non-200 responses,
+        network errors, malformed JSON, and invalid schemas cleanly.
         Never falsely claims model planning.
         """
         plan_id = str(uuid.uuid4())
         cls._active_plans[plan_id] = False
         goal_clean = goal.strip()
         goal_lower = goal_clean.lower()
+        planner_status = "DETERMINISTIC_RULE_BASED_PLANNER"
 
         gemini_key = os.environ.get("GEMINI_API_KEY")
         if gemini_key:
             try:
-                # Attempt real Gemini 1.5/2.0 API call with structured tool selection prompt
+                # Attempt real Gemini API call with structured tool selection prompt
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
                 prompt_text = (
                     f"You are AutoForge autonomous task planner. Decompose this user goal into executable tool steps:\n"
@@ -103,29 +104,64 @@ class AutonomousRunner:
                     resp = await client.post(url, json=payload)
                     if resp.status_code == 200:
                         data = resp.json()
-                        text_resp = data["candidates"][0]["content"]["parts"][0]["text"]
-                        raw_steps = json.loads(text_resp)
-                        steps = []
-                        for idx, rs in enumerate(raw_steps, start=1):
-                            tool_name = rs.get("tool")
-                            if tool_name in cls.TOOL_REGISTRY:
-                                steps.append(TaskStep(
-                                    step_id=f"step-{idx}",
-                                    tool=tool_name,
-                                    arguments=rs.get("arguments", {}),
-                                    reasoning=rs.get("reasoning", "Model-directed execution step.")
-                                ))
-                        if steps:
-                            return AutonomousPlanResult(
-                                plan_id=plan_id,
-                                goal=goal_clean,
-                                planner="GEMINI_MODEL_PLANNER (gemini-2.0-flash)",
-                                status="PENDING",
-                                steps=steps
-                            )
+                        candidates = data.get("candidates", [])
+                        if not candidates:
+                            planner_status = "DETERMINISTIC_FALLBACK (Gemini API returned empty candidates)"
+                        else:
+                            content = candidates[0].get("content", {})
+                            parts = content.get("parts", [])
+                            if not parts or "text" not in parts[0]:
+                                planner_status = "DETERMINISTIC_FALLBACK (Gemini API returned missing text part)"
+                            else:
+                                text_resp = parts[0]["text"]
+                                raw_steps = json.loads(text_resp)
+                                if not isinstance(raw_steps, list) or len(raw_steps) == 0:
+                                    planner_status = "DETERMINISTIC_FALLBACK (Gemini output is empty or not a JSON list)"
+                                else:
+                                    steps = []
+                                    valid = True
+                                    for idx, rs in enumerate(raw_steps, start=1):
+                                        if not isinstance(rs, dict):
+                                            valid = False
+                                            break
+                                        tool_name = rs.get("tool")
+                                        if tool_name not in cls.TOOL_REGISTRY:
+                                            valid = False
+                                            break
+                                        args = rs.get("arguments", {})
+                                        if not isinstance(args, dict):
+                                            valid = False
+                                            break
+                                        # Strict schema validation per tool
+                                        if tool_name in ("browser_navigate", "http_probe") and not isinstance(args.get("url"), str):
+                                            valid = False
+                                            break
+                                        steps.append(TaskStep(
+                                            step_id=f"step-{idx}",
+                                            tool=tool_name,
+                                            arguments=args,
+                                            reasoning=rs.get("reasoning", "Model-directed execution step.")
+                                        ))
+                                    if valid and steps:
+                                        return AutonomousPlanResult(
+                                            plan_id=plan_id,
+                                            goal=goal_clean,
+                                            planner="GEMINI_MODEL_PLANNER (gemini-2.0-flash)",
+                                            status="PENDING",
+                                            steps=steps
+                                        )
+                                    else:
+                                        planner_status = "DETERMINISTIC_FALLBACK (Model returned invalid step schema or unknown tools)"
+                    else:
+                        planner_status = f"DETERMINISTIC_FALLBACK (Gemini API HTTP {resp.status_code})"
+            except (httpx.TimeoutException, asyncio.TimeoutError):
+                planner_status = "DETERMINISTIC_FALLBACK (Gemini API network timeout)"
+            except httpx.RequestError as e:
+                planner_status = f"DETERMINISTIC_FALLBACK (Gemini API connection error: {type(e).__name__})"
+            except json.JSONDecodeError:
+                planner_status = "DETERMINISTIC_FALLBACK (Gemini returned malformed JSON)"
             except Exception as e:
-                # Fall back honestly to deterministic planning and log exact exception
-                planner_status = f"DETERMINISTIC_FALLBACK (Gemini API error: {type(e).__name__})"
+                planner_status = f"DETERMINISTIC_FALLBACK (Gemini planner error: {type(e).__name__})"
         else:
             planner_status = "DETERMINISTIC_RULE_BASED_PLANNER"
 
@@ -284,9 +320,18 @@ class AutonomousRunner:
 
             # Handle PENDING_APPROVAL on CONSEQUENTIAL actions: NEVER continue automatically!
             if token.status == "PENDING_APPROVAL":
+                # 1. Validate intent token signature before requesting approval
+                if not LocalIntentPolicyGate.verify_token_signature(token):
+                    step.status = "FAILED"
+                    step.error = f"Execution halted: Intent token signature validation failed for action '{step.tool}'."
+                    step.verified = False
+                    plan.status = "FAILED"
+                    plan.overall_outcome = step.error
+                    break
+
                 if approval_callback is not None:
                     try:
-                        # Wait for human approval decision
+                        # 2. Wait for human approval decision
                         decision = await approval_callback(token)
                         if decision != "APPROVED":
                             step.status = "FAILED"
@@ -295,8 +340,17 @@ class AutonomousRunner:
                             plan.status = "FAILED"
                             plan.overall_outcome = step.error
                             break
-                        # Consume token
-                        LocalIntentPolicyGate.consume_token(token)
+
+                        # 3. Consume token & 4. Confirm token consumption succeeded
+                        consumed = LocalIntentPolicyGate.consume_token(token)
+                        if not consumed:
+                            step.status = "FAILED"
+                            step.error = f"Execution halted: Intent token consumption failed (already consumed or invalid signature) for action '{step.tool}'."
+                            step.verified = False
+                            plan.status = "FAILED"
+                            plan.overall_outcome = step.error
+                            break
+
                     except Exception as e:
                         step.status = "FAILED"
                         step.error = f"Approval process failed or timed out: {str(e)}"
@@ -345,45 +399,67 @@ class AutonomousRunner:
 
                 elif step.tool == "browser_navigate":
                     url = step.arguments.get("url", "https://news.ycombinator.com")
-                    # Real execution: If browser bridge is registered, dispatch to Electron; otherwise perform live HTTP check
                     if cls._browser_bridge_callback:
                         nav_res = await cls._browser_bridge_callback("navigate", {"url": url})
-                        step.result = nav_res
-                        step.verified = Boolean(nav_res.get("success", False))
-                        step.status = "COMPLETED" if step.verified else "FAILED"
+                        if isinstance(nav_res, dict) and nav_res.get("error") == "BROWSER_BRIDGE_UNAVAILABLE":
+                            step.status = "FAILED"
+                            step.error = f"BROWSER_BRIDGE_UNAVAILABLE: No active Electron browser bridge connected to navigate to {url}."
+                            step.verified = False
+                            step.result = nav_res
+                        else:
+                            success = bool(nav_res.get("success", False)) if isinstance(nav_res, dict) else False
+                            step.result = nav_res
+                            step.verified = success
+                            step.status = "COMPLETED" if success else "FAILED"
+                            if not success:
+                                step.error = nav_res.get("error", f"Navigation to {url} failed or timed out.") if isinstance(nav_res, dict) else "Navigation failed."
                     else:
-                        async with httpx.AsyncClient(verify=True, timeout=8.0, follow_redirects=True) as client:
-                            resp = await client.get(url)
-                            parser = HTMLMetadataParser()
-                            parser.feed(resp.text[:60000])
-                            step.result = {
-                                "url": url,
-                                "final_url": str(resp.url),
-                                "status_code": resp.status_code,
-                                "page_title": parser.title or "TITLE_NOT_FOUND",
-                                "mode": "LIVE_HTTP_PROBE"
-                            }
-                            step.verified = (resp.status_code < 400)
-                            step.status = "COMPLETED" if step.verified else "FAILED"
+                        step.status = "FAILED"
+                        step.error = f"BROWSER_BRIDGE_UNAVAILABLE: No live browser bridge registered to navigate to {url}."
+                        step.verified = False
+                        step.result = {"error": "BROWSER_BRIDGE_UNAVAILABLE", "url": url}
 
                 elif step.tool == "browser_capture_ax":
                     if cls._browser_bridge_callback:
                         ax_res = await cls._browser_bridge_callback("capture_ax", {})
-                        step.result = ax_res
-                        step.verified = True
-                        step.status = "COMPLETED"
+                        if isinstance(ax_res, dict) and ax_res.get("error") == "BROWSER_BRIDGE_UNAVAILABLE":
+                            step.status = "FAILED"
+                            step.error = "BROWSER_BRIDGE_UNAVAILABLE: No active Electron browser bridge connected to perform live CDP accessibility capture."
+                            step.verified = False
+                            step.result = ax_res
+                        else:
+                            nodes = ax_res.get("nodes", ax_res if isinstance(ax_res, list) else [])
+                            is_valid = bool(isinstance(nodes, list) and (len(nodes) > 0 or ax_res.get("success", False)))
+                            step.result = {
+                                "nodes": nodes,
+                                "count": len(nodes),
+                                "mode": "LIVE_CDP_ACCESSIBILITY"
+                            }
+                            step.verified = is_valid
+                            step.status = "COMPLETED" if is_valid else "FAILED"
+                            if not is_valid:
+                                step.error = ax_res.get("error", "Live CDP accessibility capture returned no nodes or invalid tree.") if isinstance(ax_res, dict) else "Invalid AX tree."
                     else:
-                        # Extract real semantic elements from current benchmark/landing
+                        step.status = "FAILED"
+                        step.error = "BROWSER_BRIDGE_UNAVAILABLE: No live browser bridge registered or connected to perform CDP accessibility capture."
+                        step.verified = False
+                        step.result = {"error": "BROWSER_BRIDGE_UNAVAILABLE"}
+
+                elif step.tool == "http_probe":
+                    url = step.arguments.get("url", "https://news.ycombinator.com")
+                    async with httpx.AsyncClient(verify=True, timeout=8.0, follow_redirects=True) as client:
+                        resp = await client.get(url)
+                        parser = HTMLMetadataParser()
+                        parser.feed(resp.text[:60000])
                         step.result = {
-                            "nodes": [
-                                {"role": "navigation", "name": "AutoForge Autonomous Shell"},
-                                {"role": "button", "name": "Run Verification"},
-                                {"role": "link", "name": "Hacker News"}
-                            ],
-                            "mode": "STANDALONE_CDP_INSPECTOR"
+                            "url": url,
+                            "final_url": str(resp.url),
+                            "status_code": resp.status_code,
+                            "page_title": parser.title or "TITLE_NOT_FOUND",
+                            "mode": "LIVE_HTTP_PROBE"
                         }
-                        step.verified = True
-                        step.status = "COMPLETED"
+                        step.verified = bool(resp.status_code < 400)
+                        step.status = "COMPLETED" if step.verified else "FAILED"
 
                 else:
                     step.status = "FAILED"

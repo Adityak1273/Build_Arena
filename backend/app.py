@@ -6,6 +6,7 @@ Local Intent Policy Gate with Human Approval Waiting Loop, and Outcome Verificat
 
 import os
 import json
+import uuid
 import asyncio
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
@@ -74,6 +75,63 @@ class TelemetryManager:
 
 telemetry = TelemetryManager()
 
+# Browser Bridge connecting AutonomousRunner to live Electron browser via full-duplex WebSocket
+class BrowserBridge:
+    def __init__(self, telemetry_mgr: TelemetryManager):
+        self.telemetry = telemetry_mgr
+        self._pending_requests: Dict[str, asyncio.Future] = {}
+
+    def is_connected(self) -> bool:
+        return len(self.telemetry.active_connections) > 0
+
+    async def dispatch(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Dispatches a browser command to the active Electron browser session over WebSocket."""
+        if not self.is_connected():
+            return {
+                "success": False,
+                "error": "BROWSER_BRIDGE_UNAVAILABLE",
+                "message": "No active Electron browser session connected over WebSocket telemetry."
+            }
+
+        request_id = str(uuid.uuid4())
+        loop = asyncio.get_event_loop()
+        fut: asyncio.Future = loop.create_future()
+        self._pending_requests[request_id] = fut
+
+        try:
+            await self.telemetry.broadcast({
+                "type": "BROWSER_ACTION",
+                "data": {
+                    "request_id": request_id,
+                    "action": action,
+                    "params": params
+                }
+            })
+            result = await asyncio.wait_for(fut, timeout=12.0)
+            return result
+        except asyncio.TimeoutError:
+            return {
+                "success": False,
+                "error": "BROWSER_BRIDGE_TIMEOUT",
+                "message": f"Browser bridge action '{action}' timed out after 12000ms."
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"BRIDGE_ERROR: {str(e)}"
+            }
+        finally:
+            self._pending_requests.pop(request_id, None)
+
+    def resolve_response(self, request_id: str, payload: Dict[str, Any]):
+        fut = self._pending_requests.get(request_id)
+        if fut and not fut.done():
+            fut.set_result(payload)
+
+# Register live browser bridge during application startup
+browser_bridge = BrowserBridge(telemetry)
+AutonomousRunner.register_browser_bridge(browser_bridge.dispatch)
+
 # Request Models
 class TaskExecuteRequest(BaseModel):
     task_type: str # 'COUNCIL_AUDIT' | 'CODE_GEN' | 'SECURITY_EVAL' | 'VERIFICATION_BENCH' | 'GENERATE_GTM'
@@ -119,6 +177,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     if intent_id in telemetry.pending_approvals:
                         telemetry.approval_decisions[intent_id] = decision
                         telemetry.pending_approvals[intent_id].set()
+                elif msg_type == "BROWSER_ACTION_RESULT":
+                    data = msg.get("data", {})
+                    req_id = data.get("request_id")
+                    if req_id:
+                        browser_bridge.resolve_response(req_id, data)
             except Exception as e:
                 await websocket.send_json({"type": "ERROR", "message": str(e)})
     except WebSocketDisconnect:
@@ -205,7 +268,16 @@ async def execute_task(req: TaskExecuteRequest):
             )
 
         # Token consumed
-        LocalIntentPolicyGate.consume_token(token)
+        consumed = LocalIntentPolicyGate.consume_token(token)
+        if not consumed:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "status": "TOKEN_CONSUMPTION_FAILED",
+                    "error": "Intent token consumption failed: token was already consumed or signature invalid.",
+                    "intent_id": token.intent_id
+                }
+            )
 
     # Execute Safe or Approved Task
     if req.task_type in ("COUNCIL_AUDIT", "CODE_GEN"):
@@ -365,3 +437,20 @@ async def autonomous_execute(plan: AutonomousPlanResult):
 async def autonomous_cancel(req: AutonomousCancelRequest):
     cancelled = AutonomousRunner.cancel_plan(req.plan_id)
     return {"status": "CANCELLED" if cancelled else "NOT_FOUND", "plan_id": req.plan_id}
+
+# Browser Bridge Endpoints
+@app.get("/api/browser/bridge/status")
+async def get_browser_bridge_status():
+    return {
+        "connected": browser_bridge.is_connected(),
+        "active_clients": len(telemetry.active_connections)
+    }
+
+class BridgeDispatchRequest(BaseModel):
+    action: str
+    params: Optional[Dict[str, Any]] = None
+
+@app.post("/api/browser/bridge/dispatch")
+async def dispatch_browser_bridge_action(req: BridgeDispatchRequest):
+    res = await browser_bridge.dispatch(req.action, req.params or {})
+    return res

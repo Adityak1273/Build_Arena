@@ -37,19 +37,22 @@ async def test_live_webpage_extractor_offline_error():
 
 @pytest.mark.asyncio
 async def test_verifier_benchmark_roundtrip():
-    outcome = await OutcomeVerifier.run_benchmark("LIVE_SCRAPED")
-    assert outcome.disk_integrity_verified is True
-    assert outcome.status == "VERIFIED_DISK_SYNC"
-    assert len(outcome.rows) == len(STARTUP_CRAWL_TARGETS)
-    assert os.path.exists(outcome.artifact_path)
-    assert len(outcome.disk_hash) == 64 # SHA-256
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_csv = os.path.join(tmp_dir, "test_startups.csv")
+        outcome = await OutcomeVerifier.run_benchmark("LIVE_SCRAPED", output_csv_path=tmp_csv)
+        assert outcome.disk_integrity_verified is True
+        assert outcome.status == "VERIFIED_DISK_SYNC"
+        assert len(outcome.rows) == len(STARTUP_CRAWL_TARGETS)
+        assert os.path.exists(tmp_csv)
+        assert len(outcome.disk_hash) == 64 # SHA-256
 
-    # Verify every row has provenance
-    for row in outcome.rows:
-        assert "retrieval_timestamp" in row
-        assert "fetch_status" in row
-        assert "data_provenance" in row
-        assert row["data_provenance"] in ("LIVE_HTML_CRAWL", "CONFIGURED_TARGET_UNREACHED")
+        # Verify every row has provenance
+        for row in outcome.rows:
+            assert "retrieval_timestamp" in row
+            assert "fetch_status" in row
+            assert "data_provenance" in row
+            assert row["data_provenance"] in ("LIVE_HTML_CRAWL", "CONFIGURED_TARGET_UNREACHED")
 
 @pytest.mark.asyncio
 async def test_verifier_fault_injection_offline():
@@ -69,31 +72,43 @@ async def test_verifier_fault_injection_corruption():
 @pytest.mark.asyncio
 async def test_verifier_corruption_detection_preserves_canonical_csv():
     """
-    P0 Regression Test: Proves that running CORRUPTION_DETECTION fault-injection
-    operates on an isolated test file and leaves the tracked canonical artifact
-    (artifacts/ai_startups_matrix.csv) completely uncorrupted.
+    P1 Regression Test: Proves that running CORRUPTION_DETECTION fault-injection
+    operates entirely against an isolated temporary directory and leaves both
+    the canonical CSV artifact and manifest.json 100% byte-for-byte unchanged.
     """
-    canonical_path = OutcomeVerifier.get_csv_path()
-    assert os.path.exists(canonical_path), "Canonical artifact must exist"
+    canonical_csv = OutcomeVerifier.get_csv_path()
+    manifest_path = OutcomeVerifier.get_manifest_path()
+    assert os.path.exists(canonical_csv), "Canonical CSV artifact must exist"
+    assert os.path.exists(manifest_path), "Canonical manifest must exist"
 
-    # Read pre-test state
-    with open(canonical_path, "r", encoding="utf-8") as f:
-        pre_content = f.read()
+    # Capture complete pre-test bytes
+    pre_csv_bytes = open(canonical_csv, "rb").read()
+    pre_manifest_bytes = open(manifest_path, "rb").read()
 
-    assert "InjectedRogueCorp" not in pre_content, "Pre-condition violated: canonical file already has rogue corp"
+    assert b"InjectedRogueCorp" not in pre_csv_bytes, "Pre-condition violated: canonical file already has rogue corp"
 
     # Run corruption fault injection
     outcome = await OutcomeVerifier.run_benchmark("CORRUPTION_DETECTION")
     assert outcome.status == "FAILED_CORRUPTION_DETECTED"
+    assert outcome.disk_integrity_verified is False
 
-    # Read post-test state
-    with open(canonical_path, "r", encoding="utf-8") as f:
-        post_content = f.read()
+    # Capture post-test bytes
+    post_csv_bytes = open(canonical_csv, "rb").read()
+    post_manifest_bytes = open(manifest_path, "rb").read()
 
-    assert "InjectedRogueCorp" not in post_content, "Regression! CORRUPTION_DETECTION corrupted the canonical artifact"
-    # Ensure temporary file was cleanly deleted
-    temp_file = os.path.join(OutcomeVerifier.ARTIFACT_DIR, "temp_test_corrupt.csv")
-    assert not os.path.exists(temp_file), "Temporary test file was not cleaned up"
+    # Exact byte-for-byte preservation assertion
+    assert pre_csv_bytes == post_csv_bytes, "Regression! Canonical CSV bytes were mutated during CORRUPTION_DETECTION!"
+    assert pre_manifest_bytes == post_manifest_bytes, "Regression! Canonical manifest.json bytes were mutated during CORRUPTION_DETECTION!"
+    assert b"InjectedRogueCorp" not in post_csv_bytes
+
+    # Verify exactly 10 genuine records + 1 header
+    lines = post_csv_bytes.decode("utf-8").strip().splitlines()
+    assert len(lines) == 11, f"Expected 1 header + 10 startup rows, got {len(lines)}"
+
+    # Check manifest integrity
+    import json, hashlib
+    manifest_obj = json.loads(post_manifest_bytes.decode("utf-8"))
+    assert manifest_obj["csv_sha256"] == hashlib.sha256(post_csv_bytes).hexdigest()
 
 def test_verifier_cached_snapshot():
     cached = OutcomeVerifier.get_latest_cached_outcome()

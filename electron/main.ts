@@ -158,14 +158,27 @@ ipcMain.handle('browser:navigate', async (_event, url: string) => {
 });
 
 ipcMain.handle('browser:captureAXTree', async () => {
-  if (activeWebview && !activeWebview.isDestroyed() && activeWebview.debugger.isAttached()) {
-    try {
-      const rawTree = await activeWebview.debugger.sendCommand('Accessibility.getFullAXTree', {});
-      cachedAXTree = extractSemanticNodes(rawTree.nodes);
-      return cachedAXTree;
-    } catch (err: any) {
-      console.warn('Live CDP getFullAXTree failed:', err);
-      return [];
+  if (activeWebview && !activeWebview.isDestroyed()) {
+    if (!activeWebview.debugger.isAttached()) {
+      try {
+        activeWebview.debugger.attach('1.3');
+        await activeWebview.debugger.sendCommand('Accessibility.enable');
+        await activeWebview.debugger.sendCommand('DOM.enable');
+        await activeWebview.debugger.sendCommand('Page.enable');
+      } catch (attachErr) {
+        console.warn('Could not attach CDP debugger on demand for AXTree:', attachErr);
+      }
+    }
+
+    if (activeWebview.debugger.isAttached()) {
+      try {
+        const rawTree = await activeWebview.debugger.sendCommand('Accessibility.getFullAXTree', {});
+        cachedAXTree = extractSemanticNodes(rawTree.nodes);
+        return cachedAXTree;
+      } catch (err: any) {
+        console.warn('Live CDP getFullAXTree failed:', err);
+        return [];
+      }
     }
   }
 

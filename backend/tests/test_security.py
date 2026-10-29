@@ -149,3 +149,71 @@ async def test_consequential_execution_approved():
     assert executed.status in ("COMPLETED", "PARTIAL_SUCCESS")
     assert executed.steps[0].status == "COMPLETED"
     assert executed.steps[0].verified is True
+
+@pytest.mark.asyncio
+async def test_consequential_execution_fails_if_token_consumption_fails():
+    """
+    P1 Regression Test: Ensures that if token consumption fails (e.g. replay attack,
+    token already consumed), the consequential tool MUST NOT be dispatched.
+    """
+    from autonomous_runner import AutonomousRunner, AutonomousPlanResult, AutonomousStep
+    plan = AutonomousPlanResult(
+        plan_id="test-plan-consume-fail",
+        goal="Render campaign video",
+        planner="DETERMINISTIC_TEST",
+        steps=[
+            AutonomousStep(
+                step_id="step-1",
+                reasoning="Composite video",
+                tool="render_gtm_video",
+                arguments={"title": "Test Video"}
+            )
+        ]
+    )
+
+    # In approval callback, consume the token prematurely to trigger replay rejection in runner
+    async def pre_consuming_callback(token):
+        # Pre-consume token so subsequent runner consumption fails
+        LocalIntentPolicyGate.consume_token(token)
+        return "APPROVED"
+
+    executed = await AutonomousRunner.execute_plan(plan, approval_callback=pre_consuming_callback)
+    assert executed.status == "FAILED"
+    assert executed.steps[0].status == "FAILED"
+    assert "token consumption failed" in executed.steps[0].error.lower()
+    assert executed.steps[0].verified is False
+
+@pytest.mark.asyncio
+async def test_plan_cancellation_skips_subsequent_steps():
+    """
+    P1 Regression Test: Confirms that cancelling a running plan leaves subsequent
+    steps marked SKIPPED with an explicit cancellation reason.
+    """
+    from autonomous_runner import AutonomousRunner, AutonomousPlanResult, AutonomousStep
+    plan = AutonomousPlanResult(
+        plan_id="test-plan-cancel-midway",
+        goal="Two Step Task",
+        planner="DETERMINISTIC_TEST",
+        steps=[
+            AutonomousStep(
+                step_id="step-1",
+                reasoning="Step 1",
+                tool="audit_code_with_council",
+                arguments={"code": "export function A() { return 1; }"}
+            ),
+            AutonomousStep(
+                step_id="step-2",
+                reasoning="Step 2",
+                tool="render_gtm_video",
+                arguments={"title": "Should be skipped"}
+            )
+        ]
+    )
+
+    # Cancel plan before step 2 runs
+    AutonomousRunner.cancel_plan("test-plan-cancel-midway")
+
+    executed = await AutonomousRunner.execute_plan(plan)
+    assert executed.steps[0].status == "SKIPPED"
+    assert executed.steps[1].status == "SKIPPED"
+    assert "safely cancelled" in executed.steps[0].error
