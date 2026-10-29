@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
+import { app, BrowserWindow, ipcMain, WebContents } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractSemanticNodes, verifyAndClickBackendNode, SemanticAXNode } from './semanticBrowser';
@@ -110,10 +110,46 @@ ipcMain.handle('browser:navigate', async (_event, url: string) => {
   lastNavigatedUrl = targetUrl;
 
   if (activeWebview && !activeWebview.isDestroyed()) {
-    activeWebview.loadURL(targetUrl);
-    return { success: true, url: targetUrl };
+    return new Promise((resolve) => {
+      let resolved = false;
+
+      const finishHandler = () => {
+        if (!resolved) {
+          resolved = true;
+          activeWebview?.removeListener('did-finish-load', finishHandler);
+          activeWebview?.removeListener('did-fail-load', failHandler);
+          resolve({ success: true, url: activeWebview?.getURL() || targetUrl });
+        }
+      };
+
+      const failHandler = (_e: any, errorCode: number, errorDesc: string) => {
+        if (!resolved) {
+          resolved = true;
+          activeWebview?.removeListener('did-finish-load', finishHandler);
+          activeWebview?.removeListener('did-fail-load', failHandler);
+          resolve({ success: false, url: targetUrl, error: `${errorDesc} (Code ${errorCode})` });
+        }
+      };
+
+      activeWebview!.once('did-finish-load', finishHandler);
+      activeWebview!.once('did-fail-load', failHandler);
+
+      // 8s navigation timeout guard
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          activeWebview?.removeListener('did-finish-load', finishHandler);
+          activeWebview?.removeListener('did-fail-load', failHandler);
+          resolve({ success: true, url: activeWebview?.getURL() || targetUrl, timedOut: true });
+        }
+      }, 8000);
+
+      activeWebview!.loadURL(targetUrl);
+    });
   }
-  return { success: true, url: targetUrl, simulated: true };
+
+  // If running in browser preview outside Electron webview
+  return { success: false, url: targetUrl, error: 'NO_ELECTRON_WEBVIEW' };
 });
 
 ipcMain.handle('browser:captureAXTree', async () => {
@@ -122,23 +158,14 @@ ipcMain.handle('browser:captureAXTree', async () => {
       const rawTree = await activeWebview.debugger.sendCommand('Accessibility.getFullAXTree', {});
       cachedAXTree = extractSemanticNodes(rawTree.nodes);
       return cachedAXTree;
-    } catch (err) {
-      console.warn('Live CDP getFullAXTree failed, using cached/fallback:', err);
+    } catch (err: any) {
+      console.warn('Live CDP getFullAXTree failed:', err);
+      return [];
     }
   }
 
-  // Default fallback demonstration nodes if webview isn't loaded yet
-  if (cachedAXTree.length === 0) {
-    return [
-      { nodeId: 'ax-1', backendDOMNodeId: 101, role: 'heading', name: 'Hacker News — Top Stories' },
-      { nodeId: 'ax-2', backendDOMNodeId: 102, role: 'link', name: 'AutoForge: The AI-Native Chromium Shell' },
-      { nodeId: 'ax-3', backendDOMNodeId: 103, role: 'button', name: 'Upvote (428 points)' },
-      { nodeId: 'ax-4', backendDOMNodeId: 104, role: 'searchbox', name: 'Search stories, comments, users' },
-      { nodeId: 'ax-5', backendDOMNodeId: 105, role: 'link', name: 'Comments (87 discuss)' },
-      { nodeId: 'ax-6', backendDOMNodeId: 106, role: 'link', name: 'Next 30 Items' }
-    ];
-  }
-  return cachedAXTree;
+  // When CDP debugger is not connected, return empty array honestly
+  return [];
 });
 
 ipcMain.handle('browser:clickBackendNode', async (_event, backendDOMNodeId: number) => {
@@ -166,12 +193,11 @@ ipcMain.handle('browser:clickBackendNode', async (_event, backendDOMNodeId: numb
       );
     }
 
-    // Programmatic click fallback if CDP debugger is unavailable in active webview
+    // Programmatic click fallback if CDP debugger is unavailable
     try {
       const clickOutcome = await activeWebview.executeJavaScript(`
         (() => {
-          const el = document.querySelector('[data-backend-id="${backendDOMNodeId}"]') ||
-                     document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+          const el = document.querySelector('[data-backend-id="${backendDOMNodeId}"]');
           if (el) {
             el.click();
             return { clicked: true, tagName: el.tagName, text: (el.innerText || el.getAttribute('aria-label') || '').slice(0, 50) };
@@ -181,34 +207,61 @@ ipcMain.handle('browser:clickBackendNode', async (_event, backendDOMNodeId: numb
       `);
       const currentUrl = activeWebview.getURL() || lastNavigatedUrl;
       return {
-        success: true,
+        success: Boolean(clickOutcome?.clicked),
+        status: clickOutcome?.clicked ? 'ACTION_DISPATCHED' : 'DISPATCH_FAILED',
         backendDOMNodeId,
         urlChanged: currentUrl !== lastNavigatedUrl,
         initialUrl: lastNavigatedUrl,
         newUrl: currentUrl,
-        axDiffCount: 1,
+        axDiffCount: 0,
         targetRole: clickOutcome?.tagName?.toLowerCase() || 'interactive',
         targetName: clickOutcome?.text || `Interactive Node #${backendDOMNodeId}`,
-        message: `Programmatic DOM click executed on ${clickOutcome?.tagName || 'node'}`
+        message: clickOutcome?.clicked ? `Programmatic DOM click executed on ${clickOutcome.tagName}` : 'Element not found by selector'
       };
     } catch (e: any) {
-      console.warn('In-page programmatic click failed:', e);
+      return {
+        success: false,
+        status: 'DISPATCH_FAILED',
+        backendDOMNodeId,
+        urlChanged: false,
+        initialUrl: lastNavigatedUrl,
+        newUrl: lastNavigatedUrl,
+        axDiffCount: 0,
+        message: `Programmatic click failed: ${e.message}`,
+        error: e.message
+      };
     }
   }
 
-  // Headless / non-webview execution fallback without fake URL mutation
-  const currentUrl = lastNavigatedUrl;
   return {
-    success: true,
+    success: false,
+    status: 'DISPATCH_FAILED',
     backendDOMNodeId,
     urlChanged: false,
-    initialUrl: currentUrl,
-    newUrl: currentUrl,
+    initialUrl: lastNavigatedUrl,
+    newUrl: lastNavigatedUrl,
     axDiffCount: 0,
-    targetRole: 'button',
-    targetName: `Interactive Node #${backendDOMNodeId}`,
-    message: `Node #${backendDOMNodeId} clicked via CDP event queue`
+    message: 'No active webview or browser session available.',
+    error: 'NO_ACTIVE_BROWSER'
   };
+});
+
+ipcMain.handle('browser:getTelemetry', async () => {
+  if (activeWebview && !activeWebview.isDestroyed() && activeWebview.debugger.isAttached()) {
+    try {
+      const start = Date.now();
+      await activeWebview.debugger.sendCommand('DOM.getDocument', { depth: 1 });
+      const latencyMs = Date.now() - start;
+      return {
+        cdpConnected: true,
+        latencyMs,
+        url: activeWebview.getURL() || lastNavigatedUrl
+      };
+    } catch {
+      return { cdpConnected: false, latencyMs: null, url: lastNavigatedUrl };
+    }
+  }
+  return { cdpConnected: false, latencyMs: null, url: lastNavigatedUrl };
 });
 
 ipcMain.handle('browser:goBack', async () => {
@@ -227,18 +280,8 @@ ipcMain.handle('browser:getVersion', async () => {
   return app.getVersion();
 });
 
-// App Lifecycle with header unblocking for external webview browsing
+// App Lifecycle - Standard secure operation without tampering with CSP/X-Frame-Options headers
 app.whenReady().then(() => {
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    if (details.responseHeaders) {
-      delete details.responseHeaders['x-frame-options'];
-      delete details.responseHeaders['X-Frame-Options'];
-      delete details.responseHeaders['content-security-policy'];
-      delete details.responseHeaders['Content-Security-Policy'];
-    }
-    callback({ cancel: false, responseHeaders: details.responseHeaders });
-  });
-
   createWindow();
 });
 

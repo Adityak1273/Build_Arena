@@ -1,6 +1,7 @@
 /**
  * AutoForge Semantic Browser Engine
  * Chrome DevTools Protocol (CDP 1.3) Accessibility Tree Extraction & Postcondition Verification
+ * Eliminates arbitrary fallback coordinates and distinguishes ACTION_DISPATCHED from OUTCOME_VERIFIED.
  */
 
 export interface SemanticAXNode {
@@ -17,6 +18,7 @@ export interface SemanticAXNode {
 
 export interface ClickVerificationResult {
   success: boolean;
+  status: 'OUTCOME_VERIFIED' | 'ACTION_DISPATCHED' | 'DISPATCH_FAILED';
   backendDOMNodeId: number;
   urlChanged: boolean;
   initialUrl: string;
@@ -25,6 +27,7 @@ export interface ClickVerificationResult {
   message: string;
   targetRole?: string;
   targetName?: string;
+  error?: string;
 }
 
 /**
@@ -90,7 +93,11 @@ export function computeAXDiff(before: SemanticAXNode[], after: SemanticAXNode[])
 
 /**
  * Dispatches a native CDP mouse click to a backendDOMNodeId and verifies postconditions.
- * Postcondition: urlChanged === true OR axDiffCount > 0.
+ * Postcondition verification strictly checks:
+ * 1. URL changed (navigation triggered), OR
+ * 2. Focused state was transferred to the target node, OR
+ * 3. Specific AX tree delta was produced.
+ * Never clicks at arbitrary (100, 100) fallback coordinates.
  */
 export async function verifyAndClickBackendNode(
   dbg: Electron.Debugger,
@@ -105,9 +112,9 @@ export async function verifyAndClickBackendNode(
   const targetRole = targetNode?.role || 'node';
   const targetName = targetNode?.name || `ID #${backendDOMNodeId}`;
 
-  // 1. Resolve box model coordinates for the node via CDP
-  let clickX = 100;
-  let clickY = 100;
+  // 1. Resolve authentic box model coordinates for the node via CDP
+  let clickX: number | null = null;
+  let clickY: number | null = null;
 
   try {
     const boxModel = await dbg.sendCommand('DOM.getBoxModel', { backendNodeId: backendDOMNodeId });
@@ -116,8 +123,8 @@ export async function verifyAndClickBackendNode(
       clickX = Math.round((quad[0] + quad[2] + quad[4] + quad[6]) / 4);
       clickY = Math.round((quad[1] + quad[3] + quad[5] + quad[7]) / 4);
     }
-  } catch (err: any) {
-    // If box model resolution fails directly, fallback to scrollIntoView + center approximation
+  } catch {
+    // Attempt scroll into view then re-resolve
     try {
       await dbg.sendCommand('DOM.scrollIntoViewIfNeeded', { backendNodeId: backendDOMNodeId });
       const boxModel = await dbg.sendCommand('DOM.getBoxModel', { backendNodeId: backendDOMNodeId });
@@ -127,31 +134,65 @@ export async function verifyAndClickBackendNode(
         clickY = Math.round((quad[1] + quad[3] + quad[5] + quad[7]) / 4);
       }
     } catch {
-      // Continue with best-effort coordinate
+      clickX = null;
+      clickY = null;
     }
   }
 
-  // 2. Dispatch simulated native hardware mouse events via CDP Input domain
-  await dbg.sendCommand('Input.dispatchMouseEvent', {
-    type: 'mousePressed',
-    x: clickX,
-    y: clickY,
-    button: 'left',
-    clickCount: 1
-  });
+  // If node coordinates cannot be resolved, halt honestly instead of clicking arbitrary coordinates
+  if (clickX === null || clickY === null) {
+    return {
+      success: false,
+      status: 'DISPATCH_FAILED',
+      backendDOMNodeId,
+      urlChanged: false,
+      initialUrl,
+      newUrl: initialUrl,
+      axDiffCount: 0,
+      targetRole,
+      targetName,
+      message: `Failed to resolve bounding box coordinates for node #${backendDOMNodeId}. Aborted dispatch to prevent misclick.`,
+      error: 'COORDINATES_UNRESOLVED'
+    };
+  }
 
-  await new Promise(resolve => setTimeout(resolve, 80));
+  // 2. Dispatch native hardware mouse events via CDP Input domain at resolved coordinates
+  try {
+    await dbg.sendCommand('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      x: clickX,
+      y: clickY,
+      button: 'left',
+      clickCount: 1
+    });
 
-  await dbg.sendCommand('Input.dispatchMouseEvent', {
-    type: 'mouseReleased',
-    x: clickX,
-    y: clickY,
-    button: 'left',
-    clickCount: 1
-  });
+    await new Promise(resolve => setTimeout(resolve, 80));
+
+    await dbg.sendCommand('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: clickX,
+      y: clickY,
+      button: 'left',
+      clickCount: 1
+    });
+  } catch (err: any) {
+    return {
+      success: false,
+      status: 'DISPATCH_FAILED',
+      backendDOMNodeId,
+      urlChanged: false,
+      initialUrl,
+      newUrl: initialUrl,
+      axDiffCount: 0,
+      targetRole,
+      targetName,
+      message: `CDP Input.dispatchMouseEvent failed: ${err.message}`,
+      error: err.message
+    };
+  }
 
   // 3. Wait for layout settling / mutation / navigation
-  await new Promise(resolve => setTimeout(resolve, 450));
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   // 4. Observable postcondition check
   const newUrl = getCurrentUrl();
@@ -160,10 +201,27 @@ export async function verifyAndClickBackendNode(
   const postTree = await fetchAXTree();
   const axDiffCount = computeAXDiff(initialTree, postTree);
 
-  const verified = urlChanged || axDiffCount > 0;
+  // Check if target is now focused or URL changed
+  const postTarget = postTree.find(n => n.backendDOMNodeId === backendDOMNodeId);
+  const focusAcquired = Boolean(postTarget?.focused && !targetNode?.focused);
+
+  const outcomeVerified = urlChanged || focusAcquired || axDiffCount > 0;
+  const status = outcomeVerified ? 'OUTCOME_VERIFIED' : 'ACTION_DISPATCHED';
+
+  let message = '';
+  if (urlChanged) {
+    message = `OUTCOME_VERIFIED: Navigation postcondition observed -> ${newUrl}`;
+  } else if (focusAcquired) {
+    message = `OUTCOME_VERIFIED: Focus postcondition observed on node #${backendDOMNodeId}`;
+  } else if (axDiffCount > 0) {
+    message = `OUTCOME_VERIFIED: Accessibility tree mutated with ${axDiffCount} delta nodes`;
+  } else {
+    message = `ACTION_DISPATCHED: Click sent to (${clickX}, ${clickY}), but no state change or URL navigation was observed yet.`;
+  }
 
   return {
-    success: verified,
+    success: outcomeVerified,
+    status,
     backendDOMNodeId,
     urlChanged,
     initialUrl,
@@ -171,8 +229,6 @@ export async function verifyAndClickBackendNode(
     axDiffCount,
     targetRole,
     targetName,
-    message: verified
-      ? `Postcondition verified: ${urlChanged ? 'Navigated to ' + newUrl : `AX Tree mutated with ${axDiffCount} delta nodes`}`
-      : 'Click completed but no observable DOM or URL state change detected'
+    message
   };
 }

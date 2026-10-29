@@ -84,7 +84,7 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
       <div className="p-3 border-t border-[#23293d] bg-[#111520] text-[10px] text-slate-400 flex items-center justify-between">
         <span className="flex items-center gap-1.5">
           <Shield className="w-3.5 h-3.5 text-blue-400" />
-          ArmorIQ Zero-Trust Guard
+          Local Intent Policy Gate
         </span>
         <span className="text-emerald-400 font-bold">100% Fail-Closed</span>
       </div>

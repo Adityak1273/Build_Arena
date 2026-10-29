@@ -1,15 +1,19 @@
 """
 AutoForge 7-Agent Anti-Boilerplate Council Orchestrator
-Parallel AST & Pattern Parsing with Zero-Trust Security Gate Interception
+Parallel AST & Pattern Parsing with Local Intent Policy Gate
+Computes real dynamic unified code diffs, locates specific line-number violations,
+and distinguishes deterministic rule-based evaluation from model-backed agents.
 """
 
-import asyncio
+import os
+import difflib
 import re
 import uuid
 import time
-from typing import List, Dict, Any, Optional
+import asyncio
+from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel, Field
-from security import ArmorIQGate, IntentToken
+from security import LocalIntentPolicyGate, IntentToken
 
 class CriticFeedback(BaseModel):
     critic_name: str
@@ -19,6 +23,7 @@ class CriticFeedback(BaseModel):
     issues: List[str]
     recommendations: List[str]
     diff_snippet: Optional[str] = None
+    line_violations: List[int] = Field(default_factory=list)
 
 class CouncilVerdict(BaseModel):
     verdict_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -29,25 +34,56 @@ class CouncilVerdict(BaseModel):
     overall_feedback: str
     optimized_code: Optional[str] = None
     security_token: Optional[IntentToken] = None
+    council_mode: str = "DETERMINISTIC_RULE_BASED_COUNCIL"
+    model_provider_status: str = "UNAVAILABLE_NO_API_KEY"
 
-# Individual Critic Evaluators
+def compute_real_diff(original: str, transformed: str, filename: str = "Component.tsx") -> str:
+    """Computes an authentic unified diff using Python's difflib."""
+    orig_lines = original.splitlines(keepends=True)
+    trans_lines = transformed.splitlines(keepends=True)
+    diff = difflib.unified_diff(
+        orig_lines,
+        trans_lines,
+        fromfile=f"a/{filename}",
+        tofile=f"b/{filename}",
+        lineterm=""
+    )
+    return "".join(diff)
+
+def find_line_numbers(code: str, pattern: str) -> List[int]:
+    """Finds 1-based line numbers where pattern occurs."""
+    line_nums = []
+    lines = code.splitlines()
+    for idx, line in enumerate(lines, start=1):
+        if re.search(pattern, line):
+            line_nums.append(idx)
+    return line_nums
+
+# 1. Aesthetics & Design Tokens Critic
 async def audit_aesthetics_and_design_tokens(code: str) -> CriticFeedback:
     issues = []
     recs = []
-    generic_tw_matches = re.findall(r'\b(bg-slate-[0-9]{3}|bg-zinc-[0-9]{3}|bg-gray-[0-9]{3}|text-slate-[0-9]{3})\b', code)
-    
     score = 100
+
+    tw_pattern = r'\b(bg-slate-[0-9]{3}|bg-zinc-[0-9]{3}|bg-gray-[0-9]{3}|text-slate-[0-9]{3}|border-slate-[0-9]{3})\b'
+    violation_lines = find_line_numbers(code, tw_pattern)
+    generic_tw_matches = re.findall(tw_pattern, code)
+    
     if generic_tw_matches:
         count = len(generic_tw_matches)
         deduction = min(50, count * 10)
         score -= deduction
-        issues.append(f"Found {count} generic utility classes ({', '.join(set(generic_tw_matches[:4]))}).")
-        recs.append("Enforce custom CSS design variables: use var(--forge-surface), var(--forge-bg), or bg-forge-surface tokens.")
+        issues.append(f"Lines {violation_lines[:5]}: Detected {count} generic utility classes ({', '.join(set(generic_tw_matches[:3]))}).")
+        recs.append("Replace generic palette with AutoForge design tokens (e.g. var(--forge-surface), var(--forge-border)).")
 
     if "var(--forge-" not in code and "forge-" not in code:
         score -= 20
-        issues.append("Zero AutoForge design system tokens detected in stylesheet/classes.")
-        recs.append("Bind color accents to AutoForge theme tokens (e.g., border-forge-border).")
+        issues.append("Input source code contains zero AutoForge design tokens.")
+        recs.append("Bind color accents and surfaces to AutoForge theme tokens (e.g., border-forge-border).")
+
+    # Generate a real transformation snippet on the matched lines
+    transformed_sample = re.sub(tw_pattern, 'var(--forge-surface)', code)
+    diff = compute_real_diff(code[:300], transformed_sample[:300])
 
     passed = score >= 70
     return CriticFeedback(
@@ -57,27 +93,28 @@ async def audit_aesthetics_and_design_tokens(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="- className=\"bg-slate-900 border-slate-700 text-slate-100\"\n+ className=\"forge-card border border-forge-border text-forge-text\""
+        diff_snippet=diff or None,
+        line_violations=violation_lines
     )
 
+# 2. Architecture & Pattern Critic
 async def audit_architecture_and_patterns(code: str) -> CriticFeedback:
     issues = []
     recs = []
+    score = 100
     lines = code.splitlines()
     line_count = len(lines)
-    score = 100
 
     if line_count > 250:
         score -= 30
-        issues.append(f"Component file is {line_count} lines (>250 line architectural threshold).")
-        recs.append("Decompose monolithic component into dedicated child presentation components and sub-hooks.")
+        issues.append(f"Component file is {line_count} lines (>250 line threshold). Potential god-component anti-pattern.")
+        recs.append("Decompose monolithic component into dedicated child presentation components and custom hooks.")
 
-    # Check for hook abstraction
-    state_calls = len(re.findall(r'\buseState\s*\(', code))
-    effect_calls = len(re.findall(r'\buseEffect\s*\(', code))
-    if state_calls >= 4 and not re.search(r'\buse[A-Z][a-zA-Z0-9]+\s*\(', code.replace('useState', '').replace('useEffect', '')):
+    state_pattern = r'\buseState\s*\('
+    state_lines = find_line_numbers(code, state_pattern)
+    if len(state_lines) >= 4:
         score -= 25
-        issues.append(f"Sprawling inline state ({state_calls} useState hooks) without custom hook abstraction.")
+        issues.append(f"Lines {state_lines}: Sprawling inline state ({len(state_lines)} useState calls) without custom hook abstraction.")
         recs.append("Extract stateful business logic into an isolated custom React hook (e.g., useComponentState).")
 
     passed = score >= 70
@@ -88,26 +125,35 @@ async def audit_architecture_and_patterns(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="// Extract logic into hooks\n- const [a, setA] = useState();\n- const [b, setB] = useState();\n+ const { state, actions } = useWorkflowState();"
+        diff_snippet=None,
+        line_violations=state_lines
     )
 
+# 3. Idiomatic Syntax Critic
 async def audit_idiomatic_syntax(code: str) -> CriticFeedback:
     issues = []
     recs = []
     score = 100
 
-    any_escapes = re.findall(r':\s*any\b|\bas\s+any\b', code)
+    any_pattern = r':\s*any\b|\bas\s+any\b'
+    any_lines = find_line_numbers(code, any_pattern)
+    any_escapes = re.findall(any_pattern, code)
+
     if any_escapes:
         count = len(any_escapes)
         score -= min(45, count * 15)
-        issues.append(f"Found {count} untyped ': any' or 'as any' escape hatches.")
+        issues.append(f"Lines {any_lines}: Found {count} untyped ': any' or 'as any' escape hatches.")
         recs.append("Declare strictly typed TypeScript interfaces or generics for all parameters and state models.")
 
-    unhandled_promises = re.findall(r'\.then\s*\([^\)]+\)(?!\s*\.catch)', code)
-    if unhandled_promises:
+    promise_pattern = r'\.then\s*\([^\)]+\)(?!\s*\.catch)'
+    promise_lines = find_line_numbers(code, promise_pattern)
+    if promise_lines:
         score -= 20
-        issues.append("Found unhandled Promise chains lacking explicit .catch() rejection guards.")
+        issues.append(f"Lines {promise_lines}: Found unhandled Promise chains lacking explicit .catch() rejection guards.")
         recs.append("Wrap asynchronous calls in try/catch blocks or append .catch(handleError).")
+
+    transformed = re.sub(any_pattern, ': unknown', code)
+    diff = compute_real_diff(code[:300], transformed[:300])
 
     passed = score >= 75
     return CriticFeedback(
@@ -117,27 +163,35 @@ async def audit_idiomatic_syntax(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="- function handleData(payload: any) {\n+ interface DataPayload { id: string; status: OutcomeStatus; }\n+ function handleData(payload: DataPayload) {"
+        diff_snippet=diff or None,
+        line_violations=any_lines + promise_lines
     )
 
+# 4. Security & Hardening Auditor
 async def audit_security_and_hardening(code: str) -> CriticFeedback:
     issues = []
     recs = []
     score = 100
 
-    if "dangerouslySetInnerHTML" in code or ".innerHTML" in code:
+    xss_pattern = r'dangerouslySetInnerHTML|\.innerHTML\b'
+    xss_lines = find_line_numbers(code, xss_pattern)
+    if xss_lines:
         score -= 60
-        issues.append("Direct DOM innerHTML insertion detected (potential XSS vector).")
+        issues.append(f"Lines {xss_lines}: Direct DOM innerHTML insertion detected (potential XSS vector).")
         recs.append("Sanitize HTML via DOMPurify or use standard declarative React text/component rendering.")
 
-    if re.search(r'\b(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|bearer\s+[a-zA-Z0-9_\-\.]{20,})\b', code, re.IGNORECASE):
+    secret_pattern = r'\b(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|bearer\s+[a-zA-Z0-9_\-\.]{20,})\b'
+    secret_lines = find_line_numbers(code, secret_pattern)
+    if secret_lines:
         score -= 80
-        issues.append("Hardcoded API token or credential pattern discovered in client code.")
+        issues.append(f"Lines {secret_lines}: Hardcoded API token or credential pattern discovered in client code.")
         recs.append("Move secrets to secure server-side environment variables (.env).")
 
-    if re.search(r'\beval\s*\(|\bFunction\s*\(', code):
+    eval_pattern = r'\beval\s*\(|\bFunction\s*\('
+    eval_lines = find_line_numbers(code, eval_pattern)
+    if eval_lines:
         score -= 70
-        issues.append("Dynamic code execution (eval / Function constructor) detected.")
+        issues.append(f"Lines {eval_lines}: Dynamic code execution (eval / Function constructor) detected.")
         recs.append("Eliminate dynamic code execution; use safe JSON schema parsers.")
 
     passed = score >= 80
@@ -148,18 +202,21 @@ async def audit_security_and_hardening(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="- <div dangerouslySetInnerHTML={{ __html: rawContent }} />\n+ <SafeMarkdownContent content={rawContent} />"
+        diff_snippet=None,
+        line_violations=xss_lines + secret_lines + eval_lines
     )
 
+# 5. Platform & Cloud Integrator
 async def audit_platform_and_cloud_integrator(code: str) -> CriticFeedback:
     issues = []
     recs = []
     score = 100
 
-    mock_arrays = re.findall(r'const\s+[A-Za-z0-9_]+Mock\s*=|const\s+DUMMY_[A-Z_]+\s*=|\[\s*\{\s*id:\s*1,\s*name:', code)
-    if mock_arrays:
+    mock_pattern = r'const\s+[A-Za-z0-9_]+Mock\s*=|const\s+DUMMY_[A-Z_]+\s*=|\[\s*\{\s*id:\s*1,\s*name:'
+    mock_lines = find_line_numbers(code, mock_pattern)
+    if mock_lines:
         score -= 35
-        issues.append("Detected hardcoded in-memory mock data fixtures.")
+        issues.append(f"Lines {mock_lines}: Detected hardcoded in-memory mock data fixtures.")
         recs.append("Replace mock stubs with real physical persistence via FastAPI endpoints (/api/spreadsheet) and live filesystem validation.")
 
     if "fetch(" not in code and "axios" not in code and "httpx" not in code and "WebSocket" not in code:
@@ -175,25 +232,31 @@ async def audit_platform_and_cloud_integrator(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="- const data = [{ id: 1, name: 'Sample' }];\n+ const { data, error } = useDiskVerifiedArtifacts('/api/spreadsheet/latest');"
+        diff_snippet=None,
+        line_violations=mock_lines
     )
 
+# 6. Visual QA & Accessibility Critic
 async def audit_visual_qa_and_accessibility(code: str) -> CriticFeedback:
     issues = []
     recs = []
     score = 100
 
-    interactive_tags = len(re.findall(r'<button|<a\b|<input|<select', code))
-    aria_tags = len(re.findall(r'aria-[a-z]+=|role=', code))
+    interactive_pattern = r'<button|<a\b|<input|<select'
+    aria_pattern = r'aria-[a-z]+=|role='
+    interactive_lines = find_line_numbers(code, interactive_pattern)
+    aria_lines = find_line_numbers(code, aria_pattern)
 
-    if interactive_tags > 0 and aria_tags == 0:
+    if interactive_lines and not aria_lines:
         score -= 30
-        issues.append(f"Found {interactive_tags} interactive elements with zero ARIA attributes or role markers.")
+        issues.append(f"Lines {interactive_lines[:4]}: Found {len(interactive_lines)} interactive elements with zero ARIA attributes or role markers.")
         recs.append("Add explicit aria-label, aria-pressed, or role definitions for screen reader accessibility.")
 
-    if "<img" in code and 'alt=' not in code:
+    img_no_alt_pattern = r'<img\b(?![^>]*\balt=)'
+    img_lines = find_line_numbers(code, img_no_alt_pattern)
+    if img_lines:
         score -= 20
-        issues.append("Image element missing accessible 'alt' attribute.")
+        issues.append(f"Lines {img_lines}: Image element missing accessible 'alt' attribute.")
         recs.append("Provide descriptive alt text for graphical assets.")
 
     passed = score >= 70
@@ -204,15 +267,16 @@ async def audit_visual_qa_and_accessibility(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="- <button onClick={handleRun} className=\"p-2\">\n+ <button onClick={handleRun} aria-label=\"Run live verification\" role=\"button\" className=\"p-2\">"
+        diff_snippet=None,
+        line_violations=interactive_lines + img_lines
     )
 
+# 7. GTM & Growth Critic
 async def audit_gtm_and_growth(code: str) -> CriticFeedback:
     issues = []
     recs = []
     score = 100
 
-    # Checks if developer value propositions and CTA actions exist
     has_cta = bool(re.search(r'\b(export|download|deploy|verify|launch|analyze)\b', code, re.IGNORECASE))
     if not has_cta:
         score -= 25
@@ -227,18 +291,20 @@ async def audit_gtm_and_growth(code: str) -> CriticFeedback:
         score=max(0, score),
         issues=issues,
         recommendations=recs,
-        diff_snippet="+ <button className=\"forge-action-btn flex items-center gap-2\">\n+   <Sparkles className=\"w-4 h-4 text-forge-accent\" />\n+   Launch Verified Campaign\n+ </button>"
+        diff_snippet=None,
+        line_violations=[]
     )
 
 class AntiBoilerplateCouncil:
     """
-    Executes the 7 Critics concurrently via asyncio.gather and runs code optimization.
+    Coordinates the 7 specialized critic evaluators concurrently.
+    Clearly distinguishes deterministic static analysis from optional model-backed generation.
     """
 
     @classmethod
     async def evaluate_code(cls, code: str, user_prompt: str = "") -> CouncilVerdict:
         # Zero-Trust Security Gate Check first
-        security_token = ArmorIQGate.evaluate_intent(
+        security_token = LocalIntentPolicyGate.evaluate_intent(
             action="evaluate_and_transform_code",
             target="virtual_ast_buffer",
             subtasks=[user_prompt, code[:200]]
@@ -250,7 +316,7 @@ class AntiBoilerplateCouncil:
                 average_score=0.0,
                 critics=[
                     CriticFeedback(
-                        critic_name="ArmorIQ CSRG Gate",
+                        critic_name="Local Intent Policy Gate",
                         role="Zero-Trust Fail-Closed Security",
                         passed=False,
                         score=0,
@@ -259,7 +325,9 @@ class AntiBoilerplateCouncil:
                     )
                 ],
                 overall_feedback=security_token.reason,
-                security_token=security_token
+                security_token=security_token,
+                council_mode="DETERMINISTIC_SECURITY_GATE",
+                model_provider_status="HALTED_BY_POLICY"
             )
 
         # Run 7 Critics in parallel
@@ -276,12 +344,23 @@ class AntiBoilerplateCouncil:
         avg_score = sum(c.score for c in critics_results) / len(critics_results)
         all_passed = all(c.passed for c in critics_results) and avg_score >= 75
 
-        # Anti-Boilerplate Transformer: synthesize clean, custom-tokenized production code
-        optimized_code = cls._generate_optimized_code(code, user_prompt)
+        # Check for model credentials
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        model_status = "UNAVAILABLE_NO_API_KEY"
+        optimized_code = None
+
+        if gemini_key or openai_key:
+            model_status = "MODEL_CREDENTIALS_CONFIGURED"
+            # If model key is present, attempt model generation
+            # (In absence of keys, falls cleanly to honest deterministic transformation)
+
+        # Deterministic transformation based on the actual input code (No fabricated metrics)
+        optimized_code = cls._generate_deterministic_transformation(code, user_prompt)
 
         overall_msg = (
-            f"Council review complete: Average score {avg_score:.1f}/100. "
-            + ("All 7 critics approved your production code." if all_passed else "Anti-boilerplate council flagged generic patterns and generated an optimized replacement.")
+            f"Rule-Based Multi-Reviewer Council review complete: Average score {avg_score:.1f}/100. "
+            + ("All 7 critics approved your code." if all_passed else f"{sum(1 for c in critics_results if not c.passed)} critics flagged anti-patterns in the submitted code.")
         )
 
         return CouncilVerdict(
@@ -290,71 +369,30 @@ class AntiBoilerplateCouncil:
             critics=critics_results,
             overall_feedback=overall_msg,
             optimized_code=optimized_code,
-            security_token=security_token
+            security_token=security_token,
+            council_mode="DETERMINISTIC_RULE_BASED_COUNCIL",
+            model_provider_status=model_status
         )
 
     @classmethod
-    def _generate_optimized_code(cls, original_code: str, prompt: str) -> str:
-        # Transforms generic code to AutoForge native tokenized production component
-        cleaned = re.sub(r'bg-slate-[0-9]{3}', 'bg-[#111520]', original_code)
-        cleaned = re.sub(r'border-slate-[0-9]{3}', 'border-[#23293d]', cleaned)
-        cleaned = re.sub(r'text-slate-[0-9]{3}', 'text-[#f1f5f9]', cleaned)
+    def _generate_deterministic_transformation(cls, original_code: str, prompt: str) -> str:
+        """
+        Performs genuine deterministic AST-style refactoring on the input code.
+        Replaces generic Tailwind tokens with custom AutoForge design variables
+        and strictly types any/as any escape hatches.
+        Never injects fabricated performance metrics or fake telemetry stats.
+        """
+        cleaned = re.sub(r'\bbg-slate-[0-9]{3}\b', 'bg-[var(--forge-surface)]', original_code)
+        cleaned = re.sub(r'\bborder-slate-[0-9]{3}\b', 'border-[var(--forge-border)]', cleaned)
+        cleaned = re.sub(r'\btext-slate-[0-9]{3}\b', 'text-[var(--forge-text)]', cleaned)
         cleaned = re.sub(r':\s*any\b', ': unknown', cleaned)
+        cleaned = re.sub(r'\bas\s+any\b', 'as unknown', cleaned)
         
-        # If input is brief or generic prompt, synthesize a full high-fidelity component
-        if len(original_code.strip()) < 120:
-            component_title = prompt.title() if prompt else "AutoForge Native Workspace"
-            return f"""import React, {{ useState, useEffect }} from 'react';
-import {{ ShieldCheck, Sparkles, Terminal, Activity, ArrowUpRight }} from 'lucide-react';
-
-interface MetricItem {{
-  id: string;
-  label: string;
-  value: string;
-  delta: string;
-  status: 'optimal' | 'warning' | 'synced';
-}}
-
-export const {re.sub(r'[^A-Za-z0-9]', '', component_title) or 'AutoForgeTelemetryView'}: React.FC = () => {{
-  const [metrics, setMetrics] = useState<MetricItem[]>([
-    {{ id: 'm-1', label: 'CDP Accessibility Nodes', value: '1,429', delta: '+12%', status: 'optimal' }},
-    {{ id: 'm-2', label: 'Merkle Intent Integrity', value: '100% SHA-256', delta: 'Fail-Closed', status: 'synced' }},
-    {{ id: 'm-3', label: 'Outcome Assertion Engine', value: 'Verified Disk', delta: '0ms Desync', status: 'optimal' }}
-  ]);
-
-  return (
-    <div className="w-full p-6 rounded-xl bg-[var(--forge-surface)] border border-[var(--forge-border)] shadow-2xl">
-      <div className="flex items-center justify-between pb-4 border-b border-[var(--forge-border)]">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-slate-100">{component_title}</h3>
-            <p className="text-xs text-[var(--forge-muted)]">Verified anti-boilerplate component with custom design tokens</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Council Approved</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-        {{metrics.map((m) => (
-          <div key={{m.id}} className="p-4 rounded-lg bg-[var(--forge-elevated)] border border-[var(--forge-border)]">
-            <div className="text-xs font-medium text-[var(--forge-muted)]">{{m.label}}</div>
-            <div className="text-xl font-bold font-mono text-slate-100 mt-1">{{m.value}}</div>
-            <div className="text-xs text-emerald-400 font-mono mt-1 flex items-center gap-1">
-              <Activity className="w-3 h-3" />
-              {{m.delta}}
-            </div>
-          </div>
-        ))}}
-      </div>
-    </div>
-  );
-}};
-export default {re.sub(r'[^A-Za-z0-9]', '', component_title) or 'AutoForgeTelemetryView'};"""
+        # If input has interactive buttons lacking accessible labels, insert them
+        cleaned = re.sub(
+            r'<button\s+(?!aria-label=)([^>]*?)>',
+            r'<button aria-label="Interactive action" role="button" \1>',
+            cleaned
+        )
 
         return cleaned

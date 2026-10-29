@@ -39,9 +39,9 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
               </span>
             </div>
             <h3 className="mt-1 text-lg font-bold text-slate-100">
-              Zero-Trust Verification Required
+              Policy Verification Required
             </h3>
-            <p className="mt-1 text-xs text-slate-300 leading-relaxed">
+            <p className="mt-1 text-xs text-slate-300 leading-relaxed font-sans">
               {intent.reason}
             </p>
           </div>
@@ -58,7 +58,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
           </div>
           <div className="flex items-center gap-1.5 pt-2 border-t border-[#23293d] text-emerald-400 text-[11px]">
             <KeyRound className="w-3.5 h-3.5" />
-            <span>ArmorIQ Merkle signature attached & verified</span>
+            <span>Local Intent Policy Gate: HMAC-SHA256 signature verified</span>
           </div>
         </div>
 

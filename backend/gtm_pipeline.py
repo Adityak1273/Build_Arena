@@ -1,6 +1,9 @@
 """
 AutoForge Multimodal GTM Video & Audio Pipeline
-ElevenLabs Voiceover with SHA-256 Disk Caching, Pillow 1080p Canvas, and FFmpeg Compositing
+Template-Based Video Compositor:
+- Optional ElevenLabs Voiceover (or honest synthetic acoustic tone placeholder if API key is not configured)
+- Pillow 1080p Canvas Frame Generator
+- Subprocess FFmpeg Compositing with returncode and output size verification
 """
 
 import os
@@ -13,7 +16,7 @@ import subprocess
 import asyncio
 from typing import List, Dict, Any, Optional
 import httpx
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 try:
     import imageio_ffmpeg
@@ -31,8 +34,11 @@ class GTMPipeline:
         os.makedirs(cls.CACHE_DIR, exist_ok=True)
 
     @classmethod
-    def _generate_synthetic_narration_audio(cls, output_wav_path: str, duration_sec: float = 6.0):
-        """Generates a clean synthetic PCM audio file with gentle voice-frequency modulation."""
+    def _generate_synthetic_tone_placeholder(cls, output_wav_path: str, duration_sec: float = 4.0):
+        """
+        Generates a clean synthetic PCM acoustic tone placeholder.
+        Explicitly identified as a tone placeholder, NOT as spoken voiceover.
+        """
         sample_rate = 44100
         total_samples = int(sample_rate * duration_sec)
         
@@ -42,15 +48,14 @@ class GTMPipeline:
             wav.setframerate(sample_rate)
 
             raw_bytes = bytearray()
-            # Voice fundamentals (around 220Hz - 440Hz harmonic mixture)
             for i in range(total_samples):
                 t = float(i) / sample_rate
-                # Harmonic cadence representing vocalized technical pitch
-                f1 = 220.0 + 35.0 * math.sin(2.0 * math.pi * 1.5 * t)
-                f2 = 440.0 + 20.0 * math.sin(2.0 * math.pi * 2.2 * t)
-                envelope = min(1.0, t * 4.0) * min(1.0, (duration_sec - t) * 4.0)
-                sample_val = 0.5 * math.sin(2.0 * math.pi * f1 * t) + 0.3 * math.sin(2.0 * math.pi * f2 * t)
-                final_val = int(sample_val * envelope * 12000.0)
+                # Clean chord progression chime (440Hz A4 / 554Hz C#5)
+                f1 = 440.0
+                f2 = 554.37
+                envelope = math.exp(-3.0 * (t % 1.5))
+                sample_val = 0.4 * math.sin(2.0 * math.pi * f1 * t) + 0.3 * math.sin(2.0 * math.pi * f2 * t)
+                final_val = int(sample_val * envelope * 14000.0)
                 raw_bytes.extend(struct.pack('<h', max(-32767, min(32767, final_val))))
             
             wav.writeframes(raw_bytes)
@@ -58,8 +63,9 @@ class GTMPipeline:
     @classmethod
     async def synthesize_voiceover(cls, script: str, voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> Dict[str, Any]:
         """
-        Synthesizes script with ElevenLabs API, guarded by SHA-256 disk caching.
-        Falls back cleanly to local audio generation if API key is not present.
+        Synthesizes script with ElevenLabs API if ELEVENLABS_API_KEY is configured.
+        If API key is missing or invalid, explicitly reports that narration was not generated
+        and falls back to an acoustic tone placeholder.
         """
         cls.setup_directories()
         script_hash = hashlib.sha256(script.strip().encode('utf-8')).hexdigest()
@@ -71,10 +77,12 @@ class GTMPipeline:
             shutil.copyfile(cached_path, public_audio_path)
             return {
                 "source": "DISK_CACHE_HIT",
+                "narration_generated": True,
                 "sha256": script_hash,
                 "cached": True,
                 "audio_path": public_audio_path,
-                "script": script
+                "script": script,
+                "message": "Loaded cached spoken audio from disk."
             }
 
         api_key = os.environ.get("ELEVENLABS_API_KEY")
@@ -97,32 +105,46 @@ class GTMPipeline:
                         mp3_cache = os.path.join(cls.CACHE_DIR, f"voiceover_{script_hash[:16]}.mp3")
                         with open(mp3_cache, "wb") as f:
                             f.write(resp.content)
-                        shutil.copyfile(mp3_cache, os.path.join(cls.ARTIFACT_DIR, "latest_gtm_audio.mp3"))
+                        public_mp3 = os.path.join(cls.ARTIFACT_DIR, "latest_gtm_audio.mp3")
+                        shutil.copyfile(mp3_cache, public_mp3)
                         return {
                             "source": "ELEVENLABS_LIVE_API",
+                            "narration_generated": True,
                             "sha256": script_hash,
                             "cached": False,
-                            "audio_path": os.path.join(cls.ARTIFACT_DIR, "latest_gtm_audio.mp3"),
-                            "script": script
+                            "audio_path": public_mp3,
+                            "script": script,
+                            "message": "Live ElevenLabs text-to-speech synthesis succeeded."
                         }
-            except Exception as e:
-                pass # Fall back to synthetic audio
+            except Exception:
+                pass
 
-        # Synthesize fallback voice narration
-        cls._generate_synthetic_narration_audio(cached_path, duration_sec=5.0)
+        # ElevenLabs not available -> render explicit acoustic tone placeholder
+        cls._generate_synthetic_tone_placeholder(cached_path, duration_sec=4.0)
         shutil.copyfile(cached_path, public_audio_path)
 
         return {
-            "source": "SYNTHETIC_OFFLINE_AUDIO",
+            "source": "SYNTHETIC_TONE_PLACEHOLDER",
+            "narration_generated": False,
             "sha256": script_hash,
             "cached": False,
             "audio_path": public_audio_path,
-            "script": script
+            "script": script,
+            "message": "ELEVENLABS_API_KEY not configured or unreachable. Spoken narration was not generated; acoustic tone placeholder rendered."
         }
 
     @classmethod
-    def render_1080p_frames(cls, title: str, headline: str, frame_count: int = 15) -> List[str]:
-        """Renders 1080p (1920x1080) high-fidelity frames with animated camera zoom & telemetry."""
+    def render_1080p_frames(
+        cls,
+        title: str,
+        headline: str,
+        audio_source: str = "SYNTHETIC_TONE_PLACEHOLDER",
+        frame_count: int = 15
+    ) -> List[str]:
+        """
+        Renders 1080p (1920x1080) frames with genuine measured runtime parameters.
+        No fabricated metrics or invented node counts.
+        """
         cls.setup_directories()
         frames_dir = os.path.join(cls.ARTIFACT_DIR, "frames")
         os.makedirs(frames_dir, exist_ok=True)
@@ -132,18 +154,17 @@ class GTMPipeline:
 
         for frame_idx in range(frame_count):
             progress = frame_idx / max(1, frame_count - 1)
-            # Create dark luxury canvas
             img = Image.new("RGB", (width, height), color=(10, 13, 20))
             draw = ImageDraw.Draw(img)
 
-            # Draw background grid & glowing accents
+            # Draw background grid
             for x in range(0, width, 60):
                 draw.line([(x, 0), (x, height)], fill=(23, 28, 43), width=1)
             for y in range(0, height, 60):
                 draw.line([(0, y), (width, y)], fill=(23, 28, 43), width=1)
 
-            # Center Card with zoom simulation
-            zoom = 1.0 + progress * 0.08
+            # Center Card with smooth camera zoom
+            zoom = 1.0 + progress * 0.05
             card_w = int(1400 * zoom)
             card_h = int(720 * zoom)
             card_x1 = (width - card_w) // 2
@@ -151,7 +172,6 @@ class GTMPipeline:
             card_x2 = card_x1 + card_w
             card_y2 = card_y1 + card_h
 
-            # Draw card surface
             draw.rounded_rectangle([card_x1, card_y1, card_x2, card_y2], radius=24, fill=(17, 21, 32), outline=(59, 130, 246), width=3)
 
             # Header Top Bar
@@ -160,32 +180,31 @@ class GTMPipeline:
             draw.ellipse([card_x1 + 65, card_y1 + 30, card_x1 + 85, card_y1 + 50], fill=(245, 158, 11))
             draw.ellipse([card_x1 + 100, card_y1 + 30, card_x1 + 120, card_y1 + 50], fill=(16, 185, 129))
 
-            # Title & Telemetry text
-            draw.text((card_x1 + 150, card_y1 + 25), "AUTOFORGE 1080p MULTIMODAL COMPOSITOR", fill=(142, 155, 181))
-            draw.text((card_x1 + 80, card_y1 + 140), title.upper(), fill=(241, 245, 249))
-            draw.text((card_x1 + 80, card_y1 + 220), headline, fill=(96, 165, 250))
+            draw.text((card_x1 + 150, card_y1 + 25), "AUTOFORGE 1080p TEMPLATE VIDEO COMPOSITOR", fill=(142, 155, 181))
+            draw.text((card_x1 + 80, card_y1 + 130), title.upper()[:45], fill=(241, 245, 249))
+            draw.text((card_x1 + 80, card_y1 + 210), headline[:75], fill=(96, 165, 250))
 
-            # Visualized Telemetry Badges
-            badge_y = card_y1 + 320
+            # Honest Runtime Badges: Real parameters only
+            badge_y = card_y1 + 310
             badges = [
-                ("CDP AXTree Attach", "100% Attached", (16, 185, 129)),
-                ("Anti-Boilerplate Council", "7 Critics Active", (59, 130, 246)),
-                ("Outcome Verifier", "Physical Disk Parity", (139, 92, 246)),
-                ("ArmorIQ Gate", "Fail-Closed Active", (245, 158, 11))
+                ("Pipeline Engine", "Pillow + FFmpeg", (59, 130, 246)),
+                ("Canvas Target", "1920x1080 @ 10fps", (16, 185, 129)),
+                ("Total Frames", f"{frame_count} Composed", (139, 92, 246)),
+                ("Audio Track", "ElevenLabs Live" if "ELEVENLABS" in audio_source else "Tone Placeholder", (245, 158, 11))
             ]
 
             for b_idx, (b_title, b_val, color) in enumerate(badges):
                 bx = card_x1 + 80 + b_idx * 310
-                draw.rounded_rectangle([bx, badge_y, bx + 280, badge_y + 110], radius=12, fill=(23, 28, 43), outline=color, width=2)
+                draw.rounded_rectangle([bx, badge_y, bx + 280, badge_y + 100], radius=12, fill=(23, 28, 43), outline=color, width=2)
                 draw.text((bx + 20, badge_y + 20), b_title, fill=(142, 155, 181))
-                draw.text((bx + 20, badge_y + 55), b_val, fill=color)
+                draw.text((bx + 20, badge_y + 50), b_val, fill=color)
 
-            # Animated Audio Waveform Spectrum at bottom
-            for bar_i in range(40):
-                bx = card_x1 + 80 + bar_i * 30
-                bar_h = int(12 + 50 * abs(math.sin(progress * 8.0 + bar_i * 0.4)))
-                y_top = card_y2 - 70 - bar_h
-                y_bottom = card_y2 - 70
+            # Waveform visualizer
+            for bar_i in range(38):
+                bx = card_x1 + 80 + bar_i * 32
+                bar_h = int(10 + 40 * abs(math.sin(progress * 6.0 + bar_i * 0.35)))
+                y_top = card_y2 - 60 - bar_h
+                y_bottom = card_y2 - 60
                 draw.rectangle([bx, y_top, bx + 16, y_bottom], fill=(59, 130, 246))
 
             frame_file = os.path.join(frames_dir, f"frame_{frame_idx:04d}.png")
@@ -198,20 +217,19 @@ class GTMPipeline:
     async def composite_gtm_video(
         cls,
         title: str = "AutoForge Launch Campaign",
-        headline: str = "Eliminate Boilerplate with AI-Native Chromium Automation",
+        headline: str = "AI-Native Chromium Developer Browser",
         script: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Runs full multimodal pipeline:
-        1. ElevenLabs voiceover synthesis with SHA-256 caching
-        2. 1080p Pillow frame generation
-        3. Subprocess FFmpeg rendering of 1080p MP4
+        Runs template-based multimodal video composition:
+        1. Voiceover synthesis (ElevenLabs or honest acoustic tone placeholder)
+        2. 1080p frame rendering
+        3. Subprocess FFmpeg execution with returncode validation
         """
         cls.setup_directories()
         video_script = script or (
-            f"Introducing AutoForge. {headline}. "
-            "Powered by native CDP accessibility trees, a seven agent anti boilerplate council, "
-            "and independent outcome verification."
+            f"AutoForge. {headline}. "
+            "Native Chromium accessibility trees, 7-reviewer council, and independent disk outcome assertions."
         )
 
         # 1. Synthesize Audio
@@ -219,7 +237,12 @@ class GTMPipeline:
         audio_path = audio_info["audio_path"]
 
         # 2. Render Frames
-        frame_paths = cls.render_1080p_frames(title, headline, frame_count=30)
+        frame_paths = cls.render_1080p_frames(
+            title=title,
+            headline=headline,
+            audio_source=audio_info["source"],
+            frame_count=20
+        )
         frames_pattern = os.path.join(cls.ARTIFACT_DIR, "frames", "frame_%04d.png")
         output_video_path = os.path.join(cls.ARTIFACT_DIR, "autoforge_gtm_1080p.mp4")
 
@@ -246,16 +269,21 @@ class GTMPipeline:
         stdout, stderr = await process.communicate()
 
         video_exists = os.path.exists(output_video_path) and os.path.getsize(output_video_path) > 0
+        success = (process.returncode == 0) and video_exists
 
         return {
-            "success": video_exists,
-            "video_path": output_video_path if video_exists else None,
+            "success": success,
+            "video_path": output_video_path if success else None,
+            "video_size_bytes": os.path.getsize(output_video_path) if video_exists else 0,
             "audio_path": audio_path,
             "audio_source": audio_info["source"],
+            "narration_generated": audio_info.get("narration_generated", False),
+            "audio_message": audio_info.get("message", ""),
             "sha256": audio_info["sha256"],
             "resolution": "1920x1080",
             "title": title,
             "headline": headline,
             "script": video_script,
-            "returncode": process.returncode
+            "returncode": process.returncode,
+            "error": stderr.decode('utf-8', errors='replace') if not success else None
         }

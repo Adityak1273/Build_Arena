@@ -17,25 +17,25 @@ import {
   Plus,
   X,
   Laptop,
+  AlertTriangle,
 } from 'lucide-react';
 import { electronBrowser, isElectron } from '../services/api';
 import { SemanticAXNode } from '../types';
 
-interface BrowserTab {
+interface NavigationTarget {
   id: string;
   title: string;
   url: string;
-  favicon?: string;
 }
 
 export const BrowseMode: React.FC = () => {
-  const [tabs, setTabs] = useState<BrowserTab[]>([
+  const [targets, setTargets] = useState<NavigationTarget[]>([
     { id: 't1', title: 'Hacker News', url: 'https://news.ycombinator.com' },
     { id: 't2', title: 'GitHub', url: 'https://github.com' },
     { id: 't3', title: 'Perplexity AI', url: 'https://www.perplexity.ai' },
     { id: 't4', title: 'Localhost Dev', url: 'http://localhost:3000' }
   ]);
-  const [activeTabId, setActiveTabId] = useState('t1');
+  const [activeTargetId, setActiveTargetId] = useState('t1');
 
   const [url, setUrl] = useState('https://news.ycombinator.com');
   const [inputUrl, setInputUrl] = useState('https://news.ycombinator.com');
@@ -48,18 +48,34 @@ export const BrowseMode: React.FC = () => {
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [telemetry, setTelemetry] = useState<{ cdpConnected: boolean; latencyMs: number | null }>({
+    cdpConnected: false,
+    latencyMs: null
+  });
 
   const webviewRef = useRef<any>(null);
 
   useEffect(() => {
     handleCaptureAXTree();
+    checkTelemetry();
+    const interval = setInterval(checkTelemetry, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleSwitchTab = (tab: BrowserTab) => {
-    setActiveTabId(tab.id);
-    setUrl(tab.url);
-    setInputUrl(tab.url);
-    handleNavigate(tab.url);
+  const checkTelemetry = async () => {
+    if (isElectron()) {
+      const data = await electronBrowser.getTelemetry();
+      setTelemetry({ cdpConnected: data.cdpConnected, latencyMs: data.latencyMs });
+    } else {
+      setTelemetry({ cdpConnected: false, latencyMs: null });
+    }
+  };
+
+  const handleSwitchTarget = (target: NavigationTarget) => {
+    setActiveTargetId(target.id);
+    setUrl(target.url);
+    setInputUrl(target.url);
+    handleNavigate(target.url);
   };
 
   const handleNavigate = async (target?: string) => {
@@ -68,15 +84,15 @@ export const BrowseMode: React.FC = () => {
     setClickResult(null);
     try {
       const res = await electronBrowser.navigate(dest);
-      setUrl(res.url);
-      setInputUrl(res.url);
-      setTabs((prev) =>
-        prev.map((t) => (t.id === activeTabId ? { ...t, url: res.url, title: res.url.replace(/^https?:\/\//, '').split('/')[0] } : t))
-      );
+      if (res.url) {
+        setUrl(res.url);
+        setInputUrl(res.url);
+      }
       setTimeout(() => {
         handleCaptureAXTree();
+        checkTelemetry();
         setIsLoading(false);
-      }, 1100);
+      }, 1000);
     } catch {
       setIsLoading(false);
     }
@@ -87,11 +103,14 @@ export const BrowseMode: React.FC = () => {
     try {
       const tree = await electronBrowser.captureAXTree();
       setAxTree(tree);
-      if (tree.length > 0 && !selectedNode) {
+      if (tree.length > 0) {
         setSelectedNode(tree[0]);
+      } else {
+        setSelectedNode(null);
       }
     } catch (e) {
       console.error(e);
+      setAxTree([]);
     } finally {
       setIsCapturingAX(false);
     }
@@ -110,10 +129,12 @@ export const BrowseMode: React.FC = () => {
       }
       setTimeout(() => {
         handleCaptureAXTree();
+        checkTelemetry();
       }, 600);
     } catch (err: any) {
       setClickResult({
         success: false,
+        status: 'DISPATCH_FAILED',
         message: err.message || 'CDP Click Dispatch Failed',
       });
     } finally {
@@ -162,15 +183,16 @@ export const BrowseMode: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-[#07090e]">
-      {/* Sleek Browser Tab Strip */}
+      {/* Target Strip */}
       <div className="h-9 px-3 bg-[#0a0d14] border-b border-white/[0.06] flex items-center justify-between select-none">
         <div className="flex items-center gap-1 overflow-x-auto">
-          {tabs.map((tab) => {
-            const isActive = tab.id === activeTabId;
+          <span className="text-[10px] text-slate-500 font-mono mr-2">Target:</span>
+          {targets.map((tgt) => {
+            const isActive = tgt.id === activeTargetId;
             return (
               <button
-                key={tab.id}
-                onClick={() => handleSwitchTab(tab)}
+                key={tgt.id}
+                onClick={() => handleSwitchTarget(tgt)}
                 className={`group flex items-center gap-2 px-3 py-1 rounded-t-lg text-xs font-medium transition-all ${
                   isActive
                     ? 'bg-[#111622] text-white border-t border-x border-white/[0.1] shadow-sm'
@@ -178,29 +200,20 @@ export const BrowseMode: React.FC = () => {
                 }`}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-indigo-400' : 'bg-slate-600'}`} />
-                <span className="truncate max-w-[130px]">{tab.title}</span>
+                <span className="truncate max-w-[120px]">{tgt.title}</span>
               </button>
             );
           })}
-          <button
-            onClick={() => {
-              const newTab = { id: `t${tabs.length + 1}`, title: 'New Tab', url: 'https://news.ycombinator.com' };
-              setTabs([...tabs, newTab]);
-              handleSwitchTab(newTab);
-            }}
-            className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
         </div>
 
+        {/* Real Telemetry Indicator */}
         <div className="flex items-center gap-3 text-[11px] font-mono text-slate-500">
-          <span className="flex items-center gap-1 text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            CDP 1.3 Active
+          <span className={`flex items-center gap-1 ${telemetry.cdpConnected ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${telemetry.cdpConnected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+            {telemetry.cdpConnected ? 'CDP 1.3 Active' : (isElectron() ? 'CDP Connecting...' : 'CDP Detached')}
           </span>
           <span>•</span>
-          <span>Latency: 38ms</span>
+          <span>Latency: {telemetry.latencyMs !== null ? `${telemetry.latencyMs}ms` : 'N/A'}</span>
         </div>
       </div>
 
@@ -255,11 +268,11 @@ export const BrowseMode: React.FC = () => {
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
             className="w-full bg-transparent border-none outline-none text-slate-100 placeholder-slate-500 font-sans text-xs tracking-tight"
-            placeholder="Search or enter URL (e.g. news.ycombinator.com)..."
+            placeholder="Enter URL to navigate..."
           />
           {isLoading && (
             <span className="text-[10px] text-indigo-400 font-mono animate-pulse ml-2">
-              CDP Synced
+              Navigating...
             </span>
           )}
         </form>
@@ -280,7 +293,7 @@ export const BrowseMode: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Bookmark Chips */}
+      {/* Quick Navigation Shortcuts */}
       <div className="px-4 py-1.5 bg-[#0a0d14] border-b border-white/[0.04] flex items-center gap-2 text-xs select-none overflow-x-auto">
         <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
           <Compass className="w-3 h-3 text-slate-500" />
@@ -299,6 +312,17 @@ export const BrowseMode: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {/* Preview Mode Notification Banner when outside Electron */}
+      {!isElectron() && (
+        <div className="px-4 py-2 bg-amber-950/40 border-b border-amber-800/40 text-amber-300 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2 font-mono">
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <span>Web Preview Mode: Electron Chromium Shell & CDP 1.3 debugger are detached.</span>
+          </div>
+          <span className="text-[10px] text-amber-400/80">Launch with `npm start` for full hardware CDP automation</span>
+        </div>
+      )}
 
       {/* Main Split Layout: Chromium Webview Frame + CDP AX Inspector */}
       <div className="flex-1 flex overflow-hidden">
@@ -320,172 +344,167 @@ export const BrowseMode: React.FC = () => {
               sandbox="allow-scripts allow-same-origin allow-forms"
             />
           )}
-
-          {/* Observable Postcondition Verification Result Toast */}
-          {clickResult && (
-            <div className="absolute bottom-5 left-5 max-w-lg p-4 rounded-2xl bg-[#0e121b]/95 backdrop-blur-xl border border-white/[0.12] shadow-[0_16px_40px_rgba(0,0,0,0.6)] animate-slide-up text-xs font-sans text-slate-200 z-20">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.08]">
-                <div className="flex items-center gap-2 font-bold">
-                  {clickResult.success ? (
-                    <>
-                      <div className="p-1 rounded-full bg-emerald-500/20 text-emerald-400">
-                        <CheckCircle2 className="w-4 h-4" />
-                      </div>
-                      <span className="text-emerald-400 text-sm font-semibold">Postcondition Verified</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-1 rounded-full bg-amber-500/20 text-amber-400">
-                        <AlertCircle className="w-4 h-4" />
-                      </div>
-                      <span className="text-amber-400 text-sm font-semibold">Execution Notice</span>
-                    </>
-                  )}
-                </div>
-                <span className="px-2 py-0.5 rounded bg-white/[0.06] font-mono text-[10px] text-slate-400">
-                  Node #{clickResult.backendDOMNodeId}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-mono">
-                {clickResult.message}
-              </p>
-              <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-white/[0.06] text-[10px] font-mono text-slate-400">
-                <span className="text-indigo-400">AX Delta: +{clickResult.axDiffCount} nodes</span>
-                <span>URL Shift: {clickResult.urlChanged ? 'True' : 'False'}</span>
-                <span className="text-emerald-400">Zero-Trust: Passed</span>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Right: Modern CDP Accessibility Tree Inspector */}
+        {/* Right: CDP Accessibility Tree Inspector Split Pane */}
         {inspectorOpen && (
-          <div className="w-80 md:w-96 bg-[#0c1017] border-l border-white/[0.08] flex flex-col h-full font-mono text-xs select-none shadow-2xl">
-            {/* Inspector Top Bar */}
-            <div className="p-3.5 border-b border-white/[0.08] bg-[#0e131d] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <Layers className="w-3.5 h-3.5" />
+          <div className="w-[430px] border-l border-white/[0.08] bg-[#0c1018] flex flex-col h-full shadow-2xl">
+            {/* Inspector Header */}
+            <div className="p-3.5 bg-[#090d14] border-b border-white/[0.08] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-white tracking-tight font-sans">
+                      CDP Accessibility Tree
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      Accessibility.getFullAXTree ({axTree.length} semantic nodes)
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-slate-200 text-xs font-sans">Accessibility Inspector</h3>
-                  <p className="text-[10px] text-slate-400">CDP getFullAXTree</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold">
-                  {filteredNodes.length} Nodes
-                </span>
-              </div>
-            </div>
-
-            {/* Search Filter Bar */}
-            <div className="p-2.5 bg-[#090d14] border-b border-white/[0.06] space-y-2">
-              <div className="flex items-center px-2.5 py-1.5 rounded-lg bg-[#0e121b] border border-white/[0.08] text-xs">
-                <Search className="w-3.5 h-3.5 text-slate-500 mr-2" />
-                <input
-                  type="text"
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  placeholder="Filter nodes (role, name, ID)..."
-                  className="w-full bg-transparent border-none outline-none text-slate-200 text-[11px] placeholder-slate-500"
-                />
-                {searchFilter && (
-                  <button onClick={() => setSearchFilter('')} className="text-slate-500 hover:text-slate-300">
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
+                <button
+                  onClick={handleCaptureAXTree}
+                  disabled={isCapturingAX}
+                  className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white transition-colors"
+                  title="Refresh Accessibility Snapshot"
+                >
+                  <RotateCw className={`w-3.5 h-3.5 ${isCapturingAX ? 'animate-spin text-indigo-400' : ''}`} />
+                </button>
               </div>
 
-              {/* Role Filter Chips */}
-              <div className="flex items-center gap-1 overflow-x-auto text-[10px]">
-                {['all', 'button', 'link', 'input', 'heading'].map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setSelectedRoleFilter(r)}
-                    className={`px-2 py-0.5 rounded-md capitalize transition-colors ${
-                      selectedRoleFilter === r
-                        ? 'bg-indigo-600 text-white font-semibold'
-                        : 'bg-white/[0.04] text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tree Node List */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-              {filteredNodes.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-xs font-sans">
-                  {isCapturingAX ? 'Extracting accessibility nodes...' : 'No matching accessibility nodes found.'}
+              {/* Filter and Category Chips */}
+              <div className="space-y-1.5">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2" />
+                  <input
+                    type="text"
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    placeholder="Filter nodes by role, name, ID..."
+                    className="w-full pl-8 pr-3 py-1 bg-[#06080e] border border-white/[0.08] rounded-md text-xs text-slate-200 placeholder-slate-500 font-mono focus:border-indigo-500 outline-none"
+                  />
+                  {searchFilter && (
+                    <button
+                      onClick={() => setSearchFilter('')}
+                      className="absolute right-2 top-2 text-slate-500 hover:text-slate-300"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
-              ) : (
-                filteredNodes.map((node) => {
-                  const isSelected = selectedNode?.backendDOMNodeId === node.backendDOMNodeId;
-                  return (
-                    <div
-                      key={`${node.nodeId}-${node.backendDOMNodeId}`}
-                      onClick={() => setSelectedNode(node)}
-                      className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-indigo-600/10 border-indigo-500/60 text-white shadow-sm ring-1 ring-indigo-500/30'
-                          : 'bg-[#10141e] border-white/[0.06] text-slate-300 hover:bg-[#141926] hover:border-white/[0.12]'
+
+                <div className="flex items-center gap-1 text-[10px] font-mono">
+                  {['all', 'button', 'link', 'input', 'heading'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedRoleFilter(cat)}
+                      className={`px-2 py-0.5 rounded capitalize transition-colors ${
+                        selectedRoleFilter === cat
+                          ? 'bg-indigo-600 text-white font-bold'
+                          : 'bg-white/[0.03] text-slate-400 hover:text-slate-200'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Postcondition Verification Toast */}
+            {clickResult && (
+              <div
+                className={`p-3 border-b text-xs font-mono transition-all animate-fade-in ${
+                  clickResult.success
+                    ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300'
+                    : 'bg-rose-950/40 border-rose-800/60 text-rose-300'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  {clickResult.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 space-y-1">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>Status: {clickResult.status || (clickResult.success ? 'OUTCOME_VERIFIED' : 'DISPATCH_FAILED')}</span>
+                      <span className="text-[10px] opacity-75">ID #{clickResult.backendDOMNodeId}</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed opacity-90">
+                      {clickResult.message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Node List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 divide-y divide-white/[0.03]">
+              {filteredNodes.length > 0 ? (
+                filteredNodes.map((node) => {
+                  const isSelected = selectedNode?.nodeId === node.nodeId;
+                  return (
+                    <div
+                      key={node.nodeId}
+                      onClick={() => setSelectedNode(node)}
+                      className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-indigo-950/30 border-indigo-500/50 shadow-sm'
+                          : 'bg-transparent border-transparent hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${getRoleStyle(
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider ${getRoleStyle(
                             node.role
                           )}`}
                         >
                           {node.role}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          ID: #{node.backendDOMNodeId}
+                        <span className="text-[10px] font-mono text-slate-500">
+                          #{node.backendDOMNodeId}
                         </span>
                       </div>
-
-                      <div className="mt-1.5 text-xs font-sans font-medium text-slate-100 truncate">
+                      <div className="mt-1 text-xs font-sans text-slate-200 font-medium truncate">
                         {node.name}
                       </div>
 
-                      {/* Interactive 1-Click Verification Trigger */}
                       {isSelected && (
-                        <div className="mt-2.5 pt-2 border-t border-indigo-500/25">
+                        <div className="mt-2.5 pt-2 border-t border-white/[0.06] flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-slate-400">
+                            nodeId: {node.nodeId}
+                          </span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleTestClick(node);
                             }}
                             disabled={isClicking}
-                            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-sans font-semibold shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50"
+                            className="flex items-center gap-1.5 px-3 py-1 rounded bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-semibold text-xs shadow-sm transition-all disabled:opacity-50"
                           >
                             <MousePointerClick className="w-3.5 h-3.5" />
-                            <span>{isClicking ? 'Verifying Click & AX Diff...' : '1-Click Test Click'}</span>
+                            <span>{isClicking ? 'Dispatching...' : '1-Click Test'}</span>
                           </button>
                         </div>
                       )}
                     </div>
                   );
                 })
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2 mt-12">
+                  <Layers className="w-8 h-8 opacity-40 mx-auto" />
+                  <p className="text-xs font-mono">
+                    {isElectron()
+                      ? (isCapturingAX ? 'Extracting live CDP accessibility tree...' : 'No accessibility nodes captured yet.')
+                      : 'Live CDP tree requires Electron desktop shell. Running in Web Preview.'}
+                  </p>
+                </div>
               )}
             </div>
-
-            {/* Node Inspection Footer */}
-            {selectedNode && (
-              <div className="p-3 bg-[#0e131d] border-t border-white/[0.08] text-[10px] text-slate-400 space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Selected Target:</span>
-                  <span className="text-slate-200 font-semibold">{selectedNode.role}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">BackendDOMNodeId:</span>
-                  <span className="text-indigo-400 font-bold">{selectedNode.backendDOMNodeId}</span>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

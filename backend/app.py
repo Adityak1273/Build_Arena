@@ -1,6 +1,7 @@
 """
 AutoForge Backend Engine
-FastAPI Server, Full-Duplex WebSockets Telemetry, REST Endpoints, and Outcome Verification
+FastAPI Server, Full-Duplex WebSockets Telemetry, REST Endpoints,
+Local Intent Policy Gate with Human Approval Waiting Loop, and Outcome Verification
 """
 
 import os
@@ -11,17 +12,18 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from orchestrator import AntiBoilerplateCouncil, CouncilVerdict
 from verifier import OutcomeVerifier, VerificationOutcome
 from gtm_pipeline import GTMPipeline
-from security import ArmorIQGate, IntentToken
+from security import LocalIntentPolicyGate, IntentToken
+from autonomous_runner import AutonomousRunner, AutonomousPlanResult
 
 app = FastAPI(
     title="AutoForge Backend Engine",
     description="The AI-Native Developer Browser Orchestration & Verification Engine",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 # CORS setup for Electron / Vite
@@ -50,7 +52,7 @@ class TelemetryManager:
         await websocket.send_json({
             "type": "CONNECTION_ESTABLISHED",
             "data": {
-                "engine": "AutoForge ArmorIQ & Outcome Telemetry",
+                "engine": "AutoForge Local Intent Policy Gate & Outcome Telemetry",
                 "status": "ONLINE",
                 "connected_clients": len(self.active_connections)
             }
@@ -74,7 +76,7 @@ telemetry = TelemetryManager()
 
 # Request Models
 class TaskExecuteRequest(BaseModel):
-    task_type: str # 'COUNCIL_AUDIT' | 'CODE_GEN' | 'SECURITY_EVAL' | 'VERIFICATION_BENCH'
+    task_type: str # 'COUNCIL_AUDIT' | 'CODE_GEN' | 'SECURITY_EVAL' | 'VERIFICATION_BENCH' | 'GENERATE_GTM'
     prompt: str
     code_snippet: Optional[str] = None
     options: Optional[Dict[str, Any]] = None
@@ -90,6 +92,13 @@ class GTMGenerateRequest(BaseModel):
     title: str = "AutoForge Launchpad"
     headline: str = "AI-Native Developer Browser Shell with CDP Accessibility Automation"
     script: Optional[str] = None
+
+class AutonomousPlanRequest(BaseModel):
+    goal: str
+    context: Optional[Dict[str, Any]] = None
+
+class AutonomousCancelRequest(BaseModel):
+    plan_id: str
 
 # WebSocket Endpoint
 @app.websocket("/ws")
@@ -118,8 +127,8 @@ async def websocket_endpoint(websocket: WebSocket):
 # REST Endpoints
 @app.post("/api/task/execute")
 async def execute_task(req: TaskExecuteRequest):
-    # Step 1: Zero-Trust Security Gate evaluation
-    token: IntentToken = ArmorIQGate.evaluate_intent(
+    # Step 1: Local Intent Policy Gate evaluation
+    token: IntentToken = LocalIntentPolicyGate.evaluate_intent(
         action=req.task_type,
         target="execution_runtime",
         subtasks=[req.prompt, req.code_snippet or ""]
@@ -154,8 +163,11 @@ async def execute_task(req: TaskExecuteRequest):
             }
         )
 
-    # Consequential actions require human approval
+    # Consequential actions require real human-in-the-loop approval before proceeding
     if token.status == "PENDING_APPROVAL":
+        approval_event = asyncio.Event()
+        telemetry.pending_approvals[token.intent_id] = approval_event
+
         await telemetry.broadcast({
             "type": "APPROVAL_REQUEST",
             "data": {
@@ -166,13 +178,36 @@ async def execute_task(req: TaskExecuteRequest):
                 "reason": token.reason
             }
         })
-        return {
-            "status": "PENDING_APPROVAL",
-            "token": token.model_dump(),
-            "message": "Consequential task requires human approval before proceeding."
-        }
 
-    # Execute Safe Task
+        try:
+            # Wait up to 60 seconds for explicit user approval via /api/task/approve or WebSocket
+            await asyncio.wait_for(approval_event.wait(), timeout=60.0)
+        except asyncio.TimeoutError:
+            del telemetry.pending_approvals[token.intent_id]
+            return JSONResponse(
+                status_code=408,
+                content={
+                    "status": "APPROVAL_TIMEOUT",
+                    "error": "Task approval timed out after 60s. Operation safely cancelled.",
+                    "intent_id": token.intent_id
+                }
+            )
+
+        decision = telemetry.approval_decisions.get(token.intent_id, "REJECTED")
+        if decision != "APPROVED":
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "status": "TASK_REJECTED",
+                    "error": "Consequential task was rejected by user. Operation safely halted.",
+                    "intent_id": token.intent_id
+                }
+            )
+
+        # Token consumed
+        LocalIntentPolicyGate.consume_token(token)
+
+    # Execute Safe or Approved Task
     if req.task_type in ("COUNCIL_AUDIT", "CODE_GEN"):
         await telemetry.broadcast({
             "type": "AGENT_STATUS",
@@ -200,6 +235,13 @@ async def execute_task(req: TaskExecuteRequest):
         outcome = await OutcomeVerifier.run_benchmark(mode)
         return outcome.model_dump()
 
+    elif req.task_type == "GENERATE_GTM":
+        title = (req.options or {}).get("title", "AutoForge Launchpad")
+        headline = (req.options or {}).get("headline", req.prompt)
+        script = req.code_snippet
+        res = await GTMPipeline.composite_gtm_video(title, headline, script)
+        return res
+
     return {"status": "AUTHORIZED", "token": token.model_dump()}
 
 @app.post("/api/task/approve")
@@ -219,32 +261,12 @@ async def approve_task(req: TaskApproveRequest):
 
 @app.get("/api/spreadsheet/latest")
 async def get_latest_spreadsheet():
-    csv_path = OutcomeVerifier.get_csv_path()
-    if not os.path.exists(csv_path):
-        # Auto-initialize baseline verification
+    cached = OutcomeVerifier.get_latest_cached_outcome()
+    if cached is None:
+        # Perform initial baseline run if no file exists
         outcome = await OutcomeVerifier.run_benchmark("LIVE_SCRAPED")
         return outcome.model_dump()
-    
-    # Read verified CSV directly from disk
-    rows = []
-    import csv
-    with open(csv_path, mode="r", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for r in reader:
-            rows.append(r)
-    
-    import hashlib
-    disk_hash = hashlib.sha256(open(csv_path, 'rb').read()).hexdigest()
-
-    return {
-        "status": "VERIFIED_DISK_SYNC",
-        "total_evaluated": len(rows),
-        "verified_count": len(rows),
-        "flagged_sales_gates": sum(1 for r in rows if r.get("enterprise_sales_gate") == "FLAGGED_SALES_GATE"),
-        "artifact_path": csv_path,
-        "disk_hash": disk_hash,
-        "rows": rows
-    }
+    return cached.model_dump()
 
 @app.post("/api/spreadsheet/export")
 async def export_spreadsheet(req: BenchmarkExportRequest):
@@ -260,8 +282,8 @@ async def export_spreadsheet(req: BenchmarkExportRequest):
     await telemetry.broadcast({
         "type": "VERIFICATION_LOG",
         "data": {
-            "log": f"Outcome complete: {outcome.status} ({outcome.verified_count}/{outcome.total_evaluated} verified)",
-            "level": "SUCCESS" if outcome.status == "VERIFIED_DISK_SYNC" else "FAIL"
+            "log": f"Outcome complete: {outcome.status} ({outcome.verified_count}/{outcome.total_evaluated} rows verified on disk)",
+            "level": "SUCCESS" if outcome.disk_integrity_verified else "FAIL"
         }
     })
     return outcome.model_dump()
@@ -286,24 +308,37 @@ async def generate_gtm(req: GTMGenerateRequest):
             "status": "COMPOSITING_1080P_VIDEO"
         }
     })
-    
     result = await GTMPipeline.composite_gtm_video(
         title=req.title,
         headline=req.headline,
         script=req.script
     )
-    
     await telemetry.broadcast({
         "type": "TASK_COMPLETED",
         "data": {
             "task_type": "GTM_COMPOSITE",
             "success": result["success"],
             "resolution": result["resolution"],
-            "sha256": result["sha256"]
+            "audio_source": result["audio_source"]
         }
     })
     return result
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+# Autonomous Workflow Endpoints
+@app.post("/api/autonomous/plan")
+async def autonomous_plan(req: AutonomousPlanRequest):
+    plan = AutonomousRunner.plan_task(req.goal, req.context)
+    return plan.model_dump()
+
+@app.post("/api/autonomous/execute")
+async def autonomous_execute(plan: AutonomousPlanResult):
+    async def broadcast_step(msg: Dict[str, Any]):
+        await telemetry.broadcast(msg)
+
+    executed = await AutonomousRunner.execute_plan(plan, broadcast_callback=broadcast_step)
+    return executed.model_dump()
+
+@app.post("/api/autonomous/cancel")
+async def autonomous_cancel(req: AutonomousCancelRequest):
+    cancelled = AutonomousRunner.cancel_plan(req.plan_id)
+    return {"status": "CANCELLED" if cancelled else "NOT_FOUND", "plan_id": req.plan_id}

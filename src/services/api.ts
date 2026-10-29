@@ -1,4 +1,10 @@
-import { CouncilVerdict, VerificationOutcome, GTMResult, SemanticAXNode } from '../types';
+import {
+  CouncilVerdict,
+  VerificationOutcome,
+  GTMResult,
+  SemanticAXNode,
+  AutonomousPlanResult
+} from '../types';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -6,13 +12,14 @@ const API_BASE = 'http://127.0.0.1:8000';
 declare global {
   interface Window {
     electronAPI?: {
-      navigate: (url: string) => Promise<{ success: boolean; url: string }>;
+      navigate: (url: string) => Promise<{ success: boolean; url: string; error?: string }>;
       captureAXTree: () => Promise<SemanticAXNode[]>;
       clickBackendNode: (backendDOMNodeId: number) => Promise<any>;
       goBack: () => Promise<void>;
       goForward: () => Promise<void>;
       reload: () => Promise<void>;
       getAppVersion: () => Promise<string>;
+      getTelemetry: () => Promise<{ cdpConnected: boolean; latencyMs: number | null; url: string }>;
       onNavStateChanged: (callback: (state: any) => void) => () => void;
       onAXTreeUpdated: (callback: (tree: SemanticAXNode[]) => void) => () => void;
     };
@@ -28,37 +35,36 @@ export const electronBrowser = {
     if (window.electronAPI) {
       return await window.electronAPI.navigate(url);
     }
-    return { success: true, url, simulated: true };
+    return { success: false, url, error: 'ELECTRON_SHELL_DETACHED' };
   },
   captureAXTree: async (): Promise<SemanticAXNode[]> => {
     if (window.electronAPI) {
       return await window.electronAPI.captureAXTree();
     }
-    // High-fidelity fallback AX Tree for browser-based preview
-    return [
-      { nodeId: 'ax-1', backendDOMNodeId: 101, role: 'heading', name: 'AutoForge Developer Shell v1.0' },
-      { nodeId: 'ax-2', backendDOMNodeId: 102, role: 'link', name: 'Hacker News — AI Startup Benchmarks' },
-      { nodeId: 'ax-3', backendDOMNodeId: 103, role: 'button', name: 'Trigger CDP AXTree Capture' },
-      { nodeId: 'ax-4', backendDOMNodeId: 104, role: 'searchbox', name: 'Search repositories & models' },
-      { nodeId: 'ax-5', backendDOMNodeId: 105, role: 'tab', name: 'Council Telemetry Tab' },
-      { nodeId: 'ax-6', backendDOMNodeId: 106, role: 'button', name: 'Verify Physical Disk Outcomes' }
-    ];
+    // Zero fake nodes in preview mode
+    return [];
   },
   clickBackendNode: async (backendDOMNodeId: number) => {
     if (window.electronAPI) {
       return await window.electronAPI.clickBackendNode(backendDOMNodeId);
     }
     return {
-      success: true,
+      success: false,
+      status: 'DISPATCH_FAILED',
       backendDOMNodeId,
       urlChanged: false,
-      initialUrl: 'https://news.ycombinator.com',
-      newUrl: 'https://news.ycombinator.com',
-      axDiffCount: 1,
-      targetRole: 'button',
-      targetName: `Interactive Node #${backendDOMNodeId}`,
-      message: `Verified CDP Input.dispatchMouseEvent simulated on backendDOMNodeId ${backendDOMNodeId}`
+      initialUrl: '',
+      newUrl: '',
+      axDiffCount: 0,
+      message: 'Electron shell is not attached. Cannot dispatch hardware CDP input events.',
+      error: 'ELECTRON_SHELL_DETACHED'
     };
+  },
+  getTelemetry: async () => {
+    if (window.electronAPI) {
+      return await window.electronAPI.getTelemetry();
+    }
+    return { cdpConnected: false, latencyMs: null, url: '' };
   },
   goBack: async () => {
     if (window.electronAPI) await window.electronAPI.goBack();
@@ -124,6 +130,35 @@ export const api = {
       body: JSON.stringify({ title, headline, script })
     });
     if (!res.ok) throw new Error('GTM composite failed');
+    return await res.json();
+  },
+
+  planAutonomousTask: async (goal: string, context?: any): Promise<AutonomousPlanResult> => {
+    const res = await fetch(`${API_BASE}/api/autonomous/plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ goal, context })
+    });
+    if (!res.ok) throw new Error('Task planning failed');
+    return await res.json();
+  },
+
+  executeAutonomousPlan: async (plan: AutonomousPlanResult): Promise<AutonomousPlanResult> => {
+    const res = await fetch(`${API_BASE}/api/autonomous/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(plan)
+    });
+    if (!res.ok) throw new Error('Autonomous plan execution failed');
+    return await res.json();
+  },
+
+  cancelAutonomousPlan: async (planId: string) => {
+    const res = await fetch(`${API_BASE}/api/autonomous/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan_id: planId })
+    });
     return await res.json();
   }
 };

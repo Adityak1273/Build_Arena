@@ -1,17 +1,30 @@
 """
-ArmorIQ CSRG (Cryptographic Security & Rules Gate)
+AutoForge Local Intent Policy Gate
 Zero-Trust Merkle Tree Intent Token Engine with Fail-Closed Interception
+Deterministic regex pattern evaluation, HMAC-SHA256 signature verification, and one-time token enforcement.
+Note: This is a local cryptographic policy gate, not an external ArmorIQ cloud service.
 """
 
+import os
+import secrets
 import hashlib
 import hmac
 import time
 import uuid
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 from pydantic import BaseModel, Field
 
-SECRET_CSRG_KEY = b"armor_iq_csrg_zero_trust_master_key_2026"
+# Secure key initialization: use environment variable or generate cryptographically secure session key
+_ENV_KEY = os.environ.get("AUTOFORGE_SECRET_KEY")
+if _ENV_KEY:
+    SECRET_POLICY_KEY = _ENV_KEY.encode("utf-8")
+else:
+    # Ephemeral 256-bit secure secret per server process
+    SECRET_POLICY_KEY = secrets.token_bytes(32)
+
+# Set of consumed/revoked intent IDs to prevent token replay attacks
+_CONSUMED_INTENT_IDS: Set[str] = set()
 
 class IntentToken(BaseModel):
     intent_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -25,11 +38,12 @@ class IntentToken(BaseModel):
     status: str # 'AUTHORIZED' | 'PENDING_APPROVAL' | 'TASK_BLOCKED'
     reason: str
 
-class ArmorIQGate:
+class LocalIntentPolicyGate:
     """
-    Evaluates commands and intents against strict zero-trust rules.
-    Destructive operations fail-closed immediately.
-    Consequential operations halt for human approval.
+    Evaluates commands and intents against deterministic zero-trust security rules.
+    - DESTRUCTIVE operations fail-closed immediately (TASK_BLOCKED).
+    - CONSEQUENTIAL operations halt and require explicit human-in-the-loop authorization.
+    - SAFE operations are signed and permitted.
     """
 
     DESTRUCTIVE_PATTERNS = [
@@ -56,7 +70,9 @@ class ArmorIQGate:
         r'\btruncate\b',
         r'\bwrite_disk\b',
         r'\bgenerate_gtm_video\b',
-        r'\boverwrite_file\b'
+        r'\boverwrite_file\b',
+        r'\bformat_disk\b',
+        r'\bdelete_artifact\b'
     ]
 
     @staticmethod
@@ -75,10 +91,33 @@ class ArmorIQGate:
             hashes = new_level
         return hashes[0]
 
-    @staticmethod
-    def _sign_intent(intent_id: str, action: str, merkle_root: str, risk: str) -> str:
+    @classmethod
+    def _sign_intent(cls, intent_id: str, action: str, merkle_root: str, risk: str) -> str:
         payload = f"{intent_id}:{action}:{merkle_root}:{risk}".encode('utf-8')
-        return hmac.new(SECRET_CSRG_KEY, payload, hashlib.sha256).hexdigest()
+        return hmac.new(SECRET_POLICY_KEY, payload, hashlib.sha256).hexdigest()
+
+    @classmethod
+    def verify_token_signature(cls, token: IntentToken) -> bool:
+        """Verifies HMAC signature authenticity and non-tampering."""
+        expected_sig = cls._sign_intent(token.intent_id, token.action, token.merkle_root, token.risk_level)
+        return hmac.compare_digest(expected_sig, token.signature)
+
+    @classmethod
+    def consume_token(cls, token: IntentToken) -> bool:
+        """
+        Marks an intent token as consumed so it cannot be re-used for replay.
+        Returns True if consumed successfully, False if already consumed or invalid.
+        """
+        if token.intent_id in _CONSUMED_INTENT_IDS:
+            return False
+        if not cls.verify_token_signature(token):
+            return False
+        _CONSUMED_INTENT_IDS.add(token.intent_id)
+        return True
+
+    @classmethod
+    def is_token_consumed(cls, intent_id: str) -> bool:
+        return intent_id in _CONSUMED_INTENT_IDS
 
     @classmethod
     def evaluate_intent(cls, action: str, target: str, subtasks: Optional[List[str]] = None) -> IntentToken:
@@ -86,7 +125,7 @@ class ArmorIQGate:
         merkle_root = cls._compute_merkle_root(plan)
         combined_text = f"{action} {target} {' '.join(plan)}".lower()
 
-        # Check for Destructive Patterns -> Fail Closed Immediately
+        # 1. Check for Destructive Patterns -> Fail Closed Immediately
         for pattern in cls.DESTRUCTIVE_PATTERNS:
             if re.search(pattern, combined_text, re.IGNORECASE):
                 intent_id = str(uuid.uuid4())
@@ -100,10 +139,10 @@ class ArmorIQGate:
                     merkle_root=merkle_root,
                     signature=sig,
                     status="TASK_BLOCKED",
-                    reason=f"TASK_BLOCKED: ArmorIQ CSRG fail-closed interception. Destructive pattern detected ('{pattern}'). Execution halted."
+                    reason=f"TASK_BLOCKED: Local Intent Policy Gate fail-closed interception. Destructive pattern detected ('{pattern}'). Execution halted."
                 )
 
-        # Check for Consequential Patterns -> Requires Human Approval
+        # 2. Check for Consequential Patterns -> Requires Human Approval
         for pattern in cls.CONSEQUENTIAL_PATTERNS:
             if re.search(pattern, combined_text, re.IGNORECASE):
                 intent_id = str(uuid.uuid4())
@@ -117,10 +156,10 @@ class ArmorIQGate:
                     merkle_root=merkle_root,
                     signature=sig,
                     status="PENDING_APPROVAL",
-                    reason=f"Action '{action}' on '{target}' is consequential and requires explicit human verification signature."
+                    reason=f"Action '{action}' on target '{target}' is consequential and requires explicit human verification signature."
                 )
 
-        # Safe operation
+        # 3. Safe operations are authorized
         intent_id = str(uuid.uuid4())
         sig = cls._sign_intent(intent_id, action, merkle_root, "SAFE")
         return IntentToken(
@@ -132,5 +171,8 @@ class ArmorIQGate:
             merkle_root=merkle_root,
             signature=sig,
             status="AUTHORIZED",
-            reason="Verified safe: zero destructive signatures detected. Merkle leaf validated."
+            reason="Verified safe operation by Local Intent Policy Gate rules."
         )
+
+# Backward compatibility alias
+ArmorIQGate = LocalIntentPolicyGate

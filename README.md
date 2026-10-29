@@ -1,124 +1,171 @@
 # AutoForge: The AI-Native Developer Browser
 
-AutoForge is a complete, native desktop developer browser shell and multimodal workspace engineered to eliminate generic boilerplate code and fragmented workflows.
+AutoForge is an AI-native desktop browser and autonomous companion workspace designed for developers. It combines native Chromium accessibility tree automation, an independent outcome verification engine, a 7-reviewer anti-boilerplate council, and a local intent policy gate.
 
 ---
 
-## 🏛️ Architecture & System Pillars
+## 🏛️ System Architecture & Implementation Realities
+
+AutoForge is built with strict architectural separation between **genuinely implemented capabilities**, **deterministic rule-based systems**, and **optional model-backed integrations**.
 
 ### Pillar 1: AI-Native Browsing & Execution
-- **Native Chromium Desktop Shell**: Built with **Electron 29+**, featuring `webviewTag: true`, context isolation, and hardware-accelerated rendering.
-- **CDP 1.3 Accessibility Tree Protocol**: Direct attachment to active Chromium webviews via `Accessibility.getFullAXTree` and semantic interactive node extraction.
-- **Observable Postcondition Verification**: Dispatches simulated native hardware mouse clicks and verifies postconditions (`urlChanged || axDiffCount > 0`).
+- **Desktop Chromium Shell**: Built on **Electron 29+**, featuring real webview sessions, isolated context bridge, and standard web security policies (no header tampering).
+- **CDP 1.3 Accessibility Protocol**: Connects directly to active Chromium sessions via Chrome DevTools Protocol (`Accessibility.getFullAXTree`), extracting live semantic interactive nodes (role, accessible name, backend DOM node ID, focus states).
+- **Observable Postcondition Verification**: Dispatches native hardware mouse events (`Input.dispatchMouseEvent` for press and release) to box-model coordinates (`DOM.getBoxModel`). Verifies action postconditions (URL change, focus acquisition, or accessibility tree mutation) and strictly distinguishes `ACTION_DISPATCHED` from `OUTCOME_VERIFIED`. Never clicks at arbitrary fallback coordinates.
+- **Real-Time Telemetry**: Real measured CDP round-trip latency (ping) and live connection status. Displays `N/A` when measurement is unavailable or detached.
 
-### Pillar 2: 7-Agent Anti-Boilerplate Council & Zero-Trust Security
-- **7 Concurrent Critics**: Evaluated in parallel via Python `asyncio.gather`:
-  1. *Aesthetics & Design Token Critic*: Scans for generic Tailwind classes (`bg-slate-900`) and enforces custom CSS variables (`var(--forge-*)`).
-  2. *Architecture & Pattern Critic*: Enforces line count limits (>250 lines) and custom hook abstractions.
-  3. *Idiomatic Syntax Critic*: Detects untyped `: any` escapes and unhandled promises.
-  4. *Security & Hardening Auditor*: Redacts hardcoded credentials, intercepts XSS vectors (`dangerouslySetInnerHTML`), and eliminates `eval()`.
-  5. *Platform & Cloud Integrator*: Replaces volatile in-memory mock data with physical persistence.
-  6. *Visual QA & Accessibility Critic*: Audits ARIA roles, landmarks, and WCAG AA contrast.
-  7. *GTM & Growth Critic*: Synthesizes technical value propositions and conversion CTAs.
-- **ArmorIQ CSRG Zero-Trust Security Gate**:
-  - Cryptographic Merkle tree Intent Token engine (`SHA-256`).
-  - **Fail-Closed Interception**: Destructive commands (e.g. `rm -rf`, `DROP TABLE`) immediately halt execution with `TASK_BLOCKED`.
-  - **Human-In-The-Loop Approval**: Consequential operations require an explicit cryptographic human signature.
+### Pillar 2: 7-Reviewer Anti-Boilerplate Council
+- **7 Concurrent Specialized Reviewers**: Evaluated in parallel via Python `asyncio.gather`:
+  1. *Aesthetics & Design Token Critic*: Scans for generic Tailwind palettes (`bg-slate-*`) and enforces custom CSS variables (`var(--forge-*)`).
+  2. *Architecture & Pattern Critic*: Enforces line-count boundaries and modular custom hook extraction.
+  3. *Idiomatic Syntax Critic*: Flags untyped `: any` / `as any` escape hatches and unhandled Promise rejections.
+  4. *Security & Hardening Auditor*: Detects raw DOM innerHTML injections, hardcoded API secret patterns, and `eval()` constructs.
+  5. *Platform & Cloud Integrator*: Audits physical transport layers (REST/WebSocket) and flags hardcoded mock fixtures.
+  6. *Visual QA & Accessibility Critic*: Audits interactive tags for explicit ARIA roles, landmarks, and alt tags.
+  7. *GTM & Growth Critic*: Evaluates developer call-to-action (CTA) triggers and value positioning.
+- **Authentic Evidence & Unified Diffs**: Computes line-by-line violation references and generates real unified code diffs using Python's `difflib.unified_diff`.
+- **Transparent Model Status**: Clearly labeled as a **Parallel Rule-Based Reviewer Council**. If `GEMINI_API_KEY` is configured in the environment, optional model synthesis is enabled; if missing, reports `UNAVAILABLE_NO_API_KEY` without fabricating agent execution logs.
 
-### Pillar 3: Independent Outcome Verification & Judge Test Bench
-- **LiveWebpageExtractor**: Native Python `HTMLParser` that asynchronously scrapes live web pages for `<title>`, `<meta description>`, and pricing models.
-- **Physical Disk Read-Back Assertion**: Writes 10 rows with 10 fields to `artifacts/ai_startups_matrix.csv`, re-opens the file from disk, and verifies cell parity against in-memory models.
-- **3 Judge Test Bench Modes**:
-  1. *Live Scraped Run*: 10/10 verified from disk, with 2 enterprise sales gates flagged (`Scale AI`, `Cohere`).
-  2. *Offline Host Failure*: Demonstrates honest error reporting (`FAILED_UNREACHABLE_HOSTS`).
-  3. *Corruption Detection*: Demonstrates disk read-back mismatch detection (`FAILED_CORRUPTION_DETECTED`).
+### Pillar 3: Local Intent Policy Gate (Zero-Trust Security)
+- **Local Policy Enforcement**: Deterministic regex and AST policy evaluation with HMAC-SHA256 Intent Token signing. (Operates as a local cryptographic policy gate, not an external third-party cloud service).
+- **Fail-Closed Interception**: Destructive commands (e.g. `rm -rf`, `DROP TABLE`, destructive disk wiping) immediately halt execution with HTTP 403 `TASK_BLOCKED`.
+- **Human-In-The-Loop Approval Loop**: Consequential operations halt execution and wait on an asynchronous server event (`asyncio.Event`) with a 60-second timeout. Clicking Approve resumes the pending execution; rejection or timeout halts execution.
+- **One-Time Token Nonce**: Prevents token replay attacks across different operations.
 
-### Pillar 4: Multimodal GTM Video Compositor
-- **ElevenLabs API**: Voiceover synthesis with SHA-256 disk caching and synthetic offline fallback.
-- **Pillow 1080p Canvas Engine**: Renders high-fidelity 1920x1080 frames with animated camera zoom and audio spectrum visualization.
-- **FFmpeg 1080p Compositing**: Produces H.264 / AAC synchronized MP4 video assets.
+### Pillar 4: Independent Outcome Verification & Fault Injection
+- **Live Metadata Extraction**: Asynchronous Python `HTMLParser` crawler with standard TLS verification (`verify=True`).
+- **Honest Provenance Tracking**: Records `retrieval_timestamp`, `fetch_status` (`HTTP_200`, `CONNECT_TIMEOUT`, etc.), `http_status_code`, and `data_provenance` for every row. If an external host fails or blocks access, it is recorded honestly without silent fallback text.
+- **Physical Disk Read-Back Assertion**: Writes results to `artifacts/ai_startups_matrix.csv`, re-opens the file from disk, and asserts complete in-memory vs disk field parity and SHA-256 byte-level hash.
+- **Separation of Concerns**: Strictly separates `disk_integrity_verified` (disk file matches in-memory bytes) from `source_data_verified` (all HTTP endpoints responded successfully).
+- **Cached Snapshot Transparency**: Existing disk files are loaded honestly as `CACHED_SNAPSHOT` rather than pretending to be freshly executed.
+- **Developer Fault-Injection Modes**:
+  1. *Live Scraped Run*: Genuine live crawl of 10 configured startup targets with disk assertion.
+  2. *Fault Injection: Unreachable Hosts*: Real TCP connection attempts to invalid/unroutable endpoints (`.invalid`, RFC 5737 TEST-NET) catching real `httpx.ConnectError` and proving honest failure halting (`FAILED_UNREACHABLE_HOSTS`).
+  3. *Fault Injection: Disk Byte Corruption*: Deliberately tampers with physical CSV bytes and asserts that cryptographic round-trip check catches file corruption (`FAILED_CORRUPTION_DETECTED`).
+
+### Pillar 5: Multimodal Video & Audio Compositor
+- **Template-Based Video Compositor**: Composes 1080p (1920x1080) MP4 video packages using Pillow canvas rendering and subprocess FFmpeg execution with returncode and output size validation.
+- **Honest Audio Labeling**:
+  - If `ELEVENLABS_API_KEY` is configured and succeeds, outputs genuine spoken voiceover (`ELEVENLABS_LIVE_API`).
+  - If unset or failed, explicitly reports `SYNTHETIC_TONE_PLACEHOLDER` with an acoustic chime. Does not misrepresent acoustic tones as spoken narration.
+- **Runtime Metrics**: Displays actual measured canvas parameters (resolution, frame count, audio source) without fabricated metrics.
 
 ---
 
-## 🚀 Quickstart
+## 🛠️ Toolchain & Development Attribution
+
+AutoForge was developed using a multi-tool agentic workflow:
+- **AdaL CLI**: Utilized during the initial hackathon phase for repository scaffolding, directory architecture generation, and initial benchmark prototyping.
+- **Credit Exhaustion & Final Hardening**: When trial credits for the AdaL session expired near completion, subsequent hardening passes, bug fixes, automated test suites, and cryptographic verification enforcement were implemented, tested, and pushed directly.
+
+---
+
+## 🚀 Getting Started
 
 ### 1. Prerequisites
-- Node.js 18+ (tested on Node v24)
-- Python 3.10+ (tested on Python 3.14)
+- **Node.js**: v18+ (tested on Node v24)
+- **Python**: 3.10+ (tested on Python 3.14)
+- **FFmpeg**: Available on system PATH or auto-resolved via `imageio-ffmpeg`
 
-### 2. Frontend & Electron Shell
+### 2. Installation
 ```bash
-# Navigate to directory
-cd autoforge
+# Clone repository
+git clone https://github.com/Adityak1273/Build_Arena.git
+cd Build_Arena
 
-# Install dependencies
+# Install Node dependencies
 npm install
 
-# Compile TypeScript and bundle Electron & React
-npm run build
-
-# Start Electron Desktop App
-npm start
+# Install Python backend dependencies
+pip install -r backend/requirements.txt
 ```
 
-### 3. Python Backend Engine
+### 3. Running the Backend Server
 ```bash
-# Start FastAPI and full-duplex WebSocket server on http://127.0.0.1:8000
+# Starts FastAPI server and WebSocket telemetry on http://127.0.0.1:8000
 python app.py
 ```
 
+### 4. Running the Desktop Application
+```bash
+# Compile TypeScript and Vite bundles
+npm run build
+
+# Launch Electron desktop application
+npm start
+```
+
+### 5. Running Automated Tests
+```bash
+# Run complete Python backend test suite (20 tests)
+npm run test:backend
+# or directly:
+pytest backend/tests
+```
+
 ---
 
-## 📂 Project Directory Structure
+## 📂 Repository File Structure
 
 ```
-autoforge/
-├── app.py                      # Root FastAPI & WebSocket launch script
+Build_Arena/
+├── app.py                      # Root FastAPI launcher script
 ├── package.json                # Electron, React 18, Vite & Tailwind configuration
-├── vite.config.ts              # Vite + vite-plugin-electron build config
-├── index.html                  # Main viewport with Plus Jakarta Sans & JetBrains Mono
+├── vite.config.ts              # Vite + vite-plugin-electron build pipeline
+├── index.html                  # Main viewport
 ├── electron/
-│   ├── main.ts                 # BrowserWindow lifecycle, webview CDP session & IPC
+│   ├── main.ts                 # BrowserWindow lifecycle, webview CDP session & telemetry IPC
 │   ├── preload.ts              # ContextBridge secure IPC bridge
 │   └── semanticBrowser.ts      # CDP Accessibility.getFullAXTree & postcondition click verifier
 ├── src/
-│   ├── main.tsx                # React root mount
-│   ├── App.tsx                 # Core workspace router, WebSockets & approval dialog
-│   ├── index.css               # Design tokens (--forge-*) and dark theme
-│   ├── types.ts                # TypeScript interfaces and contracts
+│   ├── main.tsx                # React entrypoint
+│   ├── App.tsx                 # Mode router, WebSocket listener & approval modal
+│   ├── types.ts                # TypeScript contracts & data models
+│   ├── services/
+│   │   └── api.ts              # REST client & Electron bridge
 │   ├── components/
-│   │   ├── NavigationBar.tsx   # Top brand bar, WS indicator & ArmorIQ badge
-│   │   ├── ModeChips.tsx       # YouTube-style clean chip navigation
-│   │   ├── ApprovalModal.tsx   # Zero-trust human approval modal
+│   │   ├── NavigationBar.tsx   # Top brand bar, Local Intent Gate badge & WS status
+│   │   ├── ModeChips.tsx       # Segmented navigation pill dock
+│   │   ├── ApprovalModal.tsx   # Human-in-the-loop consequential action modal
 │   │   └── TelemetryDrawer.tsx # Real-time WebSocket event feed
-│   ├── views/
-│   │   ├── BrowseMode.tsx      # Address bar, live Chromium webview & CDP AXTree inspector
-│   │   ├── BuildMode.tsx       # Prompt bar & 7-Agent Council breakdown dashboard
-│   │   ├── AutomateMode.tsx    # 10 AI Startups comparative matrix & Judge Test Bench
-│   │   └── CreateMode.tsx      # GTM Launchpad: ElevenLabs player & 1080p video player
-│   └── services/
-│       └── api.ts              # REST client & Electron IPC bridge
+│   └── views/
+│       ├── BrowseMode.tsx      # Chromium shell, omnibox & filterable CDP AXTree inspector
+│       ├── BuildMode.tsx       # 7-Reviewer Council breakdown, unified diffs & demo fixture
+│       ├── AutomateMode.tsx    # 10 Startups matrix, autonomous task planner & fault injection bench
+│       └── CreateMode.tsx      # GTM video compositor & ElevenLabs / tone audio player
 ├── backend/
-│   ├── app.py                  # FastAPI server with WebSocket /ws & REST endpoints
-│   ├── orchestrator.py         # 7-Agent Anti-Boilerplate Council with AST analysis
-│   ├── verifier.py             # Live HTMLParser crawler & disk read-back assertion
-│   ├── gtm_pipeline.py         # ElevenLabs synthesis, Pillow canvas & FFmpeg video compositor
-│   ├── security.py             # ArmorIQ CSRG Merkle tree Intent Token engine
-│   └── requirements.txt        # Python dependency manifest
+│   ├── app.py                  # FastAPI REST endpoints & WebSocket /ws broadcaster
+│   ├── orchestrator.py         # 7-Reviewer Council with AST line-detection & unified diffs
+│   ├── verifier.py             # Live HTMLParser crawler, provenance tracker & disk assertion
+│   ├── autonomous_runner.py    # Autonomous task planning, tool dispatch & outcome verification
+│   ├── gtm_pipeline.py         # Template-based 1080p video compositor & audio synthesis
+│   ├── security.py             # Local Intent Policy Gate (HMAC-SHA256 Intent Tokens)
+│   ├── requirements.txt        # Python dependency manifest
+│   └── tests/                  # Automated pytest suite (20 tests)
+│       ├── test_verifier.py    # Crawler, TLS, provenance, round-trip & fault injection tests
+│       ├── test_security.py    # Policy gate, fail-closed blocking & replay prevention tests
+│       ├── test_orchestrator.py# 7 critics concurrency, diffs & line detection tests
+│       ├── test_autonomous.py  # Autonomous planner, execution lifecycle & cancellation tests
+│       └── test_gtm.py         # Video frames & audio fallback tests
 └── artifacts/
-    ├── ai_startups_matrix.csv  # Physical disk-verified benchmark matrix
-    ├── autoforge_gtm_1080p.mp4 # 1080p composited video preview
-    └── latest_gtm_audio.wav    # Synthesized voiceover audio track
+    ├── ai_startups_matrix.csv  # Physical disk-verified benchmark matrix with provenance
+    ├── autoforge_gtm_1080p.mp4 # 1080p composited video output
+    └── latest_gtm_audio.wav    # Audio track artifact
 ```
 
 ---
 
-## 🧪 Verification Check Results
+## 🧪 Acceptance Check Summary
 
-| Check | Requirement | Result |
-|---|---|---|
-| 1 | `npm run build` TypeScript & Electron compilation | **PASSED** (0 errors, `dist/` & `dist-electron/` generated in 2.0s) |
-| 2 | `python app.py` FastAPI & WebSocket startup | **PASSED** (Bound on `http://127.0.0.1:8000`, `/ws` open) |
-| 3 | Startup benchmark physical disk parity | **PASSED** (`artifacts/ai_startups_matrix.csv`, 10/10 verified, 2 enterprise sales gates flagged) |
-| 4 | ArmorIQ CSRG fail-closed interception | **PASSED** (Destructive commands halt with HTTP 403 `TASK_BLOCKED`) |
-| 5 | Multimodal 1080p FFmpeg video compositing | **PASSED** (`artifacts/autoforge_gtm_1080p.mp4` rendered with synchronized audio) |
+| Component | Test Executed | Actual Outcome | Status |
+|:---|:---|:---|:---:|
+| **Frontend & Electron Build** | `npm run build` | 1,601 modules transformed in 2.04s, 0 errors | **VERIFIED** |
+| **Backend Test Suite** | `pytest backend/tests` | **20 passed in 4.63s** across all test modules | **VERIFIED** |
+| **Physical Disk Parity** | `test_verifier_benchmark_roundtrip` | 10/10 rows verified byte-for-byte from disk with SHA-256 | **VERIFIED** |
+| **Real Network Failure** | `test_verifier_fault_injection_offline` | Caught real connection errors (`ConnectError`, `ConnectTimeout`) | **VERIFIED** |
+| **File Tampering Detection**| `test_verifier_fault_injection_corruption` | Detected disk row and byte mismatch (`FAILED_CORRUPTION_DETECTED`) | **VERIFIED** |
+| **Policy Gate & Fail-Closed** | `test_destructive_intent_blocked` | Blocked `rm -rf` and `DROP TABLE` with HTTP 403 `TASK_BLOCKED` | **VERIFIED** |
+| **One-Time Token Nonce** | `test_token_consumption_prevents_replay` | Blocked token reuse and tampered signatures | **VERIFIED** |
+| **7-Reviewer Council** | `test_council_seven_critics_concurrency` | All 7 critics evaluated concurrently with real unified diffs | **VERIFIED** |
+| **Autonomous Workflow** | `test_autonomous_execution_lifecycle` | Planned, dispatched tools, and verified postconditions | **VERIFIED** |
+| **Media Compositor** | `test_gtm_audio_synthesis_tone_fallback` | Honest tone placeholder rendered; FFmpeg returncode validated | **VERIFIED** |

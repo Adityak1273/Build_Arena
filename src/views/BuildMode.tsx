@@ -11,15 +11,16 @@ import {
   Terminal,
   Flame,
   Wand2,
+  Cpu,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { CouncilVerdict, CriticFeedback } from '../types';
 
 export const BuildMode: React.FC = () => {
   const [prompt, setPrompt] = useState(
-    'Generate an enterprise telemetry component with custom AutoForge design variables'
+    'Audit React component for anti-boilerplate patterns, security, and accessibility'
   );
-  const [inputCode, setInputCode] = useState(`// Generic legacy boilerplate sample
+  const [inputCode, setInputCode] = useState(`// Sample Code Fixture (Demo Input for 7-Reviewer Council)
 export function LegacyCard(props: any) {
   const [data, setData] = useState([]);
   const [count, setCount] = useState(0);
@@ -80,17 +81,20 @@ export function LegacyCard(props: any) {
                 <Code2 className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-bold tracking-tight text-white font-sans">
-                  7-Agent Anti-Boilerplate Studio
+                <h2 className="text-sm font-bold tracking-tight text-white font-sans flex items-center gap-2">
+                  <span>7-Reviewer Anti-Boilerplate Council</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                    Parallel Static Review
+                  </span>
                 </h2>
                 <p className="text-[11px] text-slate-400">
-                  Parallel AST code parsing & automated custom design-token transformation
+                  Rule-based AST pattern analysis across 7 concurrent critic roles • Real unified diffs & line references
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-              <span className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.06]">
-                asyncio.gather (7 Critics)
+              <span className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px]">
+                {verdict?.council_mode || 'Rule-Based Multi-Reviewer Council'}
               </span>
             </div>
           </div>
@@ -120,7 +124,7 @@ export function LegacyCard(props: any) {
               ) : (
                 <>
                   <FileCheck className="w-4 h-4" />
-                  <span>Audit & Transform</span>
+                  <span>Run 7-Critic Audit</span>
                 </>
               )}
             </button>
@@ -168,7 +172,7 @@ export function LegacyCard(props: any) {
           <ShieldAlert className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <div className="font-bold text-rose-100 flex items-center gap-2">
-              <span>ArmorIQ CSRG Zero-Trust Interception: TASK_BLOCKED</span>
+              <span>Local Intent Policy Gate: TASK_BLOCKED</span>
               <span className="px-2 py-0.2 rounded bg-rose-900/60 text-[10px]">Fail-Closed</span>
             </div>
             <p className="mt-1 text-[11px] text-rose-300 leading-relaxed font-sans">
@@ -201,7 +205,7 @@ export function LegacyCard(props: any) {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Synthesized Code
+                Refactored Output
               </button>
               <button
                 onClick={() => setActiveTab('input')}
@@ -211,7 +215,7 @@ export function LegacyCard(props: any) {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Raw Input Code
+                Input Code (Demo Fixture)
               </button>
             </div>
 
@@ -229,17 +233,22 @@ export function LegacyCard(props: any) {
           <div className="flex-1 overflow-auto p-4 font-mono text-xs">
             {activeTab === 'optimized' && (
               <pre className="text-slate-200 leading-relaxed overflow-x-auto whitespace-pre-wrap font-mono">
-                {verdict?.optimized_code || '// Submit code above to generate an optimized tokenized component.'}
+                {verdict?.optimized_code || '// Run the 7-Critic audit to view deterministic tokenized refactoring.'}
               </pre>
             )}
 
             {activeTab === 'input' && (
-              <textarea
-                value={inputCode}
-                onChange={(e) => setInputCode(e.target.value)}
-                className="w-full h-full bg-transparent border-none outline-none resize-none font-mono text-xs text-slate-200 leading-relaxed"
-                placeholder="Paste generic boilerplate code here..."
-              />
+              <div className="h-full flex flex-col">
+                <div className="mb-2 px-2 py-1 bg-white/[0.04] rounded text-[11px] text-slate-400 font-mono">
+                  Sample Code Fixture (Demo Input for 7-Reviewer Council)
+                </div>
+                <textarea
+                  value={inputCode}
+                  onChange={(e) => setInputCode(e.target.value)}
+                  className="flex-1 w-full bg-transparent border-none outline-none resize-none font-mono text-xs text-slate-200 leading-relaxed"
+                  placeholder="Paste code here to submit to council..."
+                />
+              </div>
             )}
 
             {activeTab === 'critics' && (
@@ -260,78 +269,86 @@ export function LegacyCard(props: any) {
                                 : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                             }`}
                           >
-                            {verdict.passed ? 'PASSED 7 CRITICS' : 'TRANSFORMED'}
+                            {verdict.passed ? 'PASSED (>=75)' : 'REQUIRES REFACTORING'}
                           </span>
                         </div>
-                        <p className="mt-1 text-xs text-slate-300 font-sans">
+                        <p className="mt-1 text-xs text-slate-300 font-sans leading-relaxed">
                           {verdict.overall_feedback}
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-3xl font-extrabold font-mono text-indigo-400">
+                        <div className="text-2xl font-bold font-mono text-white">
                           {verdict.average_score}
-                          <span className="text-xs text-slate-500 font-normal">/100</span>
+                          <span className="text-xs text-slate-400 font-sans">/100</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          Composite Score
-                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono">Composite Score</div>
                       </div>
                     </div>
 
-                    {/* 7 Critic Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {verdict.critics.map((critic, idx) => (
+                    {/* 7 Critics Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      {verdict.critics.map((critic, i) => (
                         <div
-                          key={idx}
-                          className="p-4 rounded-xl bg-[#121623] border border-white/[0.07] flex flex-col justify-between hover:border-white/[0.14] transition-colors"
+                          key={i}
+                          className="p-4 rounded-xl bg-[#080c14] border border-white/[0.07] hover:border-indigo-500/30 transition-all space-y-2.5"
                         >
-                          <div>
-                            <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
-                              <div>
-                                <h4 className="text-xs font-bold text-slate-100 font-sans">
-                                  {critic.critic_name}
-                                </h4>
-                                <p className="text-[10px] text-slate-400 font-sans">
-                                  {critic.role}
-                                </p>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-bold text-xs text-slate-100 font-sans">
+                                {critic.critic_name}
                               </div>
-                              <span
-                                className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
-                                  critic.passed
-                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                    : 'bg-rose-500/20 text-rose-400'
-                                }`}
-                              >
-                                {critic.score}/100
-                              </span>
+                              <div className="text-[10px] text-slate-400 font-mono">
+                                {critic.role}
+                              </div>
                             </div>
-
-                            {critic.issues.length > 0 && (
-                              <div className="mt-2.5 text-[11px] text-rose-300 space-y-1">
-                                {critic.issues.map((iss, i) => (
-                                  <div key={i} className="flex items-start gap-1.5 font-sans">
-                                    <span className="text-rose-500 font-bold">•</span>
-                                    <span>{iss}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {critic.recommendations.length > 0 && (
-                              <div className="mt-2 text-[11px] text-slate-300 space-y-1 font-sans">
-                                {critic.recommendations.map((rec, i) => (
-                                  <div key={i} className="flex items-start gap-1.5 text-indigo-300">
-                                    <span className="text-indigo-400 font-bold">→</span>
-                                    <span>{rec}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            <span
+                              className={`px-2 py-0.5 rounded text-xs font-mono font-bold ${
+                                critic.passed
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              }`}
+                            >
+                              {critic.score} pts
+                            </span>
                           </div>
 
+                          {critic.line_violations && critic.line_violations.length > 0 && (
+                            <div className="text-[10px] font-mono text-amber-400/90">
+                              Detected at line(s): {critic.line_violations.join(', ')}
+                            </div>
+                          )}
+
+                          {critic.issues.length > 0 && (
+                            <div className="space-y-1">
+                              {critic.issues.map((iss, j) => (
+                                <div
+                                  key={j}
+                                  className="text-[11px] text-rose-300/90 flex items-start gap-1.5 font-sans"
+                                >
+                                  <AlertCircle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+                                  <span>{iss}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {critic.recommendations.length > 0 && (
+                            <div className="space-y-1 pt-1 border-t border-white/[0.04]">
+                              {critic.recommendations.map((rec, k) => (
+                                <div
+                                  key={k}
+                                  className="text-[11px] text-emerald-300/90 flex items-start gap-1.5 font-sans"
+                                >
+                                  <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                                  <span>{rec}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
                           {critic.diff_snippet && (
-                            <div className="mt-3 p-2 rounded-lg bg-[#07090e] border border-white/[0.06] text-[10px] text-slate-400 overflow-x-auto">
-                              <pre className="whitespace-pre font-mono">{critic.diff_snippet}</pre>
+                            <div className="mt-2 p-2 rounded bg-black/40 border border-white/[0.04] text-[10px] font-mono overflow-x-auto text-slate-300 whitespace-pre">
+                              {critic.diff_snippet}
                             </div>
                           )}
                         </div>
@@ -339,8 +356,11 @@ export function LegacyCard(props: any) {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-20 text-slate-500 text-xs font-sans">
-                    Click "Audit & Transform" to evaluate the 7 critics.
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-slate-500 space-y-2 mt-8">
+                    <Code2 className="w-10 h-10 opacity-30 mx-auto" />
+                    <p className="text-xs font-mono">
+                      Click "Run 7-Critic Audit" to evaluate the sample code fixture across all 7 reviewer roles concurrently.
+                    </p>
                   </div>
                 )}
               </div>

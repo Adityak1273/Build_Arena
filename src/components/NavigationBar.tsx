@@ -54,7 +54,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
         {/* Zero-Trust Merkle Gate Status */}
         <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-emerald-400 text-xs font-mono">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-[11px] font-medium tracking-tight">ArmorIQ CSRG</span>
+          <span className="text-[11px] font-medium tracking-tight">Local Intent Gate</span>
         </div>
 
         {/* WebSocket Sync Status Pill */}
@@ -65,7 +65,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
             }`}
           />
           <span className="text-[11px] text-slate-300 font-medium">
-            {wsConnected ? 'Live CDP' : 'Offline'}
+            {wsConnected ? 'Backend Sync' : 'Offline'}
           </span>
         </div>
 

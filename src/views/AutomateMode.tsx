@@ -11,15 +11,24 @@ import {
   ExternalLink,
   RefreshCw,
   Terminal,
+  Activity,
+  Layers,
+  StopCircle,
 } from 'lucide-react';
 import { api } from '../services/api';
-import { VerificationOutcome, StartupRow } from '../types';
+import { VerificationOutcome, StartupRow, AutonomousPlanResult } from '../types';
 
 export const AutomateMode: React.FC = () => {
   const [selectedMode, setSelectedMode] = useState<string>('LIVE_SCRAPED');
   const [outcome, setOutcome] = useState<VerificationOutcome | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showLogs, setShowLogs] = useState(true);
+
+  // Autonomous task runner state
+  const [autonomousGoal, setAutonomousGoal] = useState('Crawl 10 AI startups and verify physical disk outcome');
+  const [activePlan, setActivePlan] = useState<AutonomousPlanResult | null>(null);
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [isExecutingPlan, setIsExecutingPlan] = useState(false);
 
   useEffect(() => {
     handleLoadInitial();
@@ -50,6 +59,42 @@ export const AutomateMode: React.FC = () => {
     }
   };
 
+  const handlePlanAutonomous = async () => {
+    setIsPlanning(true);
+    try {
+      const plan = await api.planAutonomousTask(autonomousGoal);
+      setActivePlan(plan);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsPlanning(false);
+    }
+  };
+
+  const handleExecuteAutonomous = async () => {
+    if (!activePlan) return;
+    setIsExecutingPlan(true);
+    try {
+      const result = await api.executeAutonomousPlan(activePlan);
+      setActivePlan(result);
+      // If benchmark was executed, reload spreadsheet
+      await handleLoadInitial();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExecutingPlan(false);
+    }
+  };
+
+  const handleCancelAutonomous = async () => {
+    if (!activePlan) return;
+    try {
+      await api.cancelAutonomousPlan(activePlan.plan_id);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-[#07090e] text-slate-100 font-sans">
       {/* Top Header */}
@@ -62,10 +107,10 @@ export const AutomateMode: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-base font-bold text-white tracking-tight font-sans">
-                  Official Challenge Benchmark: 10 AI Startups Matrix
+                  Autonomous Verification & Judge Test Bench
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Live HTMLParser crawl • Physical disk read-back assertion • Enterprise sales gate detection
+                  Standard TLS crawl • Physical disk read-back assertion • Cryptographic SHA-256 integrity verification
                 </p>
               </div>
             </div>
@@ -79,6 +124,82 @@ export const AutomateMode: React.FC = () => {
               <span>Download CSV Artifact</span>
             </a>
           </div>
+
+          {/* Autonomous Goal Planning Bar */}
+          <div className="p-3 rounded-xl bg-[#0b0e17] border border-white/[0.08] flex items-center gap-2">
+            <span className="text-xs font-mono text-indigo-400 font-bold whitespace-nowrap">
+              Autonomous Goal:
+            </span>
+            <input
+              type="text"
+              value={autonomousGoal}
+              onChange={(e) => setAutonomousGoal(e.target.value)}
+              placeholder="Enter natural-language goal (e.g. Crawl 10 startups and verify disk)..."
+              className="flex-1 bg-transparent border-none outline-none text-xs text-slate-200 font-sans"
+            />
+            <button
+              onClick={handlePlanAutonomous}
+              disabled={isPlanning || isExecutingPlan}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-sm transition-all disabled:opacity-50"
+            >
+              {isPlanning ? 'Planning...' : 'Generate Plan'}
+            </button>
+            {activePlan && activePlan.status !== 'COMPLETED' && (
+              <button
+                onClick={handleExecuteAutonomous}
+                disabled={isExecutingPlan}
+                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-sm transition-all disabled:opacity-50"
+              >
+                {isExecutingPlan ? 'Executing Plan...' : 'Execute Plan'}
+              </button>
+            )}
+            {isExecutingPlan && (
+              <button
+                onClick={handleCancelAutonomous}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all"
+              >
+                <StopCircle className="w-3.5 h-3.5 inline mr-1" />
+                Cancel
+              </button>
+            )}
+          </div>
+
+          {/* Autonomous Plan Step View */}
+          {activePlan && (
+            <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/30 space-y-2 text-xs font-mono">
+              <div className="flex items-center justify-between text-indigo-300 font-bold">
+                <span>Plan: {activePlan.plan_id.slice(0, 8)} • Planner: {activePlan.planner}</span>
+                <span className="px-2 py-0.5 rounded bg-indigo-600/40 text-[10px] text-white">
+                  Status: {activePlan.status}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+                {activePlan.steps.map((st) => (
+                  <div key={st.step_id} className="p-2 rounded bg-black/40 border border-white/[0.05] space-y-1">
+                    <div className="flex justify-between items-center text-[10px] text-slate-400">
+                      <span className="font-bold text-slate-200">{st.step_id}: {st.tool}</span>
+                      <span className={`px-1.5 py-0.2 rounded ${
+                        st.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400' :
+                        st.status === 'RUNNING' ? 'bg-amber-500/20 text-amber-400' :
+                        st.status === 'FAILED' ? 'bg-rose-500/20 text-rose-400' : 'bg-white/[0.05] text-slate-400'
+                      }`}>
+                        {st.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 font-sans">{st.reasoning}</p>
+                    {Boolean(st.execution_time_ms && st.execution_time_ms > 0) && (
+                      <div className="text-[10px] text-slate-500">Duration: {st.execution_time_ms}ms</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {activePlan.overall_outcome && (
+                <div className="text-emerald-400 text-[11px] pt-1">
+                  Outcome: {activePlan.overall_outcome}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Judge Test Bench 3 Modes */}
           <div className="p-3 rounded-xl bg-[#07090e] border border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
@@ -94,7 +215,7 @@ export const AutomateMode: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  1. Live Scraped Run (10/10)
+                  1. Live Scraped Run
                 </button>
                 <button
                   onClick={() => handleRunBenchmark('OFFLINE_HOST_FAILURE')}
@@ -105,7 +226,7 @@ export const AutomateMode: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  2. Offline Host Failure
+                  2. Fault Injection: Unreachable Hosts
                 </button>
                 <button
                   onClick={() => handleRunBenchmark('CORRUPTION_DETECTION')}
@@ -116,7 +237,7 @@ export const AutomateMode: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  3. Corruption Detection
+                  3. Fault Injection: Disk Byte Corruption
                 </button>
               </div>
             </div>
@@ -143,168 +264,158 @@ export const AutomateMode: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden p-6 max-w-7xl mx-auto w-full gap-4">
-        {outcome && (
-          <div className="p-4 rounded-xl bg-[#0e121b] border border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {outcome.status === 'VERIFIED_DISK_SYNC' ? (
-                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  <CheckCircle2 className="w-4 h-4" />
-                  VERIFIED_DISK_SYNC (10/10)
-                </span>
-              ) : outcome.status === 'FAILED_UNREACHABLE_HOSTS' ? (
-                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                  <XCircle className="w-4 h-4" />
-                  FAILED_UNREACHABLE_HOSTS (Honest Fail)
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  <AlertTriangle className="w-4 h-4" />
-                  FAILED_CORRUPTION_DETECTED (Integrity Alert)
+      <div className="flex-1 overflow-hidden flex flex-col p-4 max-w-7xl mx-auto w-full space-y-4">
+        {/* Verification Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs font-mono">
+          <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">
+            <span className="text-slate-400 text-[11px]">Verification Status</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-bold ${
+                outcome?.disk_integrity_verified ? 'text-emerald-400' : 'text-rose-400'
+              }`}>
+                {outcome?.status || 'INITIALIZING'}
+              </span>
+              {outcome?.is_cached_snapshot && (
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/[0.06] text-slate-400">
+                  Cached
                 </span>
               )}
-              <div className="text-xs text-slate-400 font-mono">
-                Flagged Sales Gates:{' '}
-                <span className="text-amber-400 font-bold">
-                  {outcome.flagged_sales_gates} Detected (Scale AI, Cohere)
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
-              <div className="flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5 text-indigo-400" />
-                <span>SHA-256:</span>
-                <span className="text-slate-200">
-                  {outcome.disk_hash ? outcome.disk_hash.slice(0, 16) + '...' : 'N/A'}
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-500">
-                Artifact: <span className="text-slate-300">artifacts/ai_startups_matrix.csv</span>
-              </div>
             </div>
           </div>
-        )}
 
-        {showLogs && outcome?.telemetry_logs && outcome.telemetry_logs.length > 0 && (
-          <div className="p-3 rounded-xl bg-[#07090e] border border-white/[0.08] font-mono text-[11px] max-h-36 overflow-y-auto space-y-1">
-            {outcome.telemetry_logs.map((log, i) => (
-              <div
-                key={i}
-                className={
-                  log.includes('[SUCCESS]') || log.includes('[OK]')
-                    ? 'text-emerald-400'
-                    : log.includes('[FAIL]') || log.includes('[ALERT]')
-                    ? 'text-rose-400 font-bold'
-                    : log.includes('[FLAG]')
-                    ? 'text-amber-400'
-                    : 'text-slate-300'
-                }
-              >
-                {log}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Table View */}
-        <div className="flex-1 bg-[#0e121b] border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-          <div className="px-4 py-3 bg-[#090d14] border-b border-white/[0.08] flex items-center justify-between text-xs font-mono text-slate-400">
-            <span className="font-bold text-slate-200">
-              Disk-Verified Matrix (10 Companies • 10 Ground-Truth Fields)
-            </span>
-            <span>Target: 10/10 Parity</span>
+          <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">
+            <span className="text-slate-400 text-[11px]">Disk vs Source Verification</span>
+            <div className="flex items-center gap-2 text-xs">
+              <span className={outcome?.disk_integrity_verified ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                Disk Parity: {outcome?.disk_integrity_verified ? 'Verified' : 'Failed'}
+              </span>
+              <span>•</span>
+              <span className="text-slate-300">
+                HTTP Fetched: {outcome?.successful_fetches ?? 0}/{outcome?.total_evaluated ?? 10}
+              </span>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-auto">
-            {outcome?.status === 'FAILED_UNREACHABLE_HOSTS' ? (
-              <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                <XCircle className="w-12 h-12 text-rose-500 mb-3" />
-                <h3 className="text-base font-bold text-rose-300 font-mono">
-                  FAILED_UNREACHABLE_HOSTS
-                </h3>
-                <p className="mt-1 text-xs text-slate-400 max-w-md font-sans leading-relaxed">
-                  {outcome.error_message}
-                </p>
-                <button
-                  onClick={() => handleRunBenchmark('LIVE_SCRAPED')}
-                  className="mt-4 px-4 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 text-xs font-mono"
+          <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">
+            <span className="text-slate-400 text-[11px]">Flagged Enterprise Sales Gates</span>
+            <div className="text-sm font-bold text-amber-400">
+              {outcome?.flagged_sales_gates ?? 0} Gate(s) Flagged
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">
+            <span className="text-slate-400 text-[11px]">Disk SHA-256 Checksum</span>
+            <div className="text-xs font-bold text-indigo-400 truncate">
+              {outcome?.disk_hash ? `${outcome.disk_hash.slice(0, 18)}...` : 'N/A'}
+            </div>
+          </div>
+        </div>
+
+        {/* Assertion Terminal Logs */}
+        {showLogs && (
+          <div className="p-3.5 rounded-xl bg-[#07090e] border border-white/[0.08] font-mono text-xs max-h-40 overflow-y-auto space-y-1 shadow-inner">
+            <div className="flex items-center justify-between pb-1 border-b border-white/[0.05] text-[10px] text-slate-500">
+              <span>TELEMETRY ASSERTION CONSOLE</span>
+              <span>Timestamp: {outcome?.retrieval_timestamp || 'N/A'}</span>
+            </div>
+            {outcome?.telemetry_logs && outcome.telemetry_logs.length > 0 ? (
+              outcome.telemetry_logs.map((log, i) => (
+                <div
+                  key={i}
+                  className={`leading-relaxed text-[11px] ${
+                    log.includes('[SUCCESS]') || log.includes('[OK')
+                      ? 'text-emerald-400'
+                      : log.includes('[FAIL]') || log.includes('[ALERT]') || log.includes('[REAL ERROR')
+                      ? 'text-rose-400 font-bold'
+                      : log.includes('[FLAG]') || log.includes('[TEST]')
+                      ? 'text-amber-400'
+                      : 'text-slate-300'
+                  }`}
                 >
-                  Switch to Live Scraped Mode (10/10)
-                </button>
-              </div>
+                  {log}
+                </div>
+              ))
             ) : (
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-[#111623] text-slate-400 font-mono text-[11px] sticky top-0 z-10 border-b border-white/[0.08]">
-                  <tr>
-                    <th className="p-3">Company</th>
-                    <th className="p-3">Domain</th>
-                    <th className="p-3">Scraped HTML Title</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3">Pricing Tier</th>
-                    <th className="p-3">Enterprise Sales Gate</th>
-                    <th className="p-3">API Availability</th>
-                    <th className="p-3">Verification</th>
-                    <th className="p-3">Row Hash</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04] text-slate-200 font-sans">
-                  {outcome?.rows && outcome.rows.length > 0 ? (
-                    outcome.rows.map((row, idx) => {
-                      const isGate = row.enterprise_sales_gate === 'FLAGGED_SALES_GATE';
-                      return (
-                        <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="p-3 font-semibold text-white whitespace-nowrap">
-                            {row.company_name}
-                          </td>
-                          <td className="p-3 font-mono text-slate-400 whitespace-nowrap">
-                            {row.domain}
-                          </td>
-                          <td className="p-3 max-w-xs truncate text-slate-300" title={row.scraped_title}>
-                            {row.scraped_title}
-                          </td>
-                          <td className="p-3 text-slate-400 whitespace-nowrap">
-                            {row.category}
-                          </td>
-                          <td className="p-3 whitespace-nowrap text-slate-300">
-                            {row.pricing_tier}
-                          </td>
-                          <td className="p-3 whitespace-nowrap">
-                            {isGate ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                FLAGGED_SALES_GATE
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                SELF_SERVE
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3 text-slate-400 whitespace-nowrap">
-                            {row.api_availability}
-                          </td>
-                          <td className="p-3 font-mono text-[10px] whitespace-nowrap">
-                            <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                              <CheckCircle2 className="w-3 h-3" />
-                              VERIFIED
-                            </span>
-                          </td>
-                          <td className="p-3 font-mono text-[10px] text-slate-500 whitespace-nowrap">
-                            {row.row_hash}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={9} className="p-10 text-center text-slate-500 font-mono">
-                        No rows loaded.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <div className="text-slate-500">No telemetry logs recorded.</div>
             )}
+          </div>
+        )}
+
+        {/* Matrix Table */}
+        <div className="flex-1 overflow-hidden rounded-xl bg-[#0e121b] border border-white/[0.08] flex flex-col shadow-2xl">
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left text-xs font-sans divide-y divide-white/[0.06]">
+              <thead className="bg-[#090d14] text-[11px] font-mono text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+                <tr>
+                  <th className="py-2.5 px-4 font-bold">Company</th>
+                  <th className="py-2.5 px-4 font-bold">Target URL</th>
+                  <th className="py-2.5 px-4 font-bold">Status</th>
+                  <th className="py-2.5 px-4 font-bold">Live Extracted Title</th>
+                  <th className="py-2.5 px-4 font-bold">Category</th>
+                  <th className="py-2.5 px-4 font-bold">Pricing Tier</th>
+                  <th className="py-2.5 px-4 font-bold">Sales Gate</th>
+                  <th className="py-2.5 px-4 font-bold">Provenance</th>
+                  <th className="py-2.5 px-4 font-bold">SHA-256</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04] text-slate-200 font-normal">
+                {outcome?.rows && outcome.rows.length > 0 ? (
+                  outcome.rows.map((row: StartupRow, idx: number) => {
+                    const isGate = row.enterprise_sales_gate === 'FLAGGED_SALES_GATE';
+                    const isSuccess = row.fetch_status === 'HTTP_200';
+                    return (
+                      <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-2.5 px-4 font-bold text-white whitespace-nowrap">
+                          {row.company_name}
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                          {row.target_url || row.domain}
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-[10px] whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded ${
+                            isSuccess ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          }`}>
+                            {row.fetch_status || 'UNKNOWN'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4 max-w-xs truncate text-slate-300">
+                          {row.scraped_title}
+                        </td>
+                        <td className="py-2.5 px-4 text-slate-400 text-[11px]">
+                          {row.target_category || row.category || 'N/A'}
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-[11px] text-slate-400">
+                          {row.pricing_tier}
+                        </td>
+                        <td className="py-2.5 px-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                              isGate
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                : 'bg-white/[0.04] text-slate-400'
+                            }`}
+                          >
+                            {row.enterprise_sales_gate}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-[10px] text-slate-400 whitespace-nowrap">
+                          {row.data_provenance || 'HISTORICAL'}
+                        </td>
+                        <td className="py-2.5 px-4 font-mono text-[10px] text-slate-500 whitespace-nowrap">
+                          {row.row_hash}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="py-12 text-center text-slate-500 font-mono text-xs">
+                      No records verified. Run a benchmark mode above.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

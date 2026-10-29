@@ -8,6 +8,7 @@ export interface ElectronAPI {
   goForward: () => Promise<void>;
   reload: () => Promise<void>;
   getAppVersion: () => Promise<string>;
+  getTelemetry: () => Promise<{ cdpConnected: boolean; latencyMs: number | null; url: string }>;
   onNavStateChanged: (callback: (state: { url: string; canGoBack: boolean; canGoForward: boolean; loading: boolean }) => void) => () => void;
   onAXTreeUpdated: (callback: (tree: any[]) => void) => () => void;
 }
@@ -20,6 +21,7 @@ const api: ElectronAPI = {
   goForward: () => ipcRenderer.invoke('browser:goForward'),
   reload: () => ipcRenderer.invoke('browser:reload'),
   getAppVersion: () => ipcRenderer.invoke('browser:getVersion'),
+  getTelemetry: () => ipcRenderer.invoke('browser:getTelemetry'),
   onNavStateChanged: (callback) => {
     const handler = (_event: any, state: any) => callback(state);
     ipcRenderer.on('browser:navStateChanged', handler);
