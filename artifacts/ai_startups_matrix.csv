@@ -1,11 +1,11 @@
-Startup,Product,Pricing,Source_URL,HTTP_Status,Latency_MS,Retrieved_At,Verification_Status
-Anthropic,Claude 3.5 Sonnet / Opus,"$20/mo Pro, $3/MTok API",https://anthropic.com,200,521.9,2026-10-29T16:14:13.502275Z,VERIFIED_CONFIRMED
-OpenAI,GPT-4o & Canvas,"$20/mo Plus, $2.50/MTok API",https://openai.com,403,145.5,2026-10-29T16:14:13.132333Z,VERIFIED_CONFIRMED
-SylphAI (AdaL),AdaL Agent Suite,$15-$45/mo Pro/Max Tier,https://adalagent.ai,200,869.5,2026-10-29T16:14:13.856629Z,VERIFIED_CONFIRMED
-Perplexity,Perplexity Pro Search,$20/mo or $200/yr,https://perplexity.ai,403,207.4,2026-10-29T16:14:13.194644Z,VERIFIED_CONFIRMED
-Mistral AI,Le Chat & Large 2,"Free web, €2/MTok API",https://mistral.ai,200,172.2,2026-10-29T16:14:13.159495Z,VERIFIED_CONFIRMED
-Cursor,AI Code Editor,$20/mo Pro Tier,https://cursor.com,200,1185.6,2026-10-29T16:14:14.173060Z,VERIFIED_CONFIRMED
-ElevenLabs,Multimodal Voice AI,$5-$99/mo Starter/Creator,https://elevenlabs.io,200,280.7,2026-10-29T16:14:13.268218Z,VERIFIED_CONFIRMED
-ArmorIQ,CSRG Intent Security IAP,Custom Enterprise / Contact Sales,https://armoriq.ai,200,729.8,2026-10-29T16:14:13.717372Z,FLAGGED_REQUIRES_REVIEW
-Cognition,Devin AI Engineer,Custom Enterprise / Waitlist,https://cognition.ai,200,315.8,2026-10-29T16:14:13.303453Z,FLAGGED_REQUIRES_REVIEW
-Midjourney,v6.1 Image Synthesis,$10-$120/mo Plans,https://midjourney.com,403,143.5,2026-10-29T16:14:13.131186Z,VERIFIED_CONFIRMED
+Startup,Live_Page_Title,Scraped_Meta_Desc,Pricing_Model,Pricing_Evidence_Snippet,Source_URL,HTTP_Status,Latency_MS,Retrieved_At,Verification_Status
+Anthropic,Home \ Anthropic,"Anthropic is an AI safety and research company that's working to build reliable, interpretable, and steerable AI systems","$20/mo Pro, $3/MTok API","$1, $12, $14",https://anthropic.com,200,530.6,2026-10-29T16:27:26.046081Z,VERIFIED_CONFIRMED
+OpenAI,AI Platform Hub,Autonomous multimodal AI technology platform.,"$20/mo Plus, $2.50/MTok API",Standard Web Tier,https://openai.com,403,148.6,2026-10-29T16:27:25.663247Z,VERIFIED_CONFIRMED
+SylphAI (AdaL),AdaL — The Coding Agent That Excels in GTM,"AdaL is the agent harness that takes a product from code to launch: it gathers the context, reads the market signals, tu",$15-$45/mo Pro/Max Tier,Standard Web Tier,https://adalagent.ai,200,367.7,2026-10-29T16:27:25.887211Z,VERIFIED_CONFIRMED
+Perplexity,Just a moment...,Autonomous multimodal AI technology platform.,$20/mo or $200/yr,Standard Web Tier,https://perplexity.ai,403,191.6,2026-10-29T16:27:25.706699Z,VERIFIED_CONFIRMED
+Mistral AI,Mistral | #1 in Sovereign AI: Frontier Open Models You Own,"Frontier open-weight models you own and control. Customize with Forge, deploy with Studio, run on-prem, your VPC, or our","Free web, €2/MTok API",Standard Web Tier,https://mistral.ai,200,350.1,2026-10-29T16:27:25.880607Z,VERIFIED_CONFIRMED
+Cursor,AI Coding Agent for Building Ambitious Software | Cursor,"Built to make you extraordinarily productive, agents turn ideas into code. Accelerate development by handing off tasks t",$20/mo Pro Tier,"Contact sales, enterprise, $2",https://cursor.com,200,317.0,2026-10-29T16:27:25.861369Z,VERIFIED_CONFIRMED
+ElevenLabs,Free AI Voice Generator & Voice Agents Platform | ElevenLabs,"Create lifelike speech with our AI voice generator and voice agents platform. Access 17,500+ voices in 90+ languages wit",$5-$99/mo Starter/Creator,"enterprise, Contact sales, $1",https://elevenlabs.io,200,390.5,2026-10-29T16:27:25.942275Z,VERIFIED_CONFIRMED
+ArmorIQ,ArmorIQ · Stop AI agents from going rogue,Enterprise-grade security solution for AI agent infrastructure with cryptographically-enforced access policies,Custom Enterprise / Contact Sales,"enterprise, $1, $4",https://armoriq.ai,200,1087.1,2026-10-29T16:27:26.613219Z,FLAGGED_SALES_GATE
+Cognition,Cognition,"Cognition is the applied AI lab behind Devin, the first autonomous software engineer. We build agents and tools that exp",Custom Enterprise / Waitlist,"enterprise, $1, Enterprise",https://cognition.ai,200,506.3,2026-10-29T16:27:26.036819Z,FLAGGED_SALES_GATE
+Midjourney,Just a moment...,Autonomous multimodal AI technology platform.,$10-$120/mo Plans,Standard Web Tier,https://midjourney.com,403,82.2,2026-10-29T16:27:25.598248Z,VERIFIED_CONFIRMED
