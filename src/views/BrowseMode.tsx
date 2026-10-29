@@ -32,6 +32,20 @@ interface NavigationTarget {
   url: string;
 }
 
+export const resolveSmartUrl = (input: string): string => {
+  const clean = input.trim();
+  if (!clean) return 'https://news.ycombinator.com';
+  if (/^https?:\/\//i.test(clean)) return clean;
+  if (/^localhost[:\/]/i.test(clean) || /^127\.0\.0\.1/i.test(clean)) return 'http://' + clean;
+  if (clean.includes(' ')) {
+    return `https://www.google.com/search?q=${encodeURIComponent(clean)}`;
+  }
+  if (!clean.includes('.')) {
+    return `https://www.${clean}.com`;
+  }
+  return 'https://' + clean;
+};
+
 export const BrowseMode: React.FC = () => {
   const [targets, setTargets] = useState<NavigationTarget[]>([
     { id: 't1', title: 'Hacker News', url: 'https://news.ycombinator.com' },
@@ -87,14 +101,18 @@ export const BrowseMode: React.FC = () => {
   };
 
   const handleNavigate = async (target?: string) => {
-    const dest = target || inputUrl;
+    const raw = target || inputUrl;
+    const dest = resolveSmartUrl(raw);
+    setInputUrl(dest);
+    setUrl(dest);
     setIsLoading(true);
     setClickResult(null);
     try {
       const res = await electronBrowser.navigate(dest);
       if (res.url) {
-        setUrl(res.url);
-        setInputUrl(res.url);
+        const resolved = resolveSmartUrl(res.url);
+        setUrl(resolved);
+        setInputUrl(resolved);
       }
       setTimeout(() => {
         handleCaptureAXTree(dest);

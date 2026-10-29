@@ -472,15 +472,28 @@ async def dispatch_browser_bridge_action(req: BridgeDispatchRequest):
     res = await browser_bridge.dispatch(req.action, req.params or {})
     return res
 
+def resolve_smart_url(query_or_url: str) -> str:
+    cleaned = query_or_url.strip()
+    if not cleaned:
+        return "https://news.ycombinator.com"
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        return cleaned
+    if cleaned.startswith("localhost") or cleaned.startswith("127.0.0.1"):
+        return "http://" + cleaned
+    if " " in cleaned:
+        from urllib.parse import quote_plus
+        return f"https://www.google.com/search?q={quote_plus(cleaned)}"
+    if "." not in cleaned:
+        return f"https://www.{cleaned}.com"
+    return "https://" + cleaned
+
 # Web Preview Endpoints (Eliminates X-Frame-Options blocking in standard browsers)
 @app.get("/api/browser/preview")
 async def browser_preview(url: str = "https://news.ycombinator.com"):
     """
     Renders clean HTML for web preview mode in standard browsers without X-Frame-Options blocking.
     """
-    target = url.strip()
-    if not target.startswith("http://") and not target.startswith("https://"):
-        target = "https://" + target
+    target = resolve_smart_url(url)
 
     try:
         async with httpx.AsyncClient(verify=True, timeout=5.0, follow_redirects=True) as client:
@@ -531,9 +544,7 @@ async def browser_preview_ax(url: str = "https://news.ycombinator.com"):
     """
     Extracts semantic accessibility nodes from the HTML page for web preview mode.
     """
-    target = url.strip()
-    if not target.startswith("http://") and not target.startswith("https://"):
-        target = "https://" + target
+    target = resolve_smart_url(url)
 
     try:
         from html.parser import HTMLParser

@@ -104,12 +104,23 @@ function createWindow() {
   });
 }
 
+function resolveSmartUrl(input: string): string {
+  const clean = input.trim();
+  if (!clean) return 'https://news.ycombinator.com';
+  if (/^https?:\/\//i.test(clean)) return clean;
+  if (/^localhost[:\/]/i.test(clean) || /^127\.0\.0\.1/i.test(clean)) return 'http://' + clean;
+  if (clean.includes(' ')) {
+    return `https://www.google.com/search?q=${encodeURIComponent(clean)}`;
+  }
+  if (!clean.includes('.')) {
+    return `https://www.${clean}.com`;
+  }
+  return 'https://' + clean;
+}
+
 // IPC Handlers
 ipcMain.handle('browser:navigate', async (_event, url: string) => {
-  let targetUrl = url.trim();
-  if (!/^https?:\/\//i.test(targetUrl)) {
-    targetUrl = 'https://' + targetUrl;
-  }
+  const targetUrl = resolveSmartUrl(url);
   lastNavigatedUrl = targetUrl;
 
   if (activeWebview && !activeWebview.isDestroyed()) {
