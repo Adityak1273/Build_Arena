@@ -115,15 +115,34 @@ export const AutomateMode: React.FC = () => {
               </div>
             </div>
 
-            <a
-              href={api.getDownloadUrl()}
-              download="ai_startups_matrix.csv"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20 transition-all"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download CSV Artifact</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleRunBenchmark('LIVE_SCRAPED')}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>{isLoading ? 'Crawling Live...' : 'Trigger Live Scrape (10 Startups)'}</span>
+              </button>
+              <a
+                href={api.getDownloadUrl()}
+                download="ai_startups_matrix.csv"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20 transition-all"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download CSV Artifact</span>
+              </a>
+            </div>
           </div>
+
+          {outcome?.is_cached_snapshot && (
+            <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-600/30 text-amber-300 text-xs flex items-center justify-between">
+              <div className="flex items-center gap-2 font-mono">
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span>Displaying Saved Disk Snapshot (From {outcome.retrieval_timestamp}). Click "Trigger Live Scrape" above for live network execution.</span>
+              </div>
+            </div>
+          )}
 
           {/* Autonomous Goal Planning Bar */}
           <div className="p-3 rounded-xl bg-[#0b0e17] border border-white/[0.08] flex items-center gap-2">

@@ -6,14 +6,19 @@ and distinguishes deterministic rule-based evaluation from model-backed agents.
 """
 
 import os
+import json
 import difflib
 import re
 import uuid
 import time
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
+import httpx
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from security import LocalIntentPolicyGate, IntentToken
+
+load_dotenv()
 
 class CriticFeedback(BaseModel):
     critic_name: str
@@ -346,20 +351,52 @@ class AntiBoilerplateCouncil:
 
         # Check for model credentials
         gemini_key = os.environ.get("GEMINI_API_KEY")
-        openai_key = os.environ.get("OPENAI_API_KEY")
         model_status = "UNAVAILABLE_NO_API_KEY"
         optimized_code = None
+        council_mode = "DETERMINISTIC_RULE_BASED_COUNCIL"
 
-        if gemini_key or openai_key:
-            model_status = "MODEL_CREDENTIALS_CONFIGURED"
-            # If model key is present, attempt model generation
-            # (In absence of keys, falls cleanly to honest deterministic transformation)
+        if gemini_key:
+            try:
+                # Real Gemini 2.0 Flash Call for Refactoring
+                prompt_content = (
+                    f"You are the AutoForge Code Synthesis Agent. Refactor this code to address the following issues:\n"
+                    f"Issues: {json.dumps([c.issues for c in critics_results])}\n"
+                    f"User Prompt: {user_prompt}\n"
+                    f"Input Code:\n{code}\n\n"
+                    f"Return ONLY the clean refactored TypeScript/React code without markdown fences or pleasantries."
+                )
+                gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                async with httpx.AsyncClient(timeout=12.0) as client:
+                    resp = await client.post(
+                        gemini_url,
+                        json={"contents": [{"parts": [{"text": prompt_content}]}]}
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        candidates = data.get("candidates", [])
+                        if candidates and "content" in candidates[0]:
+                            parts = candidates[0]["content"].get("parts", [])
+                            if parts and "text" in parts[0]:
+                                optimized_code = parts[0]["text"].strip()
+                                # Strip markdown code fence if wrapped
+                                if optimized_code.startswith("```"):
+                                    lines = optimized_code.splitlines()
+                                    if lines[0].startswith("```"):
+                                        lines = lines[1:]
+                                    if lines and lines[-1].startswith("```"):
+                                        lines = lines[:-1]
+                                    optimized_code = "\n".join(lines).strip()
+                                model_status = "GEMINI_2.0_FLASH_SYNTHESIZED"
+                                council_mode = "HYBRID_MODEL_AND_STATIC_COUNCIL"
+            except Exception as e:
+                model_status = f"MODEL_CALL_FAILED ({type(e).__name__})"
 
-        # Deterministic transformation based on the actual input code (No fabricated metrics)
-        optimized_code = cls._generate_deterministic_transformation(code, user_prompt)
+        # Fallback to authentic deterministic transformation if no model key or call failed
+        if not optimized_code:
+            optimized_code = cls._generate_deterministic_transformation(code, user_prompt)
 
         overall_msg = (
-            f"Rule-Based Multi-Reviewer Council review complete: Average score {avg_score:.1f}/100. "
+            f"Review complete ({council_mode}): Average score {avg_score:.1f}/100. "
             + ("All 7 critics approved your code." if all_passed else f"{sum(1 for c in critics_results if not c.passed)} critics flagged anti-patterns in the submitted code.")
         )
 
@@ -370,7 +407,7 @@ class AntiBoilerplateCouncil:
             overall_feedback=overall_msg,
             optimized_code=optimized_code,
             security_token=security_token,
-            council_mode="DETERMINISTIC_RULE_BASED_COUNCIL",
+            council_mode=council_mode,
             model_provider_status=model_status
         )
 

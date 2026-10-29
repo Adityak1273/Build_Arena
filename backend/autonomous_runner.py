@@ -12,7 +12,10 @@ import uuid
 import asyncio
 from typing import List, Dict, Any, Optional, Callable
 import httpx
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+
+load_dotenv()
 
 from security import LocalIntentPolicyGate, IntentToken
 from verifier import OutcomeVerifier, HTMLMetadataParser
