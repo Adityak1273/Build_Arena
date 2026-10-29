@@ -454,3 +454,8 @@ class BridgeDispatchRequest(BaseModel):
 async def dispatch_browser_bridge_action(req: BridgeDispatchRequest):
     res = await browser_bridge.dispatch(req.action, req.params or {})
     return res
+
+# Mount static production build if available for seamless local deployment
+DIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
+if os.path.exists(DIST_DIR):
+    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="static")
