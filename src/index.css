@@ -2,55 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-[#F8FAFC] text-[#0F0F0F] antialiased;
-    font-family: 'Plus Jakarta Sans', Roboto, system-ui, -apple-system, sans-serif;
-    letter-spacing: -0.011em;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    letter-spacing: -0.025em;
-  }
-
-  code, pre {
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: normal;
-  }
+:root {
+  --forge-bg: #0a0d14;
+  --forge-surface: #111520;
+  --forge-elevated: #171c2b;
+  --forge-border: #23293d;
+  --forge-accent: #3b82f6;
+  --forge-accent-glow: rgba(59, 130, 246, 0.25);
+  --forge-emerald: #10b981;
+  --forge-amber: #f59e0b;
+  --forge-rose: #f43f5e;
+  --forge-purple: #8b5cf6;
+  --forge-muted: #8e9bb5;
+  --forge-text: #f1f5f9;
 }
 
-/* Modern Pill Tag & Chip Styles (YouTube Style) */
-.yt-chip {
-  @apply px-3 py-1 rounded-full text-xs font-semibold tracking-tight transition-all duration-150 inline-flex items-center gap-1.5;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--forge-bg);
+  color: var(--forge-text);
 }
 
-/* Custom smooth scrollbars */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--forge-surface);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
+  background: var(--forge-border);
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #36415d;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.985); }
-  to { opacity: 1; transform: scale(1); }
+/* Glassmorphism token utility */
+.forge-glass {
+  background: rgba(17, 21, 32, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--forge-border);
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.15s ease-out forwards;
+.forge-card {
+  background-color: var(--forge-surface);
+  border: 1px solid var(--forge-border);
+  border-radius: 0.75rem;
 }

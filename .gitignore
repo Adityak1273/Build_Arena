@@ -24,3 +24,7 @@ Thumbs.db
 .vscode/
 .idea/
 .vite/
+
+# Generated frame caches
+artifacts/frames/
+artifacts/cache/

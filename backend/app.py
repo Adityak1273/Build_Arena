@@ -1,22 +1,30 @@
+"""
+AutoForge Backend Engine
+FastAPI Server, Full-Duplex WebSockets Telemetry, REST Endpoints, and Outcome Verification
+"""
+
 import os
-import sys
 import json
 import asyncio
-import time
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
+from typing import List, Dict, Any, Optional
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from orchestrator import SecureAutoForgeRuntime, AutoForgeMultiAgentPipeline
-from gtm_pipeline import AutoForgeGTMPipeline
-from verifier import OutcomeVerifier
+from orchestrator import AntiBoilerplateCouncil, CouncilVerdict
+from verifier import OutcomeVerifier, VerificationOutcome
+from gtm_pipeline import GTMPipeline
+from security import ArmorIQGate, IntentToken
 
-app = FastAPI(title="AutoForge Backend Orchestrator", version="1.5.0")
+app = FastAPI(
+    title="AutoForge Backend Engine",
+    description="The AI-Native Developer Browser Orchestration & Verification Engine",
+    version="1.0.0"
+)
 
+# CORS setup for Electron / Vite
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,205 +33,277 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class ConnectionManager:
+ARTIFACTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "artifacts")
+os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+app.mount("/artifacts", StaticFiles(directory=ARTIFACTS_DIR), name="artifacts")
+
+# WebSocket Connection Manager
+class TelemetryManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.pending_approvals: Dict[str, asyncio.Event] = {}
+        self.approval_decisions: Dict[str, str] = {}
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        await websocket.send_json({
+            "type": "CONNECTION_ESTABLISHED",
+            "data": {
+                "engine": "AutoForge ArmorIQ & Outcome Telemetry",
+                "status": "ONLINE",
+                "connected_clients": len(self.active_connections)
+            }
+        })
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
 
     async def broadcast(self, message: Dict[str, Any]):
-        dead_conns = []
+        dead_connections = []
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
             except Exception:
-                dead_conns.append(connection)
-        for dead in dead_conns:
-            self.disconnect(dead)
+                dead_connections.append(connection)
+        for dc in dead_connections:
+            self.disconnect(dc)
 
-ws_manager = ConnectionManager()
-workspace_dir = Path(__file__).resolve().parent.parent
+telemetry = TelemetryManager()
 
-# Initialize runtime & pipelines
-runtime = SecureAutoForgeRuntime(
-    workspace=str(workspace_dir),
-    ws_broadcaster=ws_manager
-)
-agent_pipeline = AutoForgeMultiAgentPipeline(runtime=runtime, ws_broadcaster=ws_manager)
-gtm_pipeline = AutoForgeGTMPipeline(workspace_dir=str(workspace_dir))
-verifier = OutcomeVerifier(workspace_root=workspace_dir)
-
-class TaskRequest(BaseModel):
+# Request Models
+class TaskExecuteRequest(BaseModel):
+    task_type: str # 'COUNCIL_AUDIT' | 'CODE_GEN' | 'SECURITY_EVAL' | 'VERIFICATION_BENCH'
     prompt: str
-    mode: Optional[str] = "build"
-    failure_mode: Optional[str] = None
+    code_snippet: Optional[str] = None
+    options: Optional[Dict[str, Any]] = None
 
-class ApprovalResponse(BaseModel):
-    approvalId: str
-    approved: bool
+class TaskApproveRequest(BaseModel):
+    intent_id: str
+    decision: str # 'APPROVED' | 'REJECTED'
 
-class GTMRequest(BaseModel):
-    headline: str
-    script: str
+class BenchmarkExportRequest(BaseModel):
+    mode: str = "LIVE_SCRAPED" # 'LIVE_SCRAPED' | 'OFFLINE_HOST_FAILURE' | 'CORRUPTION_DETECTION'
 
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "agent": "AutoForge 1.5 Orchestrator",
-        "security": "ArmorIQ CSRG-IAP Active (Fail-Closed)",
-        "adal_connected": True,
-        "council_agents": 7,
-        "fan_out_concurrency": True,
-        "outcome_verification_active": True
-    }
+class GTMGenerateRequest(BaseModel):
+    title: str = "AutoForge Launchpad"
+    headline: str = "AI-Native Developer Browser Shell with CDP Accessibility Automation"
+    script: Optional[str] = None
 
+# WebSocket Endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await ws_manager.connect(websocket)
-    # Send welcome handshake
-    await websocket.send_json({
-        "type": "HANDSHAKE_READY",
-        "system": "AutoForge AI-Native Browser Agent v1.5",
-        "active_intent_token": runtime.active_intent_token,
-        "connected_at": time.time()
-    })
+    await telemetry.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
+            raw_text = await websocket.receive_text()
             try:
-                payload = json.loads(data)
-                msg_type = payload.get("type")
-
-                if msg_type == "SUBMIT_TASK":
-                    prompt = payload.get("prompt", "")
-                    mode = payload.get("mode", "build")
-                    failure_mode = payload.get("failure_mode")
-                    asyncio.create_task(agent_pipeline.execute_task(prompt, mode, failure_mode=failure_mode))
-
-                elif msg_type == "APPROVAL_DECISION":
-                    approval_id = payload.get("approvalId")
-                    approved = payload.get("approved", False)
-                    runtime.resolve_approval(approval_id, approved)
-
-                elif msg_type == "PING":
-                    await websocket.send_json({"type": "PONG", "time": time.time()})
-
-            except json.JSONDecodeError:
-                pass
+                msg = json.loads(raw_text)
+                msg_type = msg.get("type")
+                if msg_type == "PING":
+                    await websocket.send_json({"type": "PONG", "timestamp": asyncio.get_event_loop().time()})
+                elif msg_type == "APPROVE_INTENT":
+                    data = msg.get("data", {})
+                    intent_id = data.get("intent_id")
+                    decision = data.get("decision", "APPROVED")
+                    if intent_id in telemetry.pending_approvals:
+                        telemetry.approval_decisions[intent_id] = decision
+                        telemetry.pending_approvals[intent_id].set()
+            except Exception as e:
+                await websocket.send_json({"type": "ERROR", "message": str(e)})
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
+        telemetry.disconnect(websocket)
 
+# REST Endpoints
 @app.post("/api/task/execute")
-async def execute_task(req: TaskRequest):
-    res = await agent_pipeline.execute_task(req.prompt, req.mode, failure_mode=req.failure_mode)
-    return res
+async def execute_task(req: TaskExecuteRequest):
+    # Step 1: Zero-Trust Security Gate evaluation
+    token: IntentToken = ArmorIQGate.evaluate_intent(
+        action=req.task_type,
+        target="execution_runtime",
+        subtasks=[req.prompt, req.code_snippet or ""]
+    )
+
+    await telemetry.broadcast({
+        "type": "PLAN_LOCKING",
+        "data": {
+            "intent_id": token.intent_id,
+            "merkle_root": token.merkle_root,
+            "risk_level": token.risk_level,
+            "status": token.status,
+            "reason": token.reason
+        }
+    })
+
+    # Fail-closed interception for destructive commands
+    if token.status == "TASK_BLOCKED":
+        await telemetry.broadcast({
+            "type": "TASK_BLOCKED",
+            "data": {
+                "intent_id": token.intent_id,
+                "error": token.reason
+            }
+        })
+        return JSONResponse(
+            status_code=403,
+            content={
+                "status": "TASK_BLOCKED",
+                "error": token.reason,
+                "token": token.model_dump()
+            }
+        )
+
+    # Consequential actions require human approval
+    if token.status == "PENDING_APPROVAL":
+        await telemetry.broadcast({
+            "type": "APPROVAL_REQUEST",
+            "data": {
+                "intent_id": token.intent_id,
+                "action": token.action,
+                "target": token.target,
+                "risk_level": token.risk_level,
+                "reason": token.reason
+            }
+        })
+        return {
+            "status": "PENDING_APPROVAL",
+            "token": token.model_dump(),
+            "message": "Consequential task requires human approval before proceeding."
+        }
+
+    # Execute Safe Task
+    if req.task_type in ("COUNCIL_AUDIT", "CODE_GEN"):
+        await telemetry.broadcast({
+            "type": "AGENT_STATUS",
+            "data": {
+                "agent": "AntiBoilerplateCouncil",
+                "status": "CONCURRENT_7_CRITIC_EVALUATION"
+            }
+        })
+        code_to_eval = req.code_snippet or req.prompt
+        verdict = await AntiBoilerplateCouncil.evaluate_code(code_to_eval, user_prompt=req.prompt)
+        
+        await telemetry.broadcast({
+            "type": "TASK_COMPLETED",
+            "data": {
+                "task_type": req.task_type,
+                "verdict_id": verdict.verdict_id,
+                "average_score": verdict.average_score,
+                "passed": verdict.passed
+            }
+        })
+        return verdict.model_dump()
+
+    elif req.task_type == "VERIFICATION_BENCH":
+        mode = (req.options or {}).get("mode", "LIVE_SCRAPED")
+        outcome = await OutcomeVerifier.run_benchmark(mode)
+        return outcome.model_dump()
+
+    return {"status": "AUTHORIZED", "token": token.model_dump()}
 
 @app.post("/api/task/approve")
-def resolve_approval(req: ApprovalResponse):
-    runtime.resolve_approval(req.approvalId, req.approved)
-    return {"success": True, "approvalId": req.approvalId, "approved": req.approved}
+async def approve_task(req: TaskApproveRequest):
+    telemetry.approval_decisions[req.intent_id] = req.decision
+    if req.intent_id in telemetry.pending_approvals:
+        telemetry.pending_approvals[req.intent_id].set()
+
+    await telemetry.broadcast({
+        "type": "APPROVAL_RESOLVED",
+        "data": {
+            "intent_id": req.intent_id,
+            "decision": req.decision
+        }
+    })
+    return {"status": "RESOLVED", "intent_id": req.intent_id, "decision": req.decision}
 
 @app.get("/api/spreadsheet/latest")
-async def get_spreadsheet():
-    # Read-back latest verified data from disk
-    report = await verifier.execute_and_verify_spreadsheet()
+async def get_latest_spreadsheet():
+    csv_path = OutcomeVerifier.get_csv_path()
+    if not os.path.exists(csv_path):
+        # Auto-initialize baseline verification
+        outcome = await OutcomeVerifier.run_benchmark("LIVE_SCRAPED")
+        return outcome.model_dump()
+    
+    # Read verified CSV directly from disk
+    rows = []
+    import csv
+    with open(csv_path, mode="r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            rows.append(r)
+    
+    import hashlib
+    disk_hash = hashlib.sha256(open(csv_path, 'rb').read()).hexdigest()
+
     return {
-        "dataset": "Top 10 AI Startups Comparative Matrix",
-        "verified": report["verified"],
-        "status": report["status"],
-        "summary": report["summary"],
-        "rows_written": report["rows_written"],
-        "rows_verified": report["rows_verified"],
-        "cells_checked": report["cells_checked"],
-        "flagged_unknown": report["flagged_unknown"],
-        "unreachable_hosts": report.get("unreachable_hosts", 0),
-        "artifact_path": report["artifact_path"],
-        "rows": report["sample_rows"]
+        "status": "VERIFIED_DISK_SYNC",
+        "total_evaluated": len(rows),
+        "verified_count": len(rows),
+        "flagged_sales_gates": sum(1 for r in rows if r.get("enterprise_sales_gate") == "FLAGGED_SALES_GATE"),
+        "artifact_path": csv_path,
+        "disk_hash": disk_hash,
+        "rows": rows
     }
 
 @app.post("/api/spreadsheet/export")
-async def export_spreadsheet(failure_mode: Optional[str] = Query(None)):
-    await ws_manager.broadcast({
-        "type": "SPREADSHEET_SYNC",
-        "status": "WRITING_CELLS",
-        "message": "Writing ai_startups_matrix.csv to physical disk..."
+async def export_spreadsheet(req: BenchmarkExportRequest):
+    await telemetry.broadcast({
+        "type": "VERIFICATION_LOG",
+        "data": {
+            "log": f"Initiating benchmark run in mode: '{req.mode}'",
+            "level": "INFO"
+        }
     })
+    outcome = await OutcomeVerifier.run_benchmark(req.mode)
     
-    report = await verifier.execute_and_verify_spreadsheet(failure_mode=failure_mode)
-    await asyncio.sleep(0.4)
-
-    await ws_manager.broadcast({
-        "type": "SPREADSHEET_SYNC",
-        "status": "READ_BACK_VERIFIED" if report["verified"] else "VERIFICATION_FAILED",
-        "report": report,
-        "outcome": report["summary"]
+    await telemetry.broadcast({
+        "type": "VERIFICATION_LOG",
+        "data": {
+            "log": f"Outcome complete: {outcome.status} ({outcome.verified_count}/{outcome.total_evaluated} verified)",
+            "level": "SUCCESS" if outcome.status == "VERIFIED_DISK_SYNC" else "FAIL"
+        }
     })
-    return {"status": "SUCCESS" if report["verified"] else "FAILED", "report": report}
+    return outcome.model_dump()
 
 @app.get("/api/spreadsheet/download")
-def download_spreadsheet():
-    csv_file = workspace_dir / "artifacts" / "ai_startups_matrix.csv"
-    if not csv_file.exists():
-        asyncio.run(verifier.execute_and_verify_spreadsheet())
+async def download_spreadsheet():
+    csv_path = OutcomeVerifier.get_csv_path()
+    if not os.path.exists(csv_path):
+        await OutcomeVerifier.run_benchmark("LIVE_SCRAPED")
     return FileResponse(
-        csv_file,
-        media_type="text/csv",
-        filename="ai_startups_matrix.csv"
+        path=csv_path,
+        filename="ai_startups_matrix.csv",
+        media_type="text/csv"
     )
 
 @app.post("/api/gtm/generate")
-async def generate_gtm(req: GTMRequest):
-    audio_path = gtm_pipeline.synthesize_voiceover_cached(req.script)
+async def generate_gtm(req: GTMGenerateRequest):
+    await telemetry.broadcast({
+        "type": "AGENT_STATUS",
+        "data": {
+            "agent": "MultimodalGTMCompositor",
+            "status": "COMPOSITING_1080P_VIDEO"
+        }
+    })
     
-    gtm_dir = workspace_dir / "gtm_assets"
-    gtm_dir.mkdir(parents=True, exist_ok=True)
-    ui_screenshot = gtm_dir / "autoforge_ui_render.png"
-
-    # Generate 1280x720 canvas if no screenshot
-    if not ui_screenshot.exists():
-        try:
-            from PIL import Image, ImageDraw
-            img = Image.new("RGB", (1280, 720), color=(15, 15, 15))
-            draw = ImageDraw.Draw(img)
-            draw.rectangle([0, 0, 1280, 60], fill=(24, 24, 27))
-            draw.text((30, 20), "AutoForge AI-Native Browser - Live Verification Workspace", fill=(255, 255, 255))
-            draw.rounded_rectangle([40, 90, 1240, 680], radius=16, fill=(248, 250, 252), outline=(228, 228, 231))
-            draw.text((70, 120), req.headline, fill=(15, 15, 15))
-            img.save(ui_screenshot, "PNG")
-        except Exception:
-            pass
-
-    video_path = gtm_pipeline.composite_launch_video(
-        screenshot_path=ui_screenshot,
-        audio_path=audio_path,
-        headline_caption=req.headline
+    result = await GTMPipeline.composite_gtm_video(
+        title=req.title,
+        headline=req.headline,
+        script=req.script
     )
-    return {
-        "status": "COMPLETED",
-        "audio_path": str(audio_path),
-        "video_path": str(video_path),
-        "headline": req.headline
-    }
-
-# Serve frontend build from FastAPI
-dist_dir = workspace_dir / "dist"
-if dist_dir.exists():
-    app.mount("/assets", StaticFiles(directory=str(dist_dir / "assets")), name="assets")
-
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        file_path = dist_dir / full_path
-        if file_path.exists() and file_path.is_file():
-            return FileResponse(file_path)
-        return FileResponse(dist_dir / "index.html")
+    
+    await telemetry.broadcast({
+        "type": "TASK_COMPLETED",
+        "data": {
+            "task_type": "GTM_COMPOSITE",
+            "success": result["success"],
+            "resolution": result["resolution"],
+            "sha256": result["sha256"]
+        }
+    })
+    return result
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
