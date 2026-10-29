@@ -4,23 +4,37 @@
 
 @layer base {
   body {
-    @apply bg-[#F8FAFC] text-slate-800 antialiased;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-[#F8FAFC] text-[#0F0F0F] antialiased;
+    font-family: 'Plus Jakarta Sans', Roboto, system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
   code, pre {
-    font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: normal;
   }
 }
 
-/* Pastel theme scrollbars */
+/* Modern Pill Tag & Chip Styles (YouTube Style) */
+.yt-chip {
+  @apply px-3 py-1 rounded-full text-xs font-semibold tracking-tight transition-all duration-150 inline-flex items-center gap-1.5;
+}
+
+/* Custom smooth scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -33,7 +47,7 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
+  from { opacity: 0; transform: scale(0.985); }
   to { opacity: 1; transform: scale(1); }
 }
 

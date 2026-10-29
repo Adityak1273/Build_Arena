@@ -7,7 +7,23 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'Roboto', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
       colors: {
+        yt: {
+          black: '#0F0F0F',
+          dark: '#18181B',
+          gray: '#52525B',
+          muted: '#71717A',
+          subtle: '#A1A1AA',
+          border: '#E4E4E7',
+          chipBg: '#F4F4F5',
+          chipHover: '#E4E4E7',
+          blue: '#065FD4',
+          red: '#FF0033',
+        },
         pastel: {
           bg: '#F8FAFC',
           card: '#FFFFFF',
@@ -28,13 +44,6 @@ export default {
         card: '#111726',
         accent: '#6366f1',
         border: '#1f293d',
-        brand: {
-          blue: '#3b82f6',
-          purple: '#8b5cf6',
-          cyan: '#06b6d4',
-          orange: '#f97316',
-          green: '#10b981'
-        }
       }
     },
   },
