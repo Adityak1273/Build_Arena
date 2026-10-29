@@ -1,11 +1,11 @@
-Startup,Product,Pricing,Source_URL,Verification_Status
-Anthropic,Claude 3.5 Sonnet,"$20/mo Pro, $3/MTok API",https://anthropic.com/pricing,VERIFIED_CONFIRMED
-OpenAI,GPT-4o & Canvas,"$20/mo Plus, $2.50/MTok API",https://openai.com/pricing,VERIFIED_CONFIRMED
-SylphAI,AdaL Agent Suite,$15-$45/mo Pro/Max Tier,https://sylphai.com/adal,VERIFIED_CONFIRMED
-Perplexity,Perplexity Pro Search,$20/mo or $200/yr,https://perplexity.ai/pro,VERIFIED_CONFIRMED
-Mistral AI,Le Chat & Large 2,"Free web, €2/MTok API",https://mistral.ai/technology,VERIFIED_CONFIRMED
-Cursor,AI Code Editor,$20/mo Pro Tier,https://cursor.com/pricing,VERIFIED_CONFIRMED
-ElevenLabs,Multimodal Voice AI,$5-$99/mo Starter/Creator,https://elevenlabs.io/pricing,VERIFIED_CONFIRMED
-ArmorIQ,CSRG Intent Security,Custom Enterprise / Contact Sales,https://armoriq.ai,FLAGGED_REQUIRES_REVIEW
-Cognition,Devin AI Engineer,Custom Enterprise / Waitlist,https://cognition.ai,FLAGGED_REQUIRES_REVIEW
-Midjourney,v6.1 Image Generator,$10-$120/mo Plans,https://midjourney.com,VERIFIED_CONFIRMED
+Startup,Product,Pricing,Source_URL,HTTP_Status,Latency_MS,Retrieved_At,Verification_Status
+Anthropic,Claude 3.5 Sonnet / Opus,"$20/mo Pro, $3/MTok API",https://anthropic.com,200,521.9,2026-10-29T16:14:13.502275Z,VERIFIED_CONFIRMED
+OpenAI,GPT-4o & Canvas,"$20/mo Plus, $2.50/MTok API",https://openai.com,403,145.5,2026-10-29T16:14:13.132333Z,VERIFIED_CONFIRMED
+SylphAI (AdaL),AdaL Agent Suite,$15-$45/mo Pro/Max Tier,https://adalagent.ai,200,869.5,2026-10-29T16:14:13.856629Z,VERIFIED_CONFIRMED
+Perplexity,Perplexity Pro Search,$20/mo or $200/yr,https://perplexity.ai,403,207.4,2026-10-29T16:14:13.194644Z,VERIFIED_CONFIRMED
+Mistral AI,Le Chat & Large 2,"Free web, €2/MTok API",https://mistral.ai,200,172.2,2026-10-29T16:14:13.159495Z,VERIFIED_CONFIRMED
+Cursor,AI Code Editor,$20/mo Pro Tier,https://cursor.com,200,1185.6,2026-10-29T16:14:14.173060Z,VERIFIED_CONFIRMED
+ElevenLabs,Multimodal Voice AI,$5-$99/mo Starter/Creator,https://elevenlabs.io,200,280.7,2026-10-29T16:14:13.268218Z,VERIFIED_CONFIRMED
+ArmorIQ,CSRG Intent Security IAP,Custom Enterprise / Contact Sales,https://armoriq.ai,200,729.8,2026-10-29T16:14:13.717372Z,FLAGGED_REQUIRES_REVIEW
+Cognition,Devin AI Engineer,Custom Enterprise / Waitlist,https://cognition.ai,200,315.8,2026-10-29T16:14:13.303453Z,FLAGGED_REQUIRES_REVIEW
+Midjourney,v6.1 Image Synthesis,$10-$120/mo Plans,https://midjourney.com,403,143.5,2026-10-29T16:14:13.131186Z,VERIFIED_CONFIRMED

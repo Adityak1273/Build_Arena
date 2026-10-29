@@ -75,10 +75,17 @@ export class SemanticBrowserEngine {
     }
   }
 
-  public async verifyAndClickBackendNode(backendNodeId: number): Promise<{ verified: boolean; axDiffCount: number }> {
+  public async verifyAndClickBackendNode(backendNodeId: number): Promise<{ verified: boolean; axDiffCount: number; error?: string; urlChanged?: boolean }> {
+    const preUrl = this.webContents.getURL();
     const preTree = await this.captureFusedSemanticTree();
+    let clickDispatched = false;
+
     try {
       const { model }: any = await this.webContents.debugger.sendCommand('DOM.getBoxModel', { backendNodeId });
+      if (!model || !model.content) {
+        return { verified: false, axDiffCount: 0, error: `Node #${backendNodeId} has no computed box model geometry` };
+      }
+
       const x = (model.content[0] + model.content[2]) / 2;
       const y = (model.content[1] + model.content[5]) / 2;
 
@@ -88,14 +95,27 @@ export class SemanticBrowserEngine {
       await this.webContents.debugger.sendCommand('Input.dispatchMouseEvent', {
         type: 'mouseReleased', x, y, button: 'left', clickCount: 1,
       });
-    } catch (e) {
-      console.warn('[SemanticBrowserEngine] BoxModel click fallback:', e);
+      clickDispatched = true;
+    } catch (e: any) {
+      return { verified: false, axDiffCount: 0, error: `Click dispatch failed: ${e.message}` };
     }
 
+    // Wait for DOM mutation or navigation
     await new Promise((resolve) => setTimeout(resolve, 600));
+    
+    const postUrl = this.webContents.getURL();
     const postTree = await this.captureFusedSemanticTree();
     const axDiffCount = Math.abs(postTree.length - preTree.length);
+    const urlChanged = postUrl !== preUrl;
 
-    return { verified: true, axDiffCount };
+    // Observable postcondition assertion: either URL changed or accessibility tree mutated
+    const observableChange = urlChanged || axDiffCount > 0;
+
+    return {
+      verified: clickDispatched && observableChange,
+      axDiffCount,
+      urlChanged,
+      error: observableChange ? undefined : 'Click dispatched but no observable state change occurred in DOM or URL'
+    };
   }
 }

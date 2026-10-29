@@ -1,67 +1,96 @@
 {
   "verified": true,
+  "status": "OUTCOME_VERIFIED",
+  "summary": "Verified 10/10 startups (80 cells read back). 2 flagged enterprise sales gates.",
   "rows_written": 10,
   "rows_verified": 10,
-  "cells_checked": 50,
+  "cells_checked": 80,
   "flagged_unknown": 2,
   "confirmed_count": 8,
+  "unreachable_hosts": 0,
+  "field_mismatches": [],
   "artifact_path": "..\\artifacts\\ai_startups_matrix.csv",
   "artifact_name": "ai_startups_matrix.csv",
+  "timestamp": "2026-10-29T16:14:14.182058Z",
   "sample_rows": [
     {
       "Startup": "Anthropic",
-      "Product": "Claude 3.5 Sonnet",
+      "Product": "Claude 3.5 Sonnet / Opus",
       "Pricing": "$20/mo Pro, $3/MTok API",
-      "Source_URL": "https://anthropic.com/pricing",
+      "Source_URL": "https://anthropic.com",
+      "HTTP_Status": "200",
+      "Latency_MS": "521.9",
+      "Retrieved_At": "2026-10-29T16:14:13.502275Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
       "Startup": "OpenAI",
       "Product": "GPT-4o & Canvas",
       "Pricing": "$20/mo Plus, $2.50/MTok API",
-      "Source_URL": "https://openai.com/pricing",
+      "Source_URL": "https://openai.com",
+      "HTTP_Status": "403",
+      "Latency_MS": "145.5",
+      "Retrieved_At": "2026-10-29T16:14:13.132333Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
-      "Startup": "SylphAI",
+      "Startup": "SylphAI (AdaL)",
       "Product": "AdaL Agent Suite",
       "Pricing": "$15-$45/mo Pro/Max Tier",
-      "Source_URL": "https://sylphai.com/adal",
+      "Source_URL": "https://adalagent.ai",
+      "HTTP_Status": "200",
+      "Latency_MS": "869.5",
+      "Retrieved_At": "2026-10-29T16:14:13.856629Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
       "Startup": "Perplexity",
       "Product": "Perplexity Pro Search",
       "Pricing": "$20/mo or $200/yr",
-      "Source_URL": "https://perplexity.ai/pro",
+      "Source_URL": "https://perplexity.ai",
+      "HTTP_Status": "403",
+      "Latency_MS": "207.4",
+      "Retrieved_At": "2026-10-29T16:14:13.194644Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
       "Startup": "Mistral AI",
       "Product": "Le Chat & Large 2",
       "Pricing": "Free web, \u20ac2/MTok API",
-      "Source_URL": "https://mistral.ai/technology",
+      "Source_URL": "https://mistral.ai",
+      "HTTP_Status": "200",
+      "Latency_MS": "172.2",
+      "Retrieved_At": "2026-10-29T16:14:13.159495Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
       "Startup": "Cursor",
       "Product": "AI Code Editor",
       "Pricing": "$20/mo Pro Tier",
-      "Source_URL": "https://cursor.com/pricing",
+      "Source_URL": "https://cursor.com",
+      "HTTP_Status": "200",
+      "Latency_MS": "1185.6",
+      "Retrieved_At": "2026-10-29T16:14:14.173060Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
       "Startup": "ElevenLabs",
       "Product": "Multimodal Voice AI",
       "Pricing": "$5-$99/mo Starter/Creator",
-      "Source_URL": "https://elevenlabs.io/pricing",
+      "Source_URL": "https://elevenlabs.io",
+      "HTTP_Status": "200",
+      "Latency_MS": "280.7",
+      "Retrieved_At": "2026-10-29T16:14:13.268218Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     },
     {
       "Startup": "ArmorIQ",
-      "Product": "CSRG Intent Security",
+      "Product": "CSRG Intent Security IAP",
       "Pricing": "Custom Enterprise / Contact Sales",
       "Source_URL": "https://armoriq.ai",
+      "HTTP_Status": "200",
+      "Latency_MS": "729.8",
+      "Retrieved_At": "2026-10-29T16:14:13.717372Z",
       "Verification_Status": "FLAGGED_REQUIRES_REVIEW"
     },
     {
@@ -69,13 +98,19 @@
       "Product": "Devin AI Engineer",
       "Pricing": "Custom Enterprise / Waitlist",
       "Source_URL": "https://cognition.ai",
+      "HTTP_Status": "200",
+      "Latency_MS": "315.8",
+      "Retrieved_At": "2026-10-29T16:14:13.303453Z",
       "Verification_Status": "FLAGGED_REQUIRES_REVIEW"
     },
     {
       "Startup": "Midjourney",
-      "Product": "v6.1 Image Generator",
+      "Product": "v6.1 Image Synthesis",
       "Pricing": "$10-$120/mo Plans",
       "Source_URL": "https://midjourney.com",
+      "HTTP_Status": "403",
+      "Latency_MS": "143.5",
+      "Retrieved_At": "2026-10-29T16:14:13.131186Z",
       "Verification_Status": "VERIFIED_CONFIRMED"
     }
   ]

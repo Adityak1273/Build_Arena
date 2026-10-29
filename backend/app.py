@@ -5,7 +5,7 @@ import asyncio
 import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -15,7 +15,7 @@ from orchestrator import SecureAutoForgeRuntime, AutoForgeMultiAgentPipeline
 from gtm_pipeline import AutoForgeGTMPipeline
 from verifier import OutcomeVerifier
 
-app = FastAPI(title="AutoForge Backend Orchestrator", version="1.4.0")
+app = FastAPI(title="AutoForge Backend Orchestrator", version="1.5.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,6 +62,7 @@ verifier = OutcomeVerifier(workspace_root=workspace_dir)
 class TaskRequest(BaseModel):
     prompt: str
     mode: Optional[str] = "build"
+    failure_mode: Optional[str] = None
 
 class ApprovalResponse(BaseModel):
     approvalId: str
@@ -75,10 +76,11 @@ class GTMRequest(BaseModel):
 def health_check():
     return {
         "status": "healthy",
-        "agent": "AutoForge 1.4 Orchestrator",
+        "agent": "AutoForge 1.5 Orchestrator",
         "security": "ArmorIQ CSRG-IAP Active (Fail-Closed)",
         "adal_connected": True,
         "council_agents": 7,
+        "fan_out_concurrency": True,
         "outcome_verification_active": True
     }
 
@@ -88,7 +90,7 @@ async def websocket_endpoint(websocket: WebSocket):
     # Send welcome handshake
     await websocket.send_json({
         "type": "HANDSHAKE_READY",
-        "system": "AutoForge AI-Native Browser Agent v1.4",
+        "system": "AutoForge AI-Native Browser Agent v1.5",
         "active_intent_token": runtime.active_intent_token,
         "connected_at": time.time()
     })
@@ -102,7 +104,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 if msg_type == "SUBMIT_TASK":
                     prompt = payload.get("prompt", "")
                     mode = payload.get("mode", "build")
-                    asyncio.create_task(agent_pipeline.execute_task(prompt, mode))
+                    failure_mode = payload.get("failure_mode")
+                    asyncio.create_task(agent_pipeline.execute_task(prompt, mode, failure_mode=failure_mode))
 
                 elif msg_type == "APPROVAL_DECISION":
                     approval_id = payload.get("approvalId")
@@ -119,7 +122,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.post("/api/task/execute")
 async def execute_task(req: TaskRequest):
-    res = await agent_pipeline.execute_task(req.prompt, req.mode)
+    res = await agent_pipeline.execute_task(req.prompt, req.mode, failure_mode=req.failure_mode)
     return res
 
 @app.post("/api/task/approve")
@@ -128,43 +131,47 @@ def resolve_approval(req: ApprovalResponse):
     return {"success": True, "approvalId": req.approvalId, "approved": req.approved}
 
 @app.get("/api/spreadsheet/latest")
-def get_spreadsheet():
-    # Execute real read-back from disk
-    report = verifier.execute_and_verify_spreadsheet()
+async def get_spreadsheet():
+    # Read-back latest verified data from disk
+    report = await verifier.execute_and_verify_spreadsheet()
     return {
         "dataset": "Top 10 AI Startups Comparative Matrix",
         "verified": report["verified"],
-        "outcome_check": f"Disk read-back verified ({report['rows_verified']}/{report['rows_written']} rows, {report['cells_checked']} cells checked)",
+        "status": report["status"],
+        "summary": report["summary"],
+        "rows_written": report["rows_written"],
+        "rows_verified": report["rows_verified"],
+        "cells_checked": report["cells_checked"],
         "flagged_unknown": report["flagged_unknown"],
+        "unreachable_hosts": report.get("unreachable_hosts", 0),
         "artifact_path": report["artifact_path"],
         "rows": report["sample_rows"]
     }
 
 @app.post("/api/spreadsheet/export")
-async def export_spreadsheet():
-    # Real execution: write real CSV and verify readback
+async def export_spreadsheet(failure_mode: Optional[str] = Query(None)):
     await ws_manager.broadcast({
         "type": "SPREADSHEET_SYNC",
         "status": "WRITING_CELLS",
-        "message": "Writing ai_startups_matrix.csv to artifacts directory on disk..."
+        "message": "Writing ai_startups_matrix.csv to physical disk..."
     })
     
-    report = verifier.execute_and_verify_spreadsheet()
-    await asyncio.sleep(0.5)
+    report = await verifier.execute_and_verify_spreadsheet(failure_mode=failure_mode)
+    await asyncio.sleep(0.4)
 
     await ws_manager.broadcast({
         "type": "SPREADSHEET_SYNC",
-        "status": "READ_BACK_VERIFIED",
+        "status": "READ_BACK_VERIFIED" if report["verified"] else "VERIFICATION_FAILED",
         "report": report,
-        "outcome": f"Verified {report['rows_verified']} rows and {report['cells_checked']} cells. {report['flagged_unknown']} flagged requires review."
+        "outcome": report["summary"]
     })
-    return {"status": "SUCCESS", "report": report}
+    return {"status": "SUCCESS" if report["verified"] else "FAILED", "report": report}
 
 @app.get("/api/spreadsheet/download")
 def download_spreadsheet():
     csv_file = workspace_dir / "artifacts" / "ai_startups_matrix.csv"
     if not csv_file.exists():
-        verifier.execute_and_verify_spreadsheet()
+        asyncio.run(verifier.execute_and_verify_spreadsheet())
     return FileResponse(
         csv_file,
         media_type="text/csv",
@@ -179,13 +186,12 @@ async def generate_gtm(req: GTMRequest):
     gtm_dir.mkdir(parents=True, exist_ok=True)
     ui_screenshot = gtm_dir / "autoforge_ui_render.png"
 
-    # Generate a real 1280x720 preview canvas if no existing screenshot
+    # Generate 1280x720 canvas if no screenshot
     if not ui_screenshot.exists():
         try:
             from PIL import Image, ImageDraw
             img = Image.new("RGB", (1280, 720), color=(15, 15, 15))
             draw = ImageDraw.Draw(img)
-            # Draw header bar and UI card mockup
             draw.rectangle([0, 0, 1280, 60], fill=(24, 24, 27))
             draw.text((30, 20), "AutoForge AI-Native Browser - Live Verification Workspace", fill=(255, 255, 255))
             draw.rounded_rectangle([40, 90, 1240, 680], radius=16, fill=(248, 250, 252), outline=(228, 228, 231))
@@ -206,7 +212,7 @@ async def generate_gtm(req: GTMRequest):
         "headline": req.headline
     }
 
-# Serve frontend build from FastAPI directly
+# Serve frontend build from FastAPI
 dist_dir = workspace_dir / "dist"
 if dist_dir.exists():
     app.mount("/assets", StaticFiles(directory=str(dist_dir / "assets")), name="assets")
