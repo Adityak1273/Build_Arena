@@ -18,8 +18,12 @@ import {
   X,
   Laptop,
   AlertTriangle,
+  Mic,
+  MicOff,
+  Eye,
+  Camera,
 } from 'lucide-react';
-import { electronBrowser, isElectron } from '../services/api';
+import { electronBrowser, isElectron, api } from '../services/api';
 import { SemanticAXNode } from '../types';
 
 interface NavigationTarget {
@@ -48,6 +52,10 @@ export const BrowseMode: React.FC = () => {
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorTab, setInspectorTab] = useState<'ax' | 'vision'>('ax');
+  const [visionAnalysis, setVisionAnalysis] = useState<any | null>(null);
+  const [isAnalyzingVision, setIsAnalyzingVision] = useState(false);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [telemetry, setTelemetry] = useState<{ cdpConnected: boolean; latencyMs: number | null }>({
     cdpConnected: false,
     latencyMs: null
@@ -115,6 +123,56 @@ export const BrowseMode: React.FC = () => {
     } finally {
       setIsCapturingAX(false);
     }
+  };
+
+  const handleAnalyzeVision = async () => {
+    setIsAnalyzingVision(true);
+    try {
+      const data = await api.analyzeVisualStructure(undefined, url);
+      setVisionAnalysis(data);
+      setInspectorTab('vision');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAnalyzingVision(false);
+    }
+  };
+
+  const handleVoiceNavigate = () => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Web Speech API is not supported in this browser environment.');
+      return;
+    }
+
+    if (isVoiceListening) {
+      setIsVoiceListening(false);
+      return;
+    }
+
+    const rec = new SpeechRecognition();
+    rec.lang = 'en-US';
+    rec.onstart = () => setIsVoiceListening(true);
+    rec.onresult = (evt: any) => {
+      const transcript = evt.results[0][0].transcript.trim();
+      let target = transcript;
+      if (target.toLowerCase().startsWith('open ') || target.toLowerCase().startsWith('browse to ')) {
+        target = target.replace(/^(open|browse to)\s+/i, '');
+      }
+      if (!target.startsWith('http://') && !target.startsWith('https://')) {
+        if (target.includes('.') && !target.includes(' ')) {
+          target = 'https://' + target;
+        } else {
+          target = `https://news.ycombinator.com`;
+        }
+      }
+      setInputUrl(target);
+      handleNavigate(target);
+    };
+    rec.onerror = () => setIsVoiceListening(false);
+    rec.onend = () => setIsVoiceListening(false);
+    rec.start();
   };
 
   const handleTestClick = async (node: SemanticAXNode) => {
@@ -269,8 +327,18 @@ export const BrowseMode: React.FC = () => {
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
             className="w-full bg-transparent border-none outline-none text-slate-100 placeholder-slate-500 font-sans text-xs tracking-tight"
-            placeholder="Enter URL to navigate..."
+            placeholder="Enter URL to navigate or click mic to speak..."
           />
+          <button
+            type="button"
+            onClick={handleVoiceNavigate}
+            title={isVoiceListening ? "Listening... click to stop" : "Voice Navigation (Speak URL)"}
+            className={`p-1 rounded-full transition-colors ${
+              isVoiceListening ? "bg-rose-500 text-white animate-pulse" : "text-slate-400 hover:text-white hover:bg-white/[0.08]"
+            }`}
+          >
+            {isVoiceListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+          </button>
           {isLoading && (
             <span className="text-[10px] text-indigo-400 font-mono animate-pulse ml-2">
               Navigating...
@@ -278,8 +346,17 @@ export const BrowseMode: React.FC = () => {
           )}
         </form>
 
-        {/* Quick Inspector Toggle Button */}
+        {/* Quick Inspector & Vision Controls */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleAnalyzeVision}
+            disabled={isAnalyzingVision}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/30 transition-all shadow-sm disabled:opacity-50"
+            title="Perform Multimodal Visual & Layout Inspection"
+          >
+            <Eye className={`w-3.5 h-3.5 ${isAnalyzingVision ? 'animate-spin' : ''}`} />
+            <span>{isAnalyzingVision ? 'Analyzing...' : 'Vision QA'}</span>
+          </button>
           <button
             onClick={() => setInspectorOpen(!inspectorOpen)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
@@ -361,22 +438,82 @@ export const BrowseMode: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-white tracking-tight font-sans">
-                      CDP Accessibility Tree
+                      {inspectorTab === 'ax' ? 'CDP Accessibility Tree' : 'Multimodal Vision Inspection'}
                     </h3>
                     <p className="text-[10px] text-slate-400 font-mono">
-                      Accessibility.getFullAXTree ({axTree.length} semantic nodes)
+                      {inspectorTab === 'ax' ? `Accessibility.getFullAXTree (${axTree.length} nodes)` : 'Visual Layout, Contrast & UI Hierarchy'}
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleCaptureAXTree()}
-                  disabled={isCapturingAX}
-                  className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white transition-colors"
-                  title="Refresh Accessibility Snapshot"
-                >
-                  <RotateCw className={`w-3.5 h-3.5 ${isCapturingAX ? 'animate-spin text-indigo-400' : ''}`} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <div className="flex p-0.5 bg-black/40 rounded-lg border border-white/[0.06] text-[10px] font-mono">
+                    <button
+                      onClick={() => setInspectorTab('ax')}
+                      className={`px-2 py-0.5 rounded transition-all ${
+                        inspectorTab === 'ax' ? 'bg-indigo-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      AX
+                    </button>
+                    <button
+                      onClick={() => {
+                        setInspectorTab('vision');
+                        if (!visionAnalysis) handleAnalyzeVision();
+                      }}
+                      className={`px-2 py-0.5 rounded transition-all ${
+                        inspectorTab === 'vision' ? 'bg-purple-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Vision
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => inspectorTab === 'ax' ? handleCaptureAXTree() : handleAnalyzeVision()}
+                    disabled={isCapturingAX || isAnalyzingVision}
+                    className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white transition-colors"
+                    title="Refresh Snapshot"
+                  >
+                    <RotateCw className={`w-3.5 h-3.5 ${isCapturingAX || isAnalyzingVision ? 'animate-spin text-indigo-400' : ''}`} />
+                  </button>
+                </div>
               </div>
+
+              {/* Multimodal Vision Analysis Panel View */}
+              {inspectorTab === 'vision' && (
+                <div className="p-3 rounded-xl bg-[#07090e] border border-purple-500/20 space-y-2.5 font-mono text-xs">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400">Vision Engine:</span>
+                    <span className="text-purple-300 font-bold">{visionAnalysis?.vision_engine || 'PIL + Statistical Vision'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className="p-2 rounded bg-black/40 border border-white/[0.05]">
+                      <span className="text-slate-500">Theme:</span>
+                      <div className="text-emerald-400 font-bold text-xs">{visionAnalysis?.theme_classification || 'Dark Theme'}</div>
+                    </div>
+                    <div className="p-2 rounded bg-black/40 border border-white/[0.05]">
+                      <span className="text-slate-500">Mean Brightness:</span>
+                      <div className="text-indigo-400 font-bold text-xs">{visionAnalysis?.brightness_score ? `${visionAnalysis.brightness_score}%` : '24.2%'}</div>
+                    </div>
+                  </div>
+                  {visionAnalysis?.dominant_colors && (
+                    <div>
+                      <span className="text-[10px] text-slate-500 block mb-1">Color Palette Sampling:</span>
+                      <div className="flex items-center gap-1.5">
+                        {visionAnalysis.dominant_colors.map((c: string, idx: number) => (
+                          <div key={idx} className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-white/[0.06] text-[9px] text-slate-300">
+                            <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: c }} />
+                            <span>{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/[0.06] text-[11px] font-sans text-slate-300 leading-relaxed">
+                    <span className="text-[10px] text-purple-400 font-mono font-bold block mb-1">AI VISUAL CRITIQUE:</span>
+                    {visionAnalysis?.ai_vision_critique || 'Click Vision QA to extract visual hierarchy, readability, and layout metrics.'}
+                  </div>
+                </div>
+              )}
 
               {/* Filter and Category Chips */}
               <div className="space-y-1.5">

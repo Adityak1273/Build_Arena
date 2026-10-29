@@ -170,5 +170,32 @@ export const api = {
       body: JSON.stringify({ plan_id: planId })
     });
     return await res.json();
+  },
+
+  // Multimodal Intelligence Services (Images, Audio, Video)
+  generateImageBanner: async (title: string, tagline: string, badge?: string, theme?: string) => {
+    const res = await fetch(`${API_BASE}/api/multimodal/image/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, tagline, badge: badge || 'GTM CAMPAIGN', theme: theme || 'indigo' })
+    });
+    if (!res.ok) throw new Error('Failed to generate creative banner');
+    return await res.json();
+  },
+
+  analyzeVisualStructure: async (imageBase64?: string, contextUrl?: string) => {
+    const res = await fetch(`${API_BASE}/api/multimodal/image/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_base64: imageBase64, context_url: contextUrl || '' })
+    });
+    if (!res.ok) throw new Error('Visual analysis failed');
+    return await res.json();
+  },
+
+  analyzeAudioTrack: async () => {
+    const res = await fetch(`${API_BASE}/api/multimodal/audio/analyze`);
+    if (!res.ok) throw new Error('Audio track analysis failed');
+    return await res.json();
   }
 };

@@ -25,6 +25,7 @@ from verifier import OutcomeVerifier, VerificationOutcome
 from gtm_pipeline import GTMPipeline
 from security import LocalIntentPolicyGate, IntentToken
 from autonomous_runner import AutonomousRunner, AutonomousPlanResult
+from multimodal import MultimodalEngine
 
 app = FastAPI(
     title="AutoForge Backend Engine",
@@ -162,6 +163,16 @@ class AutonomousPlanRequest(BaseModel):
 
 class AutonomousCancelRequest(BaseModel):
     plan_id: str
+
+class ImageGenerateRequest(BaseModel):
+    title: str = "AutoForge Launchpad"
+    tagline: str = "AI-Native Browser & Autonomous Multimodal Companion"
+    badge: str = "GTM CAMPAIGN"
+    theme: str = "indigo"
+
+class ImageAnalyzeRequest(BaseModel):
+    image_base64: Optional[str] = None
+    context_url: str = ""
 
 # WebSocket Endpoint
 @app.websocket("/ws")
@@ -569,6 +580,27 @@ async def browser_preview_ax(url: str = "https://news.ycombinator.com"):
             return {"nodes": parser.nodes[:40], "mode": "HTML_PARSER_PREVIEW"}
     except Exception:
         return {"nodes": [], "mode": "HTML_PARSER_PREVIEW"}
+
+# Multimodal Intelligence Endpoints (Point 3: Image, Audio, Video)
+@app.post("/api/multimodal/image/generate")
+async def generate_creative_banner(req: ImageGenerateRequest):
+    return await MultimodalEngine.generate_creative_banner(
+        title=req.title,
+        tagline=req.tagline,
+        badge=req.badge,
+        theme=req.theme
+    )
+
+@app.post("/api/multimodal/image/analyze")
+async def analyze_visual_structure(req: ImageAnalyzeRequest):
+    return await MultimodalEngine.analyze_visual_structure(
+        image_base64=req.image_base64,
+        context_url=req.context_url
+    )
+
+@app.get("/api/multimodal/audio/analyze")
+async def analyze_audio_track():
+    return await MultimodalEngine.analyze_audio_track()
 
 # Mount static production build if available for seamless local deployment
 DIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
