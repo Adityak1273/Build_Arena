@@ -35,13 +35,23 @@ export const electronBrowser = {
     if (window.electronAPI) {
       return await window.electronAPI.navigate(url);
     }
-    return { success: false, url, error: 'ELECTRON_SHELL_DETACHED' };
+    return { success: true, url, mode: 'WEB_PREVIEW' };
   },
-  captureAXTree: async (): Promise<SemanticAXNode[]> => {
+  captureAXTree: async (targetUrl?: string): Promise<SemanticAXNode[]> => {
     if (window.electronAPI) {
       return await window.electronAPI.captureAXTree();
     }
-    // Zero fake nodes in preview mode
+    // Web preview mode: call /api/browser/preview/ax
+    try {
+      const u = targetUrl || 'https://news.ycombinator.com';
+      const res = await fetch(`${API_BASE}/api/browser/preview/ax?url=${encodeURIComponent(u)}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.nodes || [];
+      }
+    } catch {
+      // ignore
+    }
     return [];
   },
   clickBackendNode: async (backendDOMNodeId: number) => {

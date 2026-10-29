@@ -89,19 +89,20 @@ export const BrowseMode: React.FC = () => {
         setInputUrl(res.url);
       }
       setTimeout(() => {
-        handleCaptureAXTree();
+        handleCaptureAXTree(dest);
         checkTelemetry();
         setIsLoading(false);
-      }, 1000);
+      }, 800);
     } catch {
       setIsLoading(false);
     }
   };
 
-  const handleCaptureAXTree = async () => {
+  const handleCaptureAXTree = async (targetUrl?: string) => {
     setIsCapturingAX(true);
     try {
-      const tree = await electronBrowser.captureAXTree();
+      const active = targetUrl || url;
+      const tree = await electronBrowser.captureAXTree(active);
       setAxTree(tree);
       if (tree.length > 0) {
         setSelectedNode(tree[0]);
@@ -315,12 +316,15 @@ export const BrowseMode: React.FC = () => {
 
       {/* Preview Mode Notification Banner when outside Electron */}
       {!isElectron() && (
-        <div className="px-4 py-2 bg-amber-950/40 border-b border-amber-800/40 text-amber-300 text-xs flex items-center justify-between">
+        <div className="px-4 py-2 bg-indigo-950/40 border-b border-indigo-800/40 text-indigo-200 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2 font-mono">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>Web Preview Mode: Electron Chromium Shell & CDP 1.3 debugger are detached.</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-semibold text-emerald-300">Web Preview Active:</span>
+            <span>Local reader proxy enabled. Live semantic accessibility tree extracted via HTML parser.</span>
           </div>
-          <span className="text-[10px] text-amber-400/80">Launch with `npm start` for full hardware CDP automation</span>
+          <span className="text-[11px] font-mono text-slate-400 bg-white/[0.04] px-2.5 py-0.5 rounded border border-white/[0.08]">
+            For hardware CDP 1.3 inspection, switch to the running Electron app window
+          </span>
         </div>
       )}
 
@@ -338,10 +342,9 @@ export const BrowseMode: React.FC = () => {
             />
           ) : (
             <iframe
-              src={url}
+              src={`http://127.0.0.1:8000/api/browser/preview?url=${encodeURIComponent(url)}`}
               title="AutoForge Browser Frame"
               className="w-full h-full border-none bg-white"
-              sandbox="allow-scripts allow-same-origin allow-forms"
             />
           )}
         </div>
@@ -366,7 +369,7 @@ export const BrowseMode: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={handleCaptureAXTree}
+                  onClick={() => handleCaptureAXTree()}
                   disabled={isCapturingAX}
                   className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white transition-colors"
                   title="Refresh Accessibility Snapshot"

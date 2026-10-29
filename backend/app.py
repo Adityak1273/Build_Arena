@@ -11,7 +11,7 @@ import asyncio
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -454,6 +454,116 @@ class BridgeDispatchRequest(BaseModel):
 async def dispatch_browser_bridge_action(req: BridgeDispatchRequest):
     res = await browser_bridge.dispatch(req.action, req.params or {})
     return res
+
+# Web Preview Endpoints (Eliminates X-Frame-Options blocking in standard browsers)
+@app.get("/api/browser/preview")
+async def browser_preview(url: str = "https://news.ycombinator.com"):
+    """
+    Renders clean HTML for web preview mode in standard browsers without X-Frame-Options blocking.
+    """
+    target = url.strip()
+    if not target.startswith("http://") and not target.startswith("https://"):
+        target = "https://" + target
+
+    try:
+        async with httpx.AsyncClient(verify=True, timeout=5.0, follow_redirects=True) as client:
+            resp = await client.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+            html_text = resp.text
+            base_tag = f'<base href="{target}">'
+            if "<head>" in html_text:
+                html_text = html_text.replace("<head>", f"<head>{base_tag}", 1)
+            elif "<html>" in html_text:
+                html_text = html_text.replace("<html>", f"<html><head>{base_tag}</head>", 1)
+
+            response = HTMLResponse(content=html_text, status_code=resp.status_code)
+            response.headers["X-Frame-Options"] = "ALLOWALL"
+            response.headers["Content-Security-Policy"] = "frame-ancestors *;"
+            return response
+    except Exception as e:
+        error_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: -apple-system, sans-serif; background: #0c1018; color: #f1f5f9; padding: 40px; text-align: center; }}
+                .card {{ max-width: 500px; margin: 40px auto; padding: 28px; background: #131926; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }}
+                h2 {{ color: #f43f5e; font-size: 18px; margin-bottom: 8px; }}
+                p {{ color: #94a3b8; font-size: 13px; line-height: 1.5; }}
+                .tag {{ display: inline-block; padding: 6px 12px; background: rgba(244,63,94,0.15); color: #fda4af; border-radius: 8px; font-size: 11px; margin-top: 14px; font-family: monospace; }}
+                .btn {{ display: inline-block; margin-top: 18px; padding: 8px 18px; background: #6366f1; color: white; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 600; }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h2>Target Site Unreachable in Web Preview</h2>
+                <p>Could not fetch <strong>{target}</strong> due to network timeout or connection reset.</p>
+                <div class="tag">{type(e).__name__}: {str(e)[:60]}</div>
+                <br>
+                <a href="javascript:location.reload()" class="btn">Retry Navigation</a>
+            </div>
+        </body>
+        </html>
+        """
+        err_resp = HTMLResponse(content=error_html, status_code=200)
+        err_resp.headers["X-Frame-Options"] = "ALLOWALL"
+        err_resp.headers["Content-Security-Policy"] = "frame-ancestors *;"
+        return err_resp
+
+@app.get("/api/browser/preview/ax")
+async def browser_preview_ax(url: str = "https://news.ycombinator.com"):
+    """
+    Extracts semantic accessibility nodes from the HTML page for web preview mode.
+    """
+    target = url.strip()
+    if not target.startswith("http://") and not target.startswith("https://"):
+        target = "https://" + target
+
+    try:
+        from html.parser import HTMLParser
+        async with httpx.AsyncClient(verify=True, timeout=5.0, follow_redirects=True) as client:
+            resp = await client.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            
+            class SemanticHTMLParser(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.nodes = []
+                    self.node_id = 1
+                    self.current_tag = None
+                    self.current_text = []
+
+                def handle_starttag(self, tag, attrs):
+                    attr_dict = dict(attrs)
+                    role = attr_dict.get("role", tag).lower()
+                    if tag in ("button", "a", "h1", "h2", "h3", "input", "textarea", "select") or "role" in attr_dict:
+                        self.current_tag = {
+                            "nodeId": str(self.node_id),
+                            "backendDOMNodeId": self.node_id,
+                            "role": "link" if tag == "a" else "button" if tag == "button" else "heading" if tag.startswith("h") else role,
+                            "name": attr_dict.get("aria-label", attr_dict.get("title", "")),
+                            "value": attr_dict.get("value", "")
+                        }
+                        self.node_id += 1
+                        self.current_text = []
+
+                def handle_data(self, data):
+                    if self.current_tag is not None:
+                        self.current_text.append(data.strip())
+
+                def handle_endtag(self, tag):
+                    if self.current_tag is not None:
+                        text = " ".join([t for t in self.current_text if t]).strip()
+                        if not self.current_tag["name"] and text:
+                            self.current_tag["name"] = text[:60]
+                        if self.current_tag["name"]:
+                            self.nodes.append(self.current_tag)
+                        self.current_tag = None
+                        self.current_text = []
+
+            parser = SemanticHTMLParser()
+            parser.feed(resp.text[:120000])
+            return {"nodes": parser.nodes[:40], "mode": "HTML_PARSER_PREVIEW"}
+    except Exception:
+        return {"nodes": [], "mode": "HTML_PARSER_PREVIEW"}
 
 # Mount static production build if available for seamless local deployment
 DIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
