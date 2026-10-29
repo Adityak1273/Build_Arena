@@ -39,25 +39,25 @@ export function ModernTaskDashboard() {
   ]);
 
   return (
-    <div className="p-6 rounded-2xl bg-[#0f1523] border border-slate-800 shadow-2xl">
+    <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">AutoForge Task Matrix</h2>
-          <p className="text-xs text-slate-400">Continuous QA & Playwright Verified</p>
+          <h2 className="text-xl font-bold text-slate-800 tracking-tight">AutoForge Task Matrix</h2>
+          <p className="text-xs text-slate-500">Continuous QA & Playwright Verified</p>
         </div>
-        <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full text-xs font-mono">
+        <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-mono font-semibold">
           HTTP 200 • 0 Console Errors
         </span>
       </div>
 
       <div className="space-y-3">
         {tasks.map(t => (
-          <div key={t.id} className="p-3.5 rounded-xl bg-[#131b2e] border border-slate-700/50 flex items-center justify-between hover:border-indigo-500/50 transition">
+          <div key={t.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between hover:border-purple-300 transition">
             <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <span className="text-sm font-medium text-slate-200">{t.title}</span>
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <span className="text-sm font-semibold text-slate-800">{t.title}</span>
             </div>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300">
+            <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold">
               {t.priority}
             </span>
           </div>
@@ -68,15 +68,15 @@ export function ModernTaskDashboard() {
 }`;
 
   return (
-    <div className="flex flex-col h-full bg-[#090d16]">
-      {/* Top Action Ribbon */}
-      <div className="px-6 py-4 bg-[#0e1424] border-b border-slate-800 flex items-center justify-between">
-        <div className="flex-1 max-w-2xl flex items-center bg-[#131b30] border border-slate-700 rounded-xl px-4 py-2">
+    <div className="flex flex-col h-full bg-[#F8FAFC]">
+      {/* Top Action Ribbon (Pastel Theme) */}
+      <div className="px-6 py-3.5 bg-white border-b border-slate-200/80 flex items-center justify-between shadow-xs">
+        <div className="flex-1 max-w-2xl flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 shadow-inner">
           <input
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="w-full bg-transparent text-slate-200 text-xs outline-none"
+            className="w-full bg-transparent text-slate-800 text-xs outline-none font-medium"
             placeholder="Describe what to build or refine with Code Builder + Design Critic..."
           />
         </div>
@@ -85,7 +85,7 @@ export function ModernTaskDashboard() {
           <button
             onClick={() => onTriggerTask(prompt)}
             disabled={isProcessing}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-medium shadow-lg shadow-indigo-950 transition disabled:opacity-50"
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition disabled:opacity-50"
           >
             {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             <span>Run Critique Loop</span>
@@ -94,27 +94,33 @@ export function ModernTaskDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="px-6 py-2 bg-[#0b0f1c] border-b border-slate-800 flex items-center space-x-4 text-xs font-medium">
+      <div className="px-6 py-2.5 bg-slate-50/70 border-b border-slate-200 flex items-center space-x-3 text-xs font-semibold">
         <button
           onClick={() => setActiveTab('code')}
-          className={`pb-1.5 border-b-2 transition ${
-            activeTab === 'code' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+          className={`px-3 py-1.5 rounded-lg transition ${
+            activeTab === 'code' 
+              ? 'bg-white text-purple-900 shadow-xs border border-slate-200' 
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           Code Inspector (@src/components)
         </button>
         <button
           onClick={() => setActiveTab('critique')}
-          className={`pb-1.5 border-b-2 transition ${
-            activeTab === 'critique' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+          className={`px-3 py-1.5 rounded-lg transition ${
+            activeTab === 'critique' 
+              ? 'bg-purple-100 text-purple-900 shadow-xs border border-purple-200' 
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           Multi-Agent Critique Diff (Before vs After)
         </button>
         <button
           onClick={() => setActiveTab('preview')}
-          className={`pb-1.5 border-b-2 transition ${
-            activeTab === 'preview' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+          className={`px-3 py-1.5 rounded-lg transition ${
+            activeTab === 'preview' 
+              ? 'bg-emerald-100 text-emerald-900 shadow-xs border border-emerald-200' 
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           Live Localhost:3000 Preview
@@ -124,59 +130,71 @@ export function ModernTaskDashboard() {
       {/* Content Area */}
       <div className="flex-1 overflow-auto p-6">
         {activeTab === 'code' && (
-          <div className="h-full bg-[#0a0e1a] rounded-xl border border-slate-800 p-4 font-mono text-xs overflow-auto text-slate-300">
-            <div className="text-slate-500 mb-2">// AutoForge Code Builder - Generated & Checked with Playwright</div>
-            <pre className="text-emerald-300">{critiquedCode}</pre>
+          <div className="h-full bg-white rounded-2xl border border-slate-200 p-5 font-mono text-xs overflow-auto shadow-sm text-slate-800">
+            <div className="text-purple-700 font-semibold mb-2">// AutoForge Code Builder - Generated & Checked with Playwright</div>
+            <pre className="text-slate-800 leading-relaxed">{critiquedCode}</pre>
           </div>
         )}
 
         {activeTab === 'critique' && (
           <div className="grid grid-cols-2 gap-6 h-full">
-            <div className="flex flex-col bg-[#0b0f1c] rounded-xl border border-red-500/30 overflow-hidden">
-              <div className="p-3 bg-red-950/30 border-b border-red-500/20 text-xs font-semibold text-red-300 flex items-center justify-between">
+            <div className="flex flex-col bg-white rounded-2xl border border-rose-200 overflow-hidden shadow-xs">
+              <div className="p-3.5 bg-rose-50/80 border-b border-rose-100 text-xs font-bold text-rose-900 flex items-center justify-between">
                 <span>BEFORE: Generic AI Boilerplate</span>
-                <span className="text-[10px] px-2 py-0.5 bg-red-900/50 rounded">Rejected by Design Critic</span>
+                <span className="text-[10px] px-2.5 py-0.5 bg-rose-200/80 text-rose-900 font-semibold rounded-full">
+                  Rejected by Design Critic
+                </span>
               </div>
-              <pre className="p-4 font-mono text-xs text-red-200/80 overflow-auto flex-1">{boilerplateCode}</pre>
+              <pre className="p-4 font-mono text-xs text-rose-950 overflow-auto flex-1 bg-rose-50/20 leading-relaxed">
+                {boilerplateCode}
+              </pre>
             </div>
 
-            <div className="flex flex-col bg-[#0b0f1c] rounded-xl border border-emerald-500/40 overflow-hidden">
-              <div className="p-3 bg-emerald-950/30 border-b border-emerald-500/20 text-xs font-semibold text-emerald-300 flex items-center justify-between">
+            <div className="flex flex-col bg-white rounded-2xl border border-emerald-200 overflow-hidden shadow-xs">
+              <div className="p-3.5 bg-emerald-50/80 border-b border-emerald-100 text-xs font-bold text-emerald-900 flex items-center justify-between">
                 <span>AFTER: Polished Anti-Boilerplate UI</span>
-                <span className="text-[10px] px-2 py-0.5 bg-emerald-900/50 rounded">Approved & QA Passed</span>
+                <span className="text-[10px] px-2.5 py-0.5 bg-emerald-200/80 text-emerald-900 font-semibold rounded-full">
+                  Approved & QA Passed
+                </span>
               </div>
-              <pre className="p-4 font-mono text-xs text-emerald-300 overflow-auto flex-1">{critiquedCode}</pre>
+              <pre className="p-4 font-mono text-xs text-emerald-950 overflow-auto flex-1 bg-emerald-50/20 leading-relaxed">
+                {critiquedCode}
+              </pre>
             </div>
           </div>
         )}
 
         {activeTab === 'preview' && (
           <div className="max-w-2xl mx-auto mt-6">
-            <div className="p-6 rounded-2xl bg-[#0f1523] border border-slate-800 shadow-2xl">
+            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xl">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">AutoForge Task Matrix</h2>
-                  <p className="text-xs text-slate-400">Continuous QA & Playwright Verified</p>
+                  <h2 className="text-xl font-bold text-slate-800 tracking-tight">AutoForge Task Matrix</h2>
+                  <p className="text-xs text-slate-500">Continuous QA & Playwright Verified</p>
                 </div>
-                <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full text-xs font-mono">
+                <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-mono font-semibold">
                   HTTP 200 • 0 Console Errors
                 </span>
               </div>
 
               <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-[#131b2e] border border-slate-700/50 flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span className="text-sm font-medium text-slate-200">Verify CDP Accessibility Tree Extraction</span>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span className="text-sm font-semibold text-slate-800">Verify CDP Accessibility Tree Extraction</span>
                   </div>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300">Critical</span>
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold">
+                    Critical
+                  </span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-[#131b2e] border border-slate-700/50 flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span className="text-sm font-medium text-slate-200">Mint ArmorIQ CSRG Merkle Intent Token</span>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span className="text-sm font-semibold text-slate-800">Mint ArmorIQ CSRG Merkle Intent Token</span>
                   </div>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300">High</span>
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold">
+                    High
+                  </span>
                 </div>
               </div>
             </div>

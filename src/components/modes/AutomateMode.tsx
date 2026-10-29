@@ -39,15 +39,15 @@ export const AutomateMode: React.FC<AutomateModeProps> = ({ onTriggerTask, isPro
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#090d16]">
-      {/* Top Banner */}
-      <div className="px-6 py-4 bg-[#0e1424] border-b border-slate-800 flex items-center justify-between">
-        <div className="flex-1 max-w-2xl flex items-center bg-[#131b30] border border-slate-700 rounded-xl px-4 py-2">
+    <div className="flex flex-col h-full bg-[#F8FAFC]">
+      {/* Top Banner (Pastel Theme) */}
+      <div className="px-6 py-3.5 bg-white border-b border-slate-200/80 flex items-center justify-between shadow-xs">
+        <div className="flex-1 max-w-2xl flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 shadow-inner">
           <input
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="w-full bg-transparent text-slate-200 text-xs outline-none font-sans"
+            className="w-full bg-transparent text-slate-800 text-xs outline-none font-medium"
             placeholder="Describe autonomous workflow..."
           />
         </div>
@@ -56,14 +56,14 @@ export const AutomateMode: React.FC<AutomateModeProps> = ({ onTriggerTask, isPro
           <button
             onClick={() => onTriggerTask(prompt)}
             disabled={isProcessing}
-            className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-medium shadow-lg transition disabled:opacity-50"
+            className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition disabled:opacity-50"
           >
             {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             <span>Execute Workflow</span>
           </button>
           <button
             onClick={exportCSV}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 transition"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-xs transition"
           >
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
@@ -72,59 +72,59 @@ export const AutomateMode: React.FC<AutomateModeProps> = ({ onTriggerTask, isPro
       </div>
 
       {/* Outcome Verification Header */}
-      <div className="px-6 py-3 bg-[#0a0f1d] border-b border-slate-800 flex items-center justify-between text-xs">
+      <div className="px-6 py-3 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
-          <div className="p-1.5 bg-emerald-500/10 rounded text-emerald-400">
+          <div className="p-2 bg-emerald-100 rounded-xl text-emerald-700 shadow-xs">
             <FileSpreadsheet className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Pillar 1: 10 AI Startups Comparative Matrix</h3>
-            <p className="text-[11px] text-slate-400">Autonomous CDP Search & Verified Spreadsheet Ingestion</p>
+            <h3 className="font-bold text-slate-800">Pillar 1: 10 AI Startups Comparative Matrix</h3>
+            <p className="text-[11px] text-slate-500 font-medium">Autonomous CDP Search & Verified Spreadsheet Ingestion</p>
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-[11px] font-mono">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-900 text-[11px] font-semibold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>Cell Read-Back Verified (10/10)</span>
           </span>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 text-[11px] font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 border border-purple-200 text-purple-900 text-[11px] font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
             <span>ArmorIQ Write Token Approved</span>
           </span>
         </div>
       </div>
 
-      {/* Spreadsheet Table */}
+      {/* Spreadsheet Table in Pastel Card */}
       <div className="flex-1 overflow-auto p-6">
-        <div className="rounded-xl border border-slate-800 bg-[#0e1424] overflow-hidden shadow-2xl">
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#12192c] border-b border-slate-800 text-slate-300 font-semibold">
-                <th className="py-3 px-4 w-12 text-center">#</th>
-                <th className="py-3 px-4">Startup / Company</th>
-                <th className="py-3 px-4">Flagship Product</th>
-                <th className="py-3 px-4">Pricing Model</th>
-                <th className="py-3 px-4 text-center">Outcome Verification</th>
+              <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                <th className="py-3.5 px-4 w-12 text-center">#</th>
+                <th className="py-3.5 px-4">Startup / Company</th>
+                <th className="py-3.5 px-4">Flagship Product</th>
+                <th className="py-3.5 px-4">Pricing Model</th>
+                <th className="py-3.5 px-4 text-center">Outcome Verification</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80 text-slate-300">
+            <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
               {data.map((row, idx) => (
-                <tr key={idx} className="hover:bg-[#151f36] transition">
-                  <td className="py-3 px-4 text-center font-mono text-slate-500">{idx + 1}</td>
-                  <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
+                <tr key={idx} className="hover:bg-slate-50/60 transition">
+                  <td className="py-3 px-4 text-center font-mono text-slate-400">{idx + 1}</td>
+                  <td className="py-3 px-4 font-bold text-slate-900 flex items-center gap-2">
                     {row.startup}
-                    <ExternalLink className="w-3 h-3 text-slate-500 hover:text-indigo-400 cursor-pointer" />
+                    <ExternalLink className="w-3 h-3 text-slate-400 hover:text-indigo-600 cursor-pointer" />
                   </td>
-                  <td className="py-3 px-4 text-slate-300">{row.product}</td>
+                  <td className="py-3 px-4 text-slate-700">{row.product}</td>
                   <td className="py-3 px-4 font-mono text-xs">
-                    <span className={row.pricing.includes('Unknown') ? 'text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30' : 'text-slate-300'}>
+                    <span className={row.pricing.includes('Unknown') ? 'text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-200 font-semibold' : 'text-slate-700'}>
                       {row.pricing}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-500/30">
-                      <CheckCircle2 className="w-3 h-3" /> MATCHED
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> MATCHED
                     </span>
                   </td>
                 </tr>
