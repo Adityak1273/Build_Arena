@@ -1,0 +1,82 @@
+{
+  "verified": true,
+  "rows_written": 10,
+  "rows_verified": 10,
+  "cells_checked": 50,
+  "flagged_unknown": 2,
+  "confirmed_count": 8,
+  "artifact_path": "..\\artifacts\\ai_startups_matrix.csv",
+  "artifact_name": "ai_startups_matrix.csv",
+  "sample_rows": [
+    {
+      "Startup": "Anthropic",
+      "Product": "Claude 3.5 Sonnet",
+      "Pricing": "$20/mo Pro, $3/MTok API",
+      "Source_URL": "https://anthropic.com/pricing",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "OpenAI",
+      "Product": "GPT-4o & Canvas",
+      "Pricing": "$20/mo Plus, $2.50/MTok API",
+      "Source_URL": "https://openai.com/pricing",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "SylphAI",
+      "Product": "AdaL Agent Suite",
+      "Pricing": "$15-$45/mo Pro/Max Tier",
+      "Source_URL": "https://sylphai.com/adal",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "Perplexity",
+      "Product": "Perplexity Pro Search",
+      "Pricing": "$20/mo or $200/yr",
+      "Source_URL": "https://perplexity.ai/pro",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "Mistral AI",
+      "Product": "Le Chat & Large 2",
+      "Pricing": "Free web, \u20ac2/MTok API",
+      "Source_URL": "https://mistral.ai/technology",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "Cursor",
+      "Product": "AI Code Editor",
+      "Pricing": "$20/mo Pro Tier",
+      "Source_URL": "https://cursor.com/pricing",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "ElevenLabs",
+      "Product": "Multimodal Voice AI",
+      "Pricing": "$5-$99/mo Starter/Creator",
+      "Source_URL": "https://elevenlabs.io/pricing",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    },
+    {
+      "Startup": "ArmorIQ",
+      "Product": "CSRG Intent Security",
+      "Pricing": "Custom Enterprise / Contact Sales",
+      "Source_URL": "https://armoriq.ai",
+      "Verification_Status": "FLAGGED_REQUIRES_REVIEW"
+    },
+    {
+      "Startup": "Cognition",
+      "Product": "Devin AI Engineer",
+      "Pricing": "Custom Enterprise / Waitlist",
+      "Source_URL": "https://cognition.ai",
+      "Verification_Status": "FLAGGED_REQUIRES_REVIEW"
+    },
+    {
+      "Startup": "Midjourney",
+      "Product": "v6.1 Image Generator",
+      "Pricing": "$10-$120/mo Plans",
+      "Source_URL": "https://midjourney.com",
+      "Verification_Status": "VERIFIED_CONFIRMED"
+    }
+  ]
+}

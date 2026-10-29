@@ -4,10 +4,21 @@ contextBridge.exposeInMainWorld('autoForgeElectron', {
   navigate: (url: string) => ipcRenderer.invoke('browser:navigate', url),
   captureAXTree: () => ipcRenderer.invoke('browser:captureAXTree'),
   clickBackendNode: (backendNodeId: number) => ipcRenderer.invoke('browser:clickBackendNode', backendNodeId),
+  getMetrics: () => ipcRenderer.invoke('browser:getMetrics'),
   onBrowserUrlChange: (callback: (url: string) => void) => {
     const handler = (_event: any, url: string) => callback(url);
     ipcRenderer.on('browser:urlChanged', handler);
     return () => ipcRenderer.removeListener('browser:urlChanged', handler);
+  },
+  onDoNavigate: (callback: (url: string) => void) => {
+    const handler = (_event: any, url: string) => callback(url);
+    ipcRenderer.on('browser:doNavigate', handler);
+    return () => ipcRenderer.removeListener('browser:doNavigate', handler);
+  },
+  onLoadFailed: (callback: (data: any) => void) => {
+    const handler = (_event: any, data: any) => callback(data);
+    ipcRenderer.on('browser:loadFailed', handler);
+    return () => ipcRenderer.removeListener('browser:loadFailed', handler);
   },
   onAgentEvent: (callback: (data: any) => void) => {
     const handler = (_event: any, data: any) => callback(data);

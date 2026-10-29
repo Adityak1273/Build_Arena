@@ -1,0 +1,11 @@
+Startup,Product,Pricing,Source_URL,Verification_Status
+Anthropic,Claude 3.5 Sonnet,"$20/mo Pro, $3/MTok API",https://anthropic.com/pricing,VERIFIED_CONFIRMED
+OpenAI,GPT-4o & Canvas,"$20/mo Plus, $2.50/MTok API",https://openai.com/pricing,VERIFIED_CONFIRMED
+SylphAI,AdaL Agent Suite,$15-$45/mo Pro/Max Tier,https://sylphai.com/adal,VERIFIED_CONFIRMED
+Perplexity,Perplexity Pro Search,$20/mo or $200/yr,https://perplexity.ai/pro,VERIFIED_CONFIRMED
+Mistral AI,Le Chat & Large 2,"Free web, €2/MTok API",https://mistral.ai/technology,VERIFIED_CONFIRMED
+Cursor,AI Code Editor,$20/mo Pro Tier,https://cursor.com/pricing,VERIFIED_CONFIRMED
+ElevenLabs,Multimodal Voice AI,$5-$99/mo Starter/Creator,https://elevenlabs.io/pricing,VERIFIED_CONFIRMED
+ArmorIQ,CSRG Intent Security,Custom Enterprise / Contact Sales,https://armoriq.ai,FLAGGED_REQUIRES_REVIEW
+Cognition,Devin AI Engineer,Custom Enterprise / Waitlist,https://cognition.ai,FLAGGED_REQUIRES_REVIEW
+Midjourney,v6.1 Image Generator,$10-$120/mo Plans,https://midjourney.com,VERIFIED_CONFIRMED

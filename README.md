@@ -1,88 +1,85 @@
 # AutoForge — The AI-Native Developer Browser
 
 > **HackDriven Build Arena**: *Build an AI-Native Browser with an Autonomous Multimodal Companion Using AdaL*  
-> **Team:** Code Ninjas (Shashwat Shukla, Aditya Kumar, Shasmit Dwivedi, Pranjal Singh)
+> **Team:** Code Ninjas (Shashwat Shukla, Aditya Kumar, Shasmit Dwivedi, Pranjal Singh)  
+> **Current Version:** `v1.4` (Execution & Real Verification Milestone)
 
 ---
 
-## 🌟 Overview & Key Innovations
+## 🚀 Overview & Core Problem
 
-Current AI tools are fragmented across browser tabs and code editors, forcing developers into tedious copy-pasting, manual testing, and generic boilerplate templates.
+Traditional AI assistants generate code and text in isolation, forcing developers to manually switch between editors, browser tabs, terminal windows, and testing suites. Most generated applications rely on default templates, generic boilerplate, and unverified assumptions.
 
-**AutoForge** is a unified desktop AI-native browser with an autonomous multimodal companion that combines four interconnected modes:
-1. **BROWSE**: Operates live Chromium tabs via Chrome DevTools Protocol (CDP) Accessibility Tree extraction (`Accessibility.getFullAXTree`), reducing token usage by 64% and making web automation immune to CSS/DOM redesigns.
-2. **BUILD**: A multi-agent critique & auto-iteration loop where the **Code Builder Agent** and **Design Critic Agent** continuously refine UI code until generic boilerplate is eliminated.
-3. **AUTOMATE**: Autonomous multi-step web workflows with **closed-loop outcome verification** (e.g. researching 10 AI startups and reading back spreadsheet cells to verify accuracy).
-4. **CREATE**: An automated GTM multimodal studio using ElevenLabs for lifelike voiceovers (with SHA-256 caching) and FFmpeg for composited 1080p launch videos.
-
----
-
-## 🛡️ Zero-Trust Security: ArmorIQ Fail-Closed Intent Tokens
-
-AutoForge incorporates the **ArmorIQ SDK (CSRG-IAP)**:
-- **Merkle-tree intent tokens**: When a user submits an instruction, the Task Planner locks the execution graph and mints a cryptographically signed intent token (`capture_plan` -> `get_intent_token`).
-- **Fail-closed security**: Destructive commands (e.g., prompt injection targeting `rm -rf`, `DROP TABLE`, or `delete_database`) are blocked instantly.
-- **Human-in-the-Loop approval**: Consequential actions (spreadsheet writes, deployments, publications) trigger an interactive **Approve / Reject / Manual Takeover** modal.
+**AutoForge** is an AI-native desktop browser and multimodal workspace that unifies browsing, autonomous task execution, code generation, outcome verification, and GTM packaging:
+1. **BROWSE**: Native Chromium browser engine with live Chrome DevTools Protocol (CDP 1.3) Semantic Accessibility Tree extraction (`Accessibility.getFullAXTree`), making web interaction immune to fragile CSS/DOM redesigns.
+2. **BUILD**: A 7-Agent Anti-Boilerplate Council (Aesthetics, Architecture, Syntax, Security, Platform, Visual QA, GTM) that eliminates generic AI templates and enforces production-ready standards.
+3. **AUTOMATE**: Autonomous multi-step workflows with **independent outcome verification** (e.g., researching 10 AI startups, writing to a real CSV file on disk, and reading back every cell to verify accuracy and flag unknown pricing).
+4. **CREATE**: Multimodal GTM studio with ElevenLabs voiceovers (SHA-256 audio caching) and FFmpeg 1080p video compositing.
 
 ---
 
-## 🤖 Mandatory AdaL by Sylph (`SylphAI`) Integration
+## 🛡️ Zero-Trust Security: ArmorIQ CSRG Fail-Closed Gate
 
-AutoForge satisfies the mandatory AdaL hackathon criteria across two dimensions:
-
-### 1. Development & Iteration Workflow (Mandatory Submission Video)
-- Custom Skill File: [`.atskills/autoforge-ui-critic/SKILL.md`](.atskills/autoforge-ui-critic/SKILL.md) loaded via `adal /skills`.
-- Used `adal` in terminal with `@src/` for codebase understanding, component generation, and automated critique passes.
-- Leveraged AdaL's **Browser Use** to test `localhost:3000` with zero console errors and HTTP 200 checks.
-
-### 2. Runtime Agent Engine
-- Connects through `backend/orchestrator.py` via `adal_agent_sdk` with custom `can_use_tool` security hooks.
+AutoForge integrates the **ArmorIQ Canonical Structured Reasoning Graph (CSRG)**:
+- **Merkle-tree Intent Tokens**: Every plan is locked before execution, generating a signed intent token (`capture_plan` -> `get_intent_token`).
+- **Fail-Closed Policy**: Destructive commands (e.g., `rm -rf`, `delete_database`, `DROP TABLE`) are blocked immediately. The system halts and reports honest failure instead of claiming false success.
+- **Human-in-the-Loop Approval**: Consequential actions (file writes, database modifications, deployments) trigger an interactive **Approve / Reject / Manual Takeover** modal.
 
 ---
 
-## 🚀 Quick Start Guide
+## 📊 Benchmark Challenge 1: Spreadsheet Write & Read-Back Verification
 
-### Prerequisites
-- Node.js v20+ & npm
-- Python 3.10+
-- (Optional) ElevenLabs API Key (`ELEVENLABS_API_KEY`) & ArmorIQ API Key (`ARMORIQ_API_KEY`)
+To satisfy **Pillar 1 (Outcome Verification)**, AutoForge executes the official benchmark workflow:
+1. **Autonomous Research**: Scrapes and analyzes 10 AI companies (Anthropic, OpenAI, SylphAI, Perplexity, Mistral, Cursor, ElevenLabs, ArmorIQ, Cognition, Midjourney).
+2. **Real Disk Persistence**: Generates `artifacts/ai_startups_matrix.csv` on disk with structured columns (`Startup`, `Product`, `Pricing`, `Source_URL`, `Verification_Status`).
+3. **Independent Read-Back Verification**: The `OutcomeVerifier` re-opens the file from disk, confirms row count (10/10), validates 50 cells, and flags entries with non-public or custom pricing (e.g., ArmorIQ and Cognition sales gates) as `FLAGGED_REQUIRES_REVIEW`.
+4. **Direct Download**: Provides the verified artifact directly to the user via `/api/spreadsheet/download`.
 
-### Launch Application
-You can run the launcher script:
-```powershell
-.\start.ps1
+---
+
+## 🛠️ Mandatory AdaL by Sylph Workflow Integration
+
+AutoForge satisfies the mandatory AdaL track requirement:
+- **Development & Refactoring**: AdaL by Sylph was used to architect the CDP bridge, debug `semanticBrowser.ts`, and refine the multi-agent critique council.
+- **Custom Skill**: Configured in [`.atskills/autoforge-ui-critic/SKILL.md`](.atskills/autoforge-ui-critic/SKILL.md).
+- **Runtime Integration**: Connects via `backend/orchestrator.py` with custom `can_use_tool` security hooks.
+
+---
+
+## ⚙️ Quickstart & Local Setup
+
+### 1. Prerequisites
+- Node.js >= 18
+- Python >= 3.10
+- FFmpeg (for video compositing)
+
+### 2. Frontend & Electron Desktop App
+```bash
+# Install dependencies
+npm install
+
+# Build desktop application
+npm run build
+
+# Start live development environment (Vite + Electron)
+npm run dev
 ```
-Or start each service independently:
 
-1. **Start Backend API & Orchestrator:**
-   ```bash
-   cd backend
-   python app.py
-   ```
-   *Runs on `http://127.0.0.1:8000` with WebSocket on `ws://127.0.0.1:8000/ws`.*
+### 3. Backend Orchestration Server
+```bash
+# Install Python dependencies
+cd backend
+pip install -r requirements.txt
 
-2. **Start Frontend Workspace:**
-   ```bash
-   npm run dev
-   ```
-   *Opens AutoForge at `http://localhost:3000`.*
+# Start FastAPI WebSocket Server on http://127.0.0.1:8000
+python app.py
+```
 
 ---
 
-## 🎬 How to Demo for Judges
-
-### 📌 Pillar 1 Showcase: 10 Startups Research -> Verified Spreadsheet
-1. Open AutoForge and switch to **AUTOMATE** mode (or click the *Pillar 1 Showcase* shortcut in the left drawer).
-2. Prompt: *"Research 10 AI startups, compare their products and pricing, and populate our comparison spreadsheet."*
-3. Watch the task planner mint an ArmorIQ intent token, crawl pricing via CDP AX Tree, and trigger the approval modal before writing cells.
-4. Observe closed-loop outcome verification (10/10 cells read back and confirmed, enterprise pricing flagged as Unknown).
-
-### 📌 Pillar 2 Showcase: Idea -> Critiqued App -> GTM Video
-1. Switch to **BUILD** mode (or click *Pillar 2 Showcase*).
-2. Prompt: *"Build a dark-mode developer task manager app, test its UI and API routes, and generate a launch promo video."*
-3. Compare the **Before** (generic boilerplate) vs **After** (polished AutoForge UI) tabs.
-4. Switch to **CREATE** mode to review the generated marketing script, ElevenLabs voiceover, and composited launch promo video.
-
-### 📌 Security Check: Injection Attack Test
-1. Click the red **Injection Attack Test** button on the bottom left.
-2. Observe ArmorIQ intercepting and halting the destructive `delete_database` command with fail-closed logs.
+## 📈 Git Versioning Standards
+- `v1.0`: Initial full-stack scaffolding (Electron, React, Backend, GTM, CDP).
+- `v1.1`: Telemetry and WebSocket live streaming integration.
+- `v1.2`: UI redesign with modern typography (Plus Jakarta Sans, JetBrains Mono).
+- `v1.3`: YouTube-style pill tags, clean chips, and mode switcher polish.
+- `v1.4`: Execution & Verification Milestone (Real webview navigation, OutcomeVerifier engine, real spreadsheet disk write & readback, ArmorIQ fail-closed bugfix, clean `npm run build`).
