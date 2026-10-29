@@ -9,6 +9,7 @@ import json
 import uuid
 import asyncio
 from typing import List, Dict, Any, Optional
+import httpx
 from dotenv import load_dotenv
 
 # Load environment variables from .env file if present

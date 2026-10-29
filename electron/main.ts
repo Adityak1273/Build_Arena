@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain, WebContents } from 'electron';
+import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { extractSemanticNodes, verifyAndClickBackendNode, SemanticAXNode } from './semanticBrowser';
 
@@ -73,7 +74,9 @@ function createWindow() {
     backgroundColor: '#0a0d14',
     title: 'AutoForge — The AI-Native Developer Browser',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: fs.existsSync(path.join(__dirname, 'preload.cjs'))
+        ? path.join(__dirname, 'preload.cjs')
+        : path.join(__dirname, 'preload.js'),
       webviewTag: true,
       contextIsolation: true,
       nodeIntegration: false,
@@ -274,8 +277,20 @@ ipcMain.handle('browser:getVersion', async () => {
   return app.getVersion();
 });
 
-// App Lifecycle - Standard secure operation without tampering with CSP/X-Frame-Options headers
+// App Lifecycle - Allow guest browser webviews to render target developer sites
 app.whenReady().then(() => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (details.responseHeaders) {
+      delete details.responseHeaders['x-frame-options'];
+      delete details.responseHeaders['X-Frame-Options'];
+      const csp = details.responseHeaders['content-security-policy'] || details.responseHeaders['Content-Security-Policy'];
+      if (csp) {
+        details.responseHeaders['content-security-policy'] = csp.map((c: string) => c.replace(/frame-ancestors[^;]+;?/gi, ''));
+      }
+    }
+    callback({ responseHeaders: details.responseHeaders });
+  });
+
   createWindow();
 });
 
