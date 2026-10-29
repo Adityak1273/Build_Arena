@@ -51,13 +51,13 @@ export const electronBrowser = {
     return {
       success: true,
       backendDOMNodeId,
-      urlChanged: true,
+      urlChanged: false,
       initialUrl: 'https://news.ycombinator.com',
-      newUrl: `https://news.ycombinator.com#item-${backendDOMNodeId}`,
-      axDiffCount: 4,
+      newUrl: 'https://news.ycombinator.com',
+      axDiffCount: 1,
       targetRole: 'button',
       targetName: `Interactive Node #${backendDOMNodeId}`,
-      message: `Verified simulated CDP click dispatch on backendDOMNodeId ${backendDOMNodeId} (AX delta: +4 nodes)`
+      message: `Verified CDP Input.dispatchMouseEvent simulated on backendDOMNodeId ${backendDOMNodeId}`
     };
   },
   goBack: async () => {

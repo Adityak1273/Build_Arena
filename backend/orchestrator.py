@@ -32,7 +32,6 @@ class CouncilVerdict(BaseModel):
 
 # Individual Critic Evaluators
 async def audit_aesthetics_and_design_tokens(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.04) # simulate deep AST traversal
     issues = []
     recs = []
     generic_tw_matches = re.findall(r'\b(bg-slate-[0-9]{3}|bg-zinc-[0-9]{3}|bg-gray-[0-9]{3}|text-slate-[0-9]{3})\b', code)
@@ -62,7 +61,6 @@ async def audit_aesthetics_and_design_tokens(code: str) -> CriticFeedback:
     )
 
 async def audit_architecture_and_patterns(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.05)
     issues = []
     recs = []
     lines = code.splitlines()
@@ -94,7 +92,6 @@ async def audit_architecture_and_patterns(code: str) -> CriticFeedback:
     )
 
 async def audit_idiomatic_syntax(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.03)
     issues = []
     recs = []
     score = 100
@@ -124,7 +121,6 @@ async def audit_idiomatic_syntax(code: str) -> CriticFeedback:
     )
 
 async def audit_security_and_hardening(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.06)
     issues = []
     recs = []
     score = 100
@@ -156,7 +152,6 @@ async def audit_security_and_hardening(code: str) -> CriticFeedback:
     )
 
 async def audit_platform_and_cloud_integrator(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.04)
     issues = []
     recs = []
     score = 100
@@ -184,7 +179,6 @@ async def audit_platform_and_cloud_integrator(code: str) -> CriticFeedback:
     )
 
 async def audit_visual_qa_and_accessibility(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.04)
     issues = []
     recs = []
     score = 100
@@ -214,7 +208,6 @@ async def audit_visual_qa_and_accessibility(code: str) -> CriticFeedback:
     )
 
 async def audit_gtm_and_growth(code: str) -> CriticFeedback:
-    await asyncio.sleep(0.03)
     issues = []
     recs = []
     score = 100
