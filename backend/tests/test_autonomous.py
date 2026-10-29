@@ -258,3 +258,27 @@ async def test_browser_tools_with_bridge_contract():
     assert executed_fail.steps[0].verified is False
     assert executed_fail.steps[0].status == "FAILED"
     assert "Navigation timed out" in executed_fail.steps[0].error
+
+@pytest.mark.asyncio
+async def test_autonomous_multimodal_planning_and_execution():
+    # Test creative banner planning
+    plan_banner = await AutonomousRunner.plan_task("Generate a marketing banner for AutoForge launch")
+    assert plan_banner.status == "PENDING"
+    assert len(plan_banner.steps) >= 1
+    assert plan_banner.steps[0].tool == "generate_creative_banner"
+
+    exec_banner = await AutonomousRunner.execute_plan(plan_banner)
+    assert exec_banner.status in ("COMPLETED", "PARTIAL_SUCCESS")
+    assert exec_banner.steps[0].verified is True
+    assert exec_banner.steps[0].status == "COMPLETED"
+
+    # Test visual structure planning
+    plan_vision = await AutonomousRunner.plan_task("Perform visual qa and layout inspection")
+    assert plan_vision.status == "PENDING"
+    assert len(plan_vision.steps) >= 1
+    assert plan_vision.steps[0].tool == "analyze_visual_structure"
+
+    exec_vision = await AutonomousRunner.execute_plan(plan_vision)
+    assert exec_vision.status in ("COMPLETED", "PARTIAL_SUCCESS")
+    assert exec_vision.steps[0].verified is True
+    assert exec_vision.steps[0].status == "COMPLETED"

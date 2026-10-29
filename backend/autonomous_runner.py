@@ -21,6 +21,7 @@ from security import LocalIntentPolicyGate, IntentToken
 from verifier import OutcomeVerifier, HTMLMetadataParser
 from orchestrator import AntiBoilerplateCouncil
 from gtm_pipeline import GTMPipeline
+from multimodal import MultimodalEngine
 
 class TaskStep(BaseModel):
     step_id: str
@@ -55,6 +56,8 @@ class AutonomousRunner:
         "crawl_and_verify_startups": "Crawls target AI startups, verifies TLS, writes to disk, asserts 100% round-trip parity.",
         "audit_code_with_council": "Runs the 7-reviewer parallel rule-based council on supplied code.",
         "render_gtm_video": "Composites a 1080p video package using FFmpeg and Pillow.",
+        "generate_creative_banner": "Composites high-resolution 1200x630 launch graphic / marketing banner using Pillow canvas.",
+        "analyze_visual_structure": "Performs multimodal vision analysis of webpage layout, contrast, and theme hierarchy.",
         "browser_navigate": "Navigates active browser session to target URL and verifies reachability.",
         "browser_capture_ax": "Extracts semantic accessibility tree and interactive nodes from the active CDP session.",
         "http_probe": "Performs an HTTP GET probe to check network reachability and metadata without navigating the GUI browser."
@@ -235,12 +238,30 @@ class AutonomousRunner:
             ))
 
         # 4. Multimodal video intent
-        elif any(w in goal_lower for w in ["video", "gtm", "media", "render", "1080p", "campaign"]):
+        elif any(w in goal_lower for w in ["video", "gtm video", "render", "1080p"]):
             steps.append(TaskStep(
                 step_id="step-1",
                 tool="render_gtm_video",
                 arguments={"title": "AutoForge Run", "headline": goal_clean[:70]},
                 reasoning="Composite 1080p video summary and audio track via Pillow and FFmpeg."
+            ))
+
+        # 5. Multimodal creative image banner intent
+        elif any(w in goal_lower for w in ["banner", "graphic", "image", "social card", "marketing card"]):
+            steps.append(TaskStep(
+                step_id="step-1",
+                tool="generate_creative_banner",
+                arguments={"title": goal_clean[:35] or "AutoForge Launch", "tagline": "AI-Native Browser & Multimodal Companion"},
+                reasoning="Generate 1200x630 high-resolution promotional marketing graphic via Pillow canvas."
+            ))
+
+        # 6. Multimodal vision and layout inspection intent
+        elif any(w in goal_lower for w in ["vision", "visual", "layout", "contrast", "visual qa"]):
+            steps.append(TaskStep(
+                step_id="step-1",
+                tool="analyze_visual_structure",
+                arguments={"context_url": "https://news.ycombinator.com"},
+                reasoning="Perform multimodal vision analysis of visual theme, brightness, and layout hierarchy."
             ))
 
         # 5. Unrecognized intent - do NOT silently convert to default startup crawl
@@ -398,6 +419,23 @@ class AutonomousRunner:
                     gtm_res = await GTMPipeline.composite_gtm_video(title=title, headline=headline)
                     step.result = gtm_res
                     step.verified = (gtm_res.get("success") is True and gtm_res.get("returncode") == 0)
+                    step.status = "COMPLETED" if step.verified else "FAILED"
+
+                elif step.tool == "generate_creative_banner":
+                    title = step.arguments.get("title", "AutoForge Launchpad")
+                    tagline = step.arguments.get("tagline", "AI-Native Browser & Multimodal Companion")
+                    theme = step.arguments.get("theme", "indigo")
+                    badge = step.arguments.get("badge", "GTM LAUNCH")
+                    res = await MultimodalEngine.generate_creative_banner(title=title, tagline=tagline, badge=badge, theme=theme)
+                    step.result = res
+                    step.verified = bool(res.get("success") is True and os.path.exists(res.get("artifact_path", "")))
+                    step.status = "COMPLETED" if step.verified else "FAILED"
+
+                elif step.tool == "analyze_visual_structure":
+                    context_url = step.arguments.get("context_url", "https://news.ycombinator.com")
+                    res = await MultimodalEngine.analyze_visual_structure(context_url=context_url)
+                    step.result = res
+                    step.verified = bool(res.get("success") is True and "theme_classification" in res)
                     step.status = "COMPLETED" if step.verified else "FAILED"
 
                 elif step.tool == "browser_navigate":
