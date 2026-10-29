@@ -285,22 +285,38 @@ export const AutomateMode: React.FC = () => {
 
           <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">
             <span className="text-slate-400 text-[11px]">Disk vs Source Verification</span>
-            <div className="flex items-center gap-2 text-xs">
-              <span className={outcome?.disk_integrity_verified ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                Disk Parity: {outcome?.disk_integrity_verified ? 'Verified' : 'Failed'}
-              </span>
-              <span>•</span>
-              <span className="text-slate-300">
-                HTTP Fetched: {outcome?.successful_fetches ?? 0}/{outcome?.total_evaluated ?? 10}
+            <div className="flex flex-col gap-0.5 text-xs">
+              <div className="flex items-center gap-2">
+                <span className={outcome?.disk_integrity_verified ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                  Disk Parity: {outcome?.disk_integrity_verified ? 'Verified' : 'Failed'}
+                </span>
+                <span>•</span>
+                <span className="text-slate-300">
+                  {outcome?.successful_fetches ?? 0}/{outcome?.total_evaluated ?? 10} Scraped
+                  {outcome && outcome.total_evaluated && (outcome.total_evaluated - (outcome.successful_fetches ?? 0) > 0) ? (
+                    <span className="text-rose-400 font-medium"> ({outcome.total_evaluated - (outcome.successful_fetches ?? 0)} unreached)</span>
+                  ) : null}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-sans">
+                {outcome?.source_data_verified ? 'All endpoints reached' : 'Target reachability tracked honestly'}
               </span>
             </div>
           </div>
 
           <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">
-            <span className="text-slate-400 text-[11px]">Flagged Enterprise Sales Gates</span>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 text-[11px]">Enterprise Sales Gates</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
+                Keyword Heuristic
+              </span>
+            </div>
             <div className="text-sm font-bold text-amber-400">
               {outcome?.flagged_sales_gates ?? 0} Gate(s) Flagged
             </div>
+            <span className="text-[10px] text-slate-500 block font-sans">
+              Rule-based inspection, not dynamic contract negotiation
+            </span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-[#0e121b] border border-white/[0.08] space-y-1">

@@ -327,7 +327,7 @@ async def generate_gtm(req: GTMGenerateRequest):
 # Autonomous Workflow Endpoints
 @app.post("/api/autonomous/plan")
 async def autonomous_plan(req: AutonomousPlanRequest):
-    plan = AutonomousRunner.plan_task(req.goal, req.context)
+    plan = await AutonomousRunner.plan_task(req.goal, req.context)
     return plan.model_dump()
 
 @app.post("/api/autonomous/execute")
@@ -335,7 +335,30 @@ async def autonomous_execute(plan: AutonomousPlanResult):
     async def broadcast_step(msg: Dict[str, Any]):
         await telemetry.broadcast(msg)
 
-    executed = await AutonomousRunner.execute_plan(plan, broadcast_callback=broadcast_step)
+    async def approval_handler(token: IntentToken) -> str:
+        approval_event = asyncio.Event()
+        telemetry.pending_approvals[token.intent_id] = approval_event
+        await telemetry.broadcast({
+            "type": "APPROVAL_REQUEST",
+            "data": {
+                "intent_id": token.intent_id,
+                "action": token.action,
+                "target": token.target,
+                "risk_level": token.risk_level,
+                "reason": token.reason
+            }
+        })
+        try:
+            await asyncio.wait_for(approval_event.wait(), timeout=60.0)
+            return telemetry.approval_decisions.get(token.intent_id, "REJECTED")
+        finally:
+            telemetry.pending_approvals.pop(token.intent_id, None)
+
+    executed = await AutonomousRunner.execute_plan(
+        plan,
+        broadcast_callback=broadcast_step,
+        approval_callback=approval_handler
+    )
     return executed.model_dump()
 
 @app.post("/api/autonomous/cancel")

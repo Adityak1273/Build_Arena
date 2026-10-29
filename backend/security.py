@@ -70,6 +70,7 @@ class LocalIntentPolicyGate:
         r'\btruncate\b',
         r'\bwrite_disk\b',
         r'\bgenerate_gtm_video\b',
+        r'\brender_gtm_video\b',
         r'\boverwrite_file\b',
         r'\bformat_disk\b',
         r'\bdelete_artifact\b'

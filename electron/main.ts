@@ -140,7 +140,12 @@ ipcMain.handle('browser:navigate', async (_event, url: string) => {
           resolved = true;
           activeWebview?.removeListener('did-finish-load', finishHandler);
           activeWebview?.removeListener('did-fail-load', failHandler);
-          resolve({ success: true, url: activeWebview?.getURL() || targetUrl, timedOut: true });
+          resolve({
+            success: false,
+            url: activeWebview?.getURL() || targetUrl,
+            timedOut: true,
+            error: 'Navigation timed out after 8000ms'
+          });
         }
       }, 8000);
 
@@ -193,44 +198,20 @@ ipcMain.handle('browser:clickBackendNode', async (_event, backendDOMNodeId: numb
       );
     }
 
-    // Programmatic click fallback if CDP debugger is unavailable
-    try {
-      const clickOutcome = await activeWebview.executeJavaScript(`
-        (() => {
-          const el = document.querySelector('[data-backend-id="${backendDOMNodeId}"]');
-          if (el) {
-            el.click();
-            return { clicked: true, tagName: el.tagName, text: (el.innerText || el.getAttribute('aria-label') || '').slice(0, 50) };
-          }
-          return { clicked: false };
-        })()
-      `);
-      const currentUrl = activeWebview.getURL() || lastNavigatedUrl;
-      return {
-        success: Boolean(clickOutcome?.clicked),
-        status: clickOutcome?.clicked ? 'ACTION_DISPATCHED' : 'DISPATCH_FAILED',
-        backendDOMNodeId,
-        urlChanged: currentUrl !== lastNavigatedUrl,
-        initialUrl: lastNavigatedUrl,
-        newUrl: currentUrl,
-        axDiffCount: 0,
-        targetRole: clickOutcome?.tagName?.toLowerCase() || 'interactive',
-        targetName: clickOutcome?.text || `Interactive Node #${backendDOMNodeId}`,
-        message: clickOutcome?.clicked ? `Programmatic DOM click executed on ${clickOutcome.tagName}` : 'Element not found by selector'
-      };
-    } catch (e: any) {
-      return {
-        success: false,
-        status: 'DISPATCH_FAILED',
-        backendDOMNodeId,
-        urlChanged: false,
-        initialUrl: lastNavigatedUrl,
-        newUrl: lastNavigatedUrl,
-        axDiffCount: 0,
-        message: `Programmatic click failed: ${e.message}`,
-        error: e.message
-      };
-    }
+    // If CDP debugger could not be attached, report honestly rather than using fake DOM attributes
+    return {
+      success: false,
+      status: 'DISPATCH_FAILED',
+      backendDOMNodeId,
+      urlChanged: false,
+      initialUrl: lastNavigatedUrl,
+      newUrl: lastNavigatedUrl,
+      axDiffCount: 0,
+      targetRole: 'interactive',
+      targetName: `Node #${backendDOMNodeId}`,
+      message: 'CDP debugger unavailable; cannot resolve backend DOM node ID on external webpage without active CDP session.',
+      error: 'CDP_UNAVAILABLE'
+    };
   }
 
   return {

@@ -66,6 +66,35 @@ async def test_verifier_fault_injection_corruption():
     assert outcome.disk_integrity_verified is False
     assert "FAILED_CORRUPTION_DETECTED" in outcome.error_message
 
+@pytest.mark.asyncio
+async def test_verifier_corruption_detection_preserves_canonical_csv():
+    """
+    P0 Regression Test: Proves that running CORRUPTION_DETECTION fault-injection
+    operates on an isolated test file and leaves the tracked canonical artifact
+    (artifacts/ai_startups_matrix.csv) completely uncorrupted.
+    """
+    canonical_path = OutcomeVerifier.get_csv_path()
+    assert os.path.exists(canonical_path), "Canonical artifact must exist"
+
+    # Read pre-test state
+    with open(canonical_path, "r", encoding="utf-8") as f:
+        pre_content = f.read()
+
+    assert "InjectedRogueCorp" not in pre_content, "Pre-condition violated: canonical file already has rogue corp"
+
+    # Run corruption fault injection
+    outcome = await OutcomeVerifier.run_benchmark("CORRUPTION_DETECTION")
+    assert outcome.status == "FAILED_CORRUPTION_DETECTED"
+
+    # Read post-test state
+    with open(canonical_path, "r", encoding="utf-8") as f:
+        post_content = f.read()
+
+    assert "InjectedRogueCorp" not in post_content, "Regression! CORRUPTION_DETECTION corrupted the canonical artifact"
+    # Ensure temporary file was cleanly deleted
+    temp_file = os.path.join(OutcomeVerifier.ARTIFACT_DIR, "temp_test_corrupt.csv")
+    assert not os.path.exists(temp_file), "Temporary test file was not cleaned up"
+
 def test_verifier_cached_snapshot():
     cached = OutcomeVerifier.get_latest_cached_outcome()
     assert cached is not None
@@ -73,3 +102,33 @@ def test_verifier_cached_snapshot():
     assert cached.is_cached_snapshot is True
     assert cached.disk_integrity_verified is True
     assert cached.source_data_verified is False
+
+def test_verifier_cached_snapshot_manifest_validation():
+    """
+    P0 Integrity Test: Ensures disk_integrity_verified requires matching
+    trusted baseline manifest.json rather than blindly trusting disk bytes.
+    """
+    # 1. Normal validation succeeds when manifest matches
+    cached = OutcomeVerifier.get_latest_cached_outcome()
+    assert cached is not None
+    assert cached.disk_integrity_verified is True
+
+    # 2. When manifest does not match or is absent, disk_integrity_verified is False
+    manifest_path = OutcomeVerifier.get_manifest_path()
+    assert os.path.exists(manifest_path)
+
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        orig_manifest = f.read()
+
+    try:
+        # Write corrupted manifest hash
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            f.write('{"csv_sha256": "bad_hash_00000000000000000000000000000000000000000000000000000000"}')
+
+        tampered_cached = OutcomeVerifier.get_latest_cached_outcome()
+        assert tampered_cached is not None
+        assert tampered_cached.disk_integrity_verified is False
+    finally:
+        # Restore valid manifest
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            f.write(orig_manifest)

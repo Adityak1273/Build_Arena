@@ -1,10 +1,13 @@
 """
 AutoForge Independent Outcome Verification Engine
 Real HTMLParser web crawler, physical disk read-back assertion, provenance tracking, and honest fault injection.
+Ensures canonical artifacts remain clean and uncorrupted during tests, and validates cached snapshots against trusted manifests.
 """
 
 import os
 import csv
+import json
+import shutil
 import hashlib
 import asyncio
 from datetime import datetime, timezone
@@ -74,7 +77,7 @@ class LiveWebpageExtractor:
                 title = parser.title or "TITLE_NOT_FOUND"
                 desc = parser.description or "DESCRIPTION_NOT_FOUND"
                 
-                # Check for sales gate keywords in scraped title and description
+                # Check for sales gate keywords in scraped content as a heuristic
                 content_lower = (title + " " + desc + " " + resp.text[:50000]).lower()
                 has_sales_gate = any(k in content_lower for k in ["contact sales", "talk to sales", "enterprise demo", "request demo"])
 
@@ -151,6 +154,7 @@ class OutcomeVerifier:
     
     ARTIFACT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "artifacts")
     CSV_FILENAME = "ai_startups_matrix.csv"
+    MANIFEST_FILENAME = "manifest.json"
 
     @classmethod
     def get_csv_path(cls) -> str:
@@ -158,7 +162,12 @@ class OutcomeVerifier:
         return os.path.join(cls.ARTIFACT_DIR, cls.CSV_FILENAME)
 
     @classmethod
-    async def run_benchmark(cls, test_mode: str = "LIVE_SCRAPED") -> VerificationOutcome:
+    def get_manifest_path(cls) -> str:
+        os.makedirs(cls.ARTIFACT_DIR, exist_ok=True)
+        return os.path.join(cls.ARTIFACT_DIR, cls.MANIFEST_FILENAME)
+
+    @classmethod
+    async def run_benchmark(cls, test_mode: str = "LIVE_SCRAPED", http_client: Optional[httpx.AsyncClient] = None) -> VerificationOutcome:
         logs = []
         csv_path = cls.get_csv_path()
         run_timestamp = datetime.now(timezone.utc).isoformat()
@@ -173,14 +182,18 @@ class OutcomeVerifier:
                 "http://192.0.2.1:81" # RFC 5737 TEST-NET-1 unroutable IP
             ]
             failed_count = 0
-            async with httpx.AsyncClient(verify=True, timeout=2.5) as client:
+            timeout_client = http_client or httpx.AsyncClient(verify=True, timeout=2.5)
+            try:
                 for target in unreachable_targets:
                     try:
                         logs.append(f"  [+] Attempting real TCP connection to: {target}")
-                        await client.get(target)
+                        await timeout_client.get(target)
                     except Exception as e:
                         failed_count += 1
                         logs.append(f"  [REAL ERROR CAUGHT] {target} -> {type(e).__name__}: {str(e)[:60]}")
+            finally:
+                if http_client is None:
+                    await timeout_client.aclose()
 
             logs.append(f"[FAIL] Real Connectivity Check: {failed_count}/{len(unreachable_targets)} connections failed as expected.")
             logs.append("[FAIL] Honest Error Reporting: Halting verification pipeline with FAILED_UNREACHABLE_HOSTS.")
@@ -210,9 +223,13 @@ class OutcomeVerifier:
         failed_fetches = 0
         flagged_count = 0
 
-        async with httpx.AsyncClient(verify=True) as client:
+        client = http_client or httpx.AsyncClient(verify=True)
+        try:
             tasks = [LiveWebpageExtractor.extract_metadata(client, target["url"]) for target in STARTUP_CRAWL_TARGETS]
             results = await asyncio.gather(*tasks)
+        finally:
+            if http_client is None:
+                await client.aclose()
 
         for target, meta in zip(STARTUP_CRAWL_TARGETS, results):
             is_success = meta["fetch_status"] == "HTTP_200"
@@ -223,10 +240,10 @@ class OutcomeVerifier:
                 failed_fetches += 1
                 logs.append(f"  [FETCH FAILED] {target['name']} ({target['url']}) -> Status: {meta['fetch_status']} ({meta.get('error')})")
 
-            sales_gate_label = "FLAGGED_SALES_GATE" if meta["has_sales_gate"] else "NOT_VERIFIED_FROM_HTML"
+            sales_gate_label = "FLAGGED_SALES_GATE (Keyword Heuristic)" if meta["has_sales_gate"] else "NOT_VERIFIED_FROM_HTML"
             if meta["has_sales_gate"]:
                 flagged_count += 1
-                logs.append(f"    [GATE DETECTED] Enterprise sales gate keyword detected in page content for {target['name']}")
+                logs.append(f"    [GATE HEURISTIC] Keyword heuristic detected sales gate terms in scraped snippet for {target['name']}")
 
             # Compute row hash using all authentic fields
             row_content = f"{target['name']}:{target['url']}:{meta['fetch_status']}:{meta['title']}"
@@ -265,45 +282,63 @@ class OutcomeVerifier:
             for r in rows_in_memory:
                 writer.writerow(r)
 
-        # Mode 3: DELIBERATE FILE CORRUPTION DETECTION (Fault Injection)
-        if test_mode in ("CORRUPTION_DETECTION", "FAULT_INJECTION_CORRUPTION"):
-            logs.append("[!] [FAULT_INJECTION] Tampering with physical disk bytes to verify cryptographic corruption detection...")
-            with open(csv_path, mode="a", newline="", encoding="utf-8") as f:
-                f.write("InjectedRogueCorp,hacked.invalid,http://hacked.invalid,2026-01-01T00:00:00Z,CORRUPT,999,Hacked,Desc,Category,Free,None,None,TAMPERED,deadbeef\n")
-            
-            logs.append("[!] Performing independent read-back assertion on altered CSV...")
-            read_back_rows = []
-            with open(csv_path, mode="r", newline="", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for r in reader:
-                    read_back_rows.append(r)
-            
-            logs.append(f"[ALERT] Complete round-trip assertion failed: disk row count ({len(read_back_rows)}) != memory count ({len(rows_in_memory)})!")
-            logs.append("[FAIL] Outcome: FAILED_CORRUPTION_DETECTED correctly triggered.")
-            return VerificationOutcome(
-                mode=test_mode,
-                status="FAILED_CORRUPTION_DETECTED",
-                disk_integrity_verified=False,
-                source_data_verified=successful_fetches == len(rows_in_memory),
-                total_evaluated=len(rows_in_memory),
-                verified_count=0,
-                successful_fetches=successful_fetches,
-                failed_fetches=failed_fetches,
-                flagged_sales_gates=flagged_count,
-                artifact_path=csv_path,
-                disk_hash=hashlib.sha256(open(csv_path, 'rb').read()).hexdigest(),
-                retrieval_timestamp=run_timestamp,
-                is_cached_snapshot=False,
-                rows=rows_in_memory,
-                telemetry_logs=logs,
-                error_message="FAILED_CORRUPTION_DETECTED: Disk read-back mismatch! Cryptographic round-trip check detected file tampering."
-            )
-
-        # Mode 1: COMPLETE IN-MEMORY VS PHYSICAL DISK ROUND-TRIP ASSERTION
-        logs.append("[+] Re-reading physical CSV from disk to perform byte-for-byte and field-for-field assertion...")
         disk_bytes = open(csv_path, "rb").read()
         disk_hash = hashlib.sha256(disk_bytes).hexdigest()
 
+        # Write trusted baseline manifest alongside canonical file
+        manifest_data = {
+            "csv_sha256": disk_hash,
+            "canonical_filename": cls.CSV_FILENAME,
+            "generated_at": run_timestamp,
+            "row_count": len(rows_in_memory)
+        }
+        with open(cls.get_manifest_path(), mode="w", encoding="utf-8") as mf:
+            json.dump(manifest_data, mf, indent=2)
+
+        # Mode 3: DELIBERATE FILE CORRUPTION DETECTION (Fault Injection on isolated test file)
+        if test_mode in ("CORRUPTION_DETECTION", "FAULT_INJECTION_CORRUPTION"):
+            logs.append("[!] [FAULT_INJECTION] Testing corruption detection on isolated temporary test file...")
+            temp_corrupt_path = os.path.join(cls.ARTIFACT_DIR, "temp_test_corrupt.csv")
+            try:
+                # Copy canonical file to temporary test file, then inject tampering into temporary file
+                shutil.copyfile(csv_path, temp_corrupt_path)
+                with open(temp_corrupt_path, mode="a", newline="", encoding="utf-8") as f:
+                    f.write("InjectedRogueCorp,hacked.invalid,http://hacked.invalid,2026-01-01T00:00:00Z,CORRUPT,999,Hacked,Desc,Category,Free,None,None,TAMPERED,deadbeef\n")
+                
+                logs.append("[!] Performing independent read-back assertion on tampered test file...")
+                corrupt_rows = []
+                with open(temp_corrupt_path, mode="r", newline="", encoding="utf-8") as f:
+                    for r in csv.DictReader(f):
+                        corrupt_rows.append(r)
+                
+                assert len(corrupt_rows) != len(rows_in_memory), "Corruption detection failed: row count matched unexpectedly"
+                logs.append(f"[ALERT] Complete round-trip assertion failed as expected: tampered count ({len(corrupt_rows)}) != memory count ({len(rows_in_memory)})!")
+                logs.append("[FAIL] Outcome: FAILED_CORRUPTION_DETECTED correctly triggered. Canonical artifact remains clean.")
+                return VerificationOutcome(
+                    mode=test_mode,
+                    status="FAILED_CORRUPTION_DETECTED",
+                    disk_integrity_verified=False,
+                    source_data_verified=successful_fetches == len(rows_in_memory),
+                    total_evaluated=len(rows_in_memory),
+                    verified_count=0,
+                    successful_fetches=successful_fetches,
+                    failed_fetches=failed_fetches,
+                    flagged_sales_gates=flagged_count,
+                    artifact_path=csv_path,
+                    disk_hash=disk_hash, # Canonical file hash preserved
+                    retrieval_timestamp=run_timestamp,
+                    is_cached_snapshot=False,
+                    rows=rows_in_memory,
+                    telemetry_logs=logs,
+                    error_message="FAILED_CORRUPTION_DETECTED: Disk read-back mismatch! Cryptographic round-trip check detected file tampering."
+                )
+            finally:
+                # Guarantee temporary test file cleanup
+                if os.path.exists(temp_corrupt_path):
+                    os.remove(temp_corrupt_path)
+
+        # Mode 1: COMPLETE IN-MEMORY VS PHYSICAL DISK ROUND-TRIP ASSERTION
+        logs.append("[+] Re-reading physical CSV from disk to perform byte-for-byte and field-for-field assertion...")
         read_back_rows = []
         with open(csv_path, mode="r", newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -353,7 +388,8 @@ class OutcomeVerifier:
     def get_latest_cached_outcome(cls) -> Optional[VerificationOutcome]:
         """
         Reads existing CSV from disk honestly as a cached snapshot.
-        Does NOT fabricate a fresh verification run.
+        Verifies integrity against trusted manifest if available.
+        Does NOT set disk_integrity_verified=True unless validated by trusted baseline manifest.
         """
         csv_path = cls.get_csv_path()
         if not os.path.exists(csv_path):
@@ -370,17 +406,33 @@ class OutcomeVerifier:
 
         file_mod_time = datetime.fromtimestamp(os.path.getmtime(csv_path), tz=timezone.utc).isoformat()
 
+        # Validate against trusted manifest baseline
+        manifest_path = cls.get_manifest_path()
+        manifest_verified = False
+        manifest_info = "No trusted baseline manifest found on disk"
+        if os.path.exists(manifest_path):
+            try:
+                with open(manifest_path, mode="r", encoding="utf-8") as mf:
+                    manifest_data = json.load(mf)
+                if manifest_data.get("csv_sha256") == disk_hash and manifest_data.get("row_count") == len(read_back_rows):
+                    manifest_verified = True
+                    manifest_info = f"Verified against trusted baseline manifest (generated {manifest_data.get('generated_at')})"
+                else:
+                    manifest_info = "Disk SHA-256 does NOT match trusted baseline manifest (file altered since generation)"
+            except Exception as e:
+                manifest_info = f"Failed to parse manifest: {e}"
+
         successful = sum(1 for r in read_back_rows if r.get("fetch_status") == "HTTP_200")
         failed = len(read_back_rows) - successful
-        sales_gates = sum(1 for r in read_back_rows if r.get("enterprise_sales_gate") == "FLAGGED_SALES_GATE")
+        sales_gates = sum(1 for r in read_back_rows if "FLAGGED_SALES_GATE" in (r.get("enterprise_sales_gate") or ""))
 
         return VerificationOutcome(
             mode="CACHED_DISK_FILE",
             status="CACHED_SNAPSHOT",
-            disk_integrity_verified=True, # Read directly from disk
+            disk_integrity_verified=manifest_verified, # True ONLY if matches trusted baseline manifest
             source_data_verified=False, # Historical snapshot, not freshly re-verified
             total_evaluated=len(read_back_rows),
-            verified_count=len(read_back_rows),
+            verified_count=len(read_back_rows) if manifest_verified else 0,
             successful_fetches=successful,
             failed_fetches=failed,
             flagged_sales_gates=sales_gates,
@@ -393,7 +445,8 @@ class OutcomeVerifier:
                 f"[*] Loaded cached snapshot from disk ({csv_path})",
                 f"[*] File timestamp: {file_mod_time}",
                 f"[*] File SHA-256: {disk_hash[:16]}...",
-                "[i] Notice: This is a cached historical file from an earlier run. Re-run verification for fresh live crawl."
+                f"[*] Manifest validation: {manifest_info}",
+                "[i] Notice: This is a historical file from an earlier run. Re-run verification for fresh live crawl."
             ],
             error_message=None
         )

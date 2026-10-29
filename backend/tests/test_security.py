@@ -54,3 +54,98 @@ def test_tampered_token_signature_rejected():
     # Alter token payload
     tampered_token = token.model_copy(update={"action": "rm -rf /"})
     assert LocalIntentPolicyGate.verify_token_signature(tampered_token) is False
+
+@pytest.mark.asyncio
+async def test_consequential_execution_halted_without_approval_callback():
+    from autonomous_runner import AutonomousRunner, AutonomousPlanResult, AutonomousStep
+    plan = AutonomousPlanResult(
+        plan_id="test-plan-halt",
+        goal="Render campaign video",
+        planner="DETERMINISTIC_TEST",
+        steps=[
+            AutonomousStep(
+                step_id="step-1",
+                reasoning="Composite video",
+                tool="render_gtm_video",
+                arguments={"title": "Test Video"}
+            )
+        ]
+    )
+    executed = await AutonomousRunner.execute_plan(plan, approval_callback=None)
+    assert executed.status == "FAILED"
+    assert executed.steps[0].status == "FAILED"
+    assert "requires human approval signature" in executed.steps[0].error
+    assert executed.steps[0].verified is False
+
+@pytest.mark.asyncio
+async def test_consequential_execution_rejected_by_user():
+    from autonomous_runner import AutonomousRunner, AutonomousPlanResult, AutonomousStep
+    plan = AutonomousPlanResult(
+        plan_id="test-plan-reject",
+        goal="Render campaign video",
+        planner="DETERMINISTIC_TEST",
+        steps=[
+            AutonomousStep(
+                step_id="step-1",
+                reasoning="Composite video",
+                tool="render_gtm_video",
+                arguments={"title": "Test Video"}
+            )
+        ]
+    )
+    async def reject_callback(token):
+        return "REJECTED"
+
+    executed = await AutonomousRunner.execute_plan(plan, approval_callback=reject_callback)
+    assert executed.status == "FAILED"
+    assert executed.steps[0].status == "FAILED"
+    assert "was rejected by user" in executed.steps[0].error
+
+@pytest.mark.asyncio
+async def test_consequential_execution_timeout():
+    import asyncio
+    from autonomous_runner import AutonomousRunner, AutonomousPlanResult, AutonomousStep
+    plan = AutonomousPlanResult(
+        plan_id="test-plan-timeout",
+        goal="Render campaign video",
+        planner="DETERMINISTIC_TEST",
+        steps=[
+            AutonomousStep(
+                step_id="step-1",
+                reasoning="Composite video",
+                tool="render_gtm_video",
+                arguments={"title": "Test Video"}
+            )
+        ]
+    )
+    async def timeout_callback(token):
+        raise asyncio.TimeoutError("Approval timed out after 30s")
+
+    executed = await AutonomousRunner.execute_plan(plan, approval_callback=timeout_callback)
+    assert executed.status == "FAILED"
+    assert executed.steps[0].status == "FAILED"
+    assert "timed out" in executed.steps[0].error
+
+@pytest.mark.asyncio
+async def test_consequential_execution_approved():
+    from autonomous_runner import AutonomousRunner, AutonomousPlanResult, AutonomousStep
+    plan = AutonomousPlanResult(
+        plan_id="test-plan-approved",
+        goal="Render campaign video",
+        planner="DETERMINISTIC_TEST",
+        steps=[
+            AutonomousStep(
+                step_id="step-1",
+                reasoning="Composite video",
+                tool="render_gtm_video",
+                arguments={"title": "Test Video", "frame_count": 2}
+            )
+        ]
+    )
+    async def approve_callback(token):
+        return "APPROVED"
+
+    executed = await AutonomousRunner.execute_plan(plan, approval_callback=approve_callback)
+    assert executed.status in ("COMPLETED", "PARTIAL_SUCCESS")
+    assert executed.steps[0].status == "COMPLETED"
+    assert executed.steps[0].verified is True

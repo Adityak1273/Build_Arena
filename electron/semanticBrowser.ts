@@ -194,29 +194,42 @@ export async function verifyAndClickBackendNode(
   // 3. Wait for layout settling / mutation / navigation
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  // 4. Observable postcondition check
+  // 4. Observable action-specific postcondition check
   const newUrl = getCurrentUrl();
   const urlChanged = newUrl !== initialUrl;
 
   const postTree = await fetchAXTree();
   const axDiffCount = computeAXDiff(initialTree, postTree);
 
-  // Check if target is now focused or URL changed
+  // Check action-specific target outcomes: focus acquired or value mutated
   const postTarget = postTree.find(n => n.backendDOMNodeId === backendDOMNodeId);
   const focusAcquired = Boolean(postTarget?.focused && !targetNode?.focused);
+  const valueMutated = Boolean(
+    targetNode &&
+    postTarget &&
+    targetNode.value !== postTarget.value &&
+    postTarget.value !== undefined
+  );
 
-  const outcomeVerified = urlChanged || focusAcquired || axDiffCount > 0;
-  const status = outcomeVerified ? 'OUTCOME_VERIFIED' : 'ACTION_DISPATCHED';
+  // Outcome verification strictly requires an action-specific postcondition:
+  // 1) Navigation to a new URL, OR
+  // 2) Focus acquired by the target node, OR
+  // 3) Value mutated on the target node.
+  // Ambient AX tree deltas alone (e.g. background animations, timers, ads) do not qualify as verified outcome.
+  const outcomeVerified = urlChanged || focusAcquired || valueMutated;
+  const status: 'OUTCOME_VERIFIED' | 'ACTION_DISPATCHED' = outcomeVerified ? 'OUTCOME_VERIFIED' : 'ACTION_DISPATCHED';
 
   let message = '';
   if (urlChanged) {
     message = `OUTCOME_VERIFIED: Navigation postcondition observed -> ${newUrl}`;
   } else if (focusAcquired) {
     message = `OUTCOME_VERIFIED: Focus postcondition observed on node #${backendDOMNodeId}`;
+  } else if (valueMutated) {
+    message = `OUTCOME_VERIFIED: Value mutation observed on node #${backendDOMNodeId} -> "${postTarget?.value}"`;
   } else if (axDiffCount > 0) {
-    message = `OUTCOME_VERIFIED: Accessibility tree mutated with ${axDiffCount} delta nodes`;
+    message = `ACTION_DISPATCHED: Click sent to (${clickX}, ${clickY}); ${axDiffCount} ambient AX deltas detected, but no action-specific postcondition (URL, focus, or value) was observed on target node #${backendDOMNodeId}.`;
   } else {
-    message = `ACTION_DISPATCHED: Click sent to (${clickX}, ${clickY}), but no state change or URL navigation was observed yet.`;
+    message = `ACTION_DISPATCHED: Click sent to (${clickX}, ${clickY}), but no state change or URL navigation was observed.`;
   }
 
   return {
