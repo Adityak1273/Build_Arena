@@ -41,10 +41,31 @@ export function extractSemanticNodes(rawNodes: any[]): SemanticAXNode[] {
   for (const node of rawNodes) {
     if (!node || !node.role) continue;
 
-    const role = (node.role.value || node.role).toLowerCase();
-    const name = node.name ? (node.name.value || String(node.name)).trim() : '';
-    const value = node.value ? (node.value.value || String(node.value)) : undefined;
-    const description = node.description ? (node.description.value || String(node.description)) : undefined;
+    const role = (node.role?.value || String(node.role || 'generic')).toLowerCase();
+    let name = '';
+    if (node.name) {
+      if (typeof node.name.value === 'string') {
+        name = node.name.value.trim();
+      } else if (typeof node.name === 'string') {
+        name = node.name.trim();
+      }
+    }
+    let value: string | undefined = undefined;
+    if (node.value) {
+      if (typeof node.value.value === 'string') {
+        value = node.value.value;
+      } else if (typeof node.value === 'string') {
+        value = node.value;
+      }
+    }
+    let description: string | undefined = undefined;
+    if (node.description) {
+      if (typeof node.description.value === 'string') {
+        description = node.description.value;
+      } else if (typeof node.description === 'string') {
+        description = node.description;
+      }
+    }
     const backendDOMNodeId = node.backendDOMNodeId || 0;
 
     // Filter out uninformative layout noise unless it carries accessible names
