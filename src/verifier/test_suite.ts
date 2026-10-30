@@ -1,7 +1,10 @@
+process.env.AUTOFORGE_TEST_RUNNER = 'true';
 import { OutcomeVerifier } from './outcomeVerifier';
 import { policyApprovalGate } from '../runtime/policyGate';
 import { GTMMultimodalPipeline } from '../tools/gtmMultimodalPipeline';
 import { CodeReviewCouncil } from '../runtime/council';
+import { createPlanForGoal } from '../runtime/planner';
+import { loadTaskHistory, saveTaskHistoryEntry } from '../runtime/taskHistory';
 import fs from 'fs';
 import path from 'path';
 
@@ -90,9 +93,63 @@ async function runTestSuite() {
     failures++;
   }
 
+  // 6. Verify AdaL Adaptive Planner Dynamic Decomposition
+  console.log('\n[Test 6] AdaL Adaptive Planner: Flagship Workflow Decomposition');
+  const plan = await createPlanForGoal('Research 10 AI startups, compare product and pricing, write to spreadsheet, create a launch image');
+  if (plan.steps.length >= 5 && plan.steps.some((s) => s.tool === 'benchmark_export') && plan.steps.some((s) => s.tool === 'multimodal_launch')) {
+    console.log(`✓ PASS: Plan dynamically generated with ${plan.steps.length} sequential execution steps.`);
+  } else {
+    console.error('✗ FAIL: Planner failed to generate expected multi-step sequence:', plan);
+    failures++;
+  }
+
+  // 7. Verify Task History & Memory Store
+  console.log('\n[Test 7] Task History & User Memory: Persistence & Integrity');
+  const testEntry = {
+    task_id: `test-task-${Date.now()}`,
+    goal: 'Test Plan Persistence',
+    status: 'COMPLETED' as const,
+    start_time: new Date().toISOString(),
+    duration_ms: 1250,
+    steps_count: 5,
+    verified_steps: 5,
+    artifacts: [{ name: 'Test Artifact', path: 'artifacts/test.csv', type: 'text/csv' }],
+    outcome_summary: 'All steps verified successfully.'
+  };
+  saveTaskHistoryEntry(testEntry);
+  const history = loadTaskHistory();
+  const found = history.find((h) => h.task_id === testEntry.task_id);
+  if (found && found.status === 'COMPLETED' && found.verified_steps === 5) {
+    console.log(`✓ PASS: Task history persisted and retrieved from disk. Total recorded tasks: ${history.length}`);
+  } else {
+    console.error('✗ FAIL: Task history persistence assertion failed.');
+    failures++;
+  }
+
+  // 8. Verify OutcomeVerifier DOM State Assertion
+  console.log('\n[Test 8] OutcomeVerifier: Closed-Loop DOM State Assertion');
+  const mockActionResult = {
+    success: true,
+    action: 'navigate' as const,
+    target: 'https://news.ycombinator.com',
+    url: 'https://news.ycombinator.com',
+    title: 'Hacker News',
+    screenshotBase64: 'mock_base64',
+    domExcerpt: 'Hacker News new | past | comments | ask | show | jobs | submit',
+    extractedText: 'Hacker News new | past | comments | ask | show | jobs | submit',
+    executionTimeMs: 120
+  };
+  const domVerification = OutcomeVerifier.verifyBrowserState(mockActionResult, 'ycombinator.com', ['Hacker News', 'comments']);
+  if (domVerification.verified && domVerification.keywordsFound.length === 2) {
+    console.log('✓ PASS: OutcomeVerifier correctly asserted live DOM keywords and URL match.');
+  } else {
+    console.error('✗ FAIL: DOM state verification failed:', domVerification);
+    failures++;
+  }
+
   console.log('\n-----------------------------------------------------------');
   if (failures === 0) {
-    console.log('🎉 ALL RUNTIME VERIFICATION TESTS PASSED (5/5)');
+    console.log('🎉 ALL RUNTIME VERIFICATION TESTS PASSED (8/8)');
     process.exit(0);
   } else {
     console.error(`❌ ${failures} TEST(S) FAILED`);

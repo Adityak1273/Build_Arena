@@ -11,6 +11,8 @@ import { StartupSpreadsheetWorkflow } from '../tools/startupSpreadsheetWorkflow'
 import { GTMMultimodalPipeline } from '../tools/gtmMultimodalPipeline';
 import { CodeReviewCouncil } from './council';
 import { AutonomousPlanResult, TaskStep, TaskHistoryEntry } from '../types';
+import { loadTaskHistory, saveTaskHistoryEntry, clearTaskHistory } from './taskHistory';
+import { createPlanForGoal } from './planner';
 
 const PORT = 4000;
 const app = express();
@@ -180,38 +182,13 @@ let activeLoopCancelled = false;
 let activeLoopPaused = false;
 let pauseResolver: (() => void) | null = null;
 
-const historyFilePath = path.resolve(artifactsDir, 'task_history.json');
-
-export function loadTaskHistory(): TaskHistoryEntry[] {
-  try {
-    if (fs.existsSync(historyFilePath)) {
-      const raw = fs.readFileSync(historyFilePath, 'utf-8');
-      return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.warn('[TaskHistory] Read warning:', e);
-  }
-  return [];
-}
-
-export function saveTaskHistoryEntry(entry: TaskHistoryEntry): void {
-  try {
-    const list = loadTaskHistory();
-    list.unshift(entry);
-    const trimmed = list.slice(0, 50);
-    fs.writeFileSync(historyFilePath, JSON.stringify(trimmed, null, 2), 'utf-8');
-  } catch (e) {
-    console.warn('[TaskHistory] Save warning:', e);
-  }
-}
-
 app.get('/api/tasks/history', (_req, res) => {
   res.json({ history: loadTaskHistory() });
 });
 
 app.delete('/api/tasks/history', (_req, res) => {
   try {
-    fs.writeFileSync(historyFilePath, JSON.stringify([]), 'utf-8');
+    clearTaskHistory();
     broadcast('HISTORY_CLEARED', { timestamp: new Date().toISOString() });
     res.json({ success: true, message: 'User task history memory cleared.' });
   } catch (err: any) {
@@ -314,136 +291,6 @@ app.post('/api/gtm/generate', async (req, res) => {
 });
 
 // 7. Autonomous Planning & Execution with AdaL
-export async function createPlanForGoal(goal: string): Promise<AutonomousPlanResult> {
-  const planId = `plan-${Date.now()}`;
-  const lowerGoal = goal.toLowerCase();
-
-  const steps: TaskStep[] = [];
-
-  if (
-    lowerGoal.includes('startup') ||
-    lowerGoal.includes('crawl') ||
-    lowerGoal.includes('spreadsheet') ||
-    lowerGoal.includes('pricing') ||
-    lowerGoal.includes('research') ||
-    lowerGoal.includes('compare') ||
-    lowerGoal.includes('launch') ||
-    lowerGoal.includes('image')
-  ) {
-    // Flagship End-to-End Multimodal Orchestration Workflow
-    steps.push({
-      step_id: 'step-1',
-      tool: 'browser_navigate',
-      arguments: { url: 'https://elevenlabs.io' },
-      reasoning: 'Navigate to target AI startup homepage to establish live session context in Chromium.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-2',
-      tool: 'browser_extract',
-      arguments: { selector: 'body' },
-      reasoning: 'Extract live DOM text to verify platform capabilities and pricing structure.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-3',
-      tool: 'benchmark_export',
-      arguments: { mode: 'LIVE_SCRAPED' },
-      reasoning: 'Execute concurrent TLS scrape of 10 target AI startups, audit pricing honestly, and write disk artifact.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-4',
-      tool: 'verify_artifact',
-      arguments: {
-        filePath: 'artifacts/ai_startups_comparison.csv',
-        minRows: 10,
-        requiredColumns: ['company_name', 'domain', 'pricing_tier', 'scraped_title', 'row_hash']
-      },
-      reasoning: 'Perform closed-loop OutcomeVerifier assertion on written disk CSV and compute HMAC-SHA256.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-5',
-      tool: 'multimodal_launch',
-      arguments: {
-        title: 'AutoForge Flagship Launch',
-        headline: 'AI-Native Browser with Multimodal Companion & Outcome Verification'
-      },
-      reasoning: 'Render high-resolution 1280x720 launch poster via Playwright Chromium and compose 1080p MP4 package.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-6',
-      tool: 'verify_launch_artifact',
-      arguments: {
-        imagePath: 'artifacts/hero_frame.png',
-        minBytes: 20000
-      },
-      reasoning: 'Re-read generated launch poster from disk and assert byte-size threshold (>20KB high-res verification).',
-      status: 'PENDING'
-    });
-  } else if (
-    lowerGoal.includes('accessibility') ||
-    lowerGoal.includes('ax') ||
-    lowerGoal.includes('tree') ||
-    lowerGoal.includes('wcag') ||
-    lowerGoal.includes('hacker news')
-  ) {
-    steps.push({
-      step_id: 'step-1',
-      tool: 'browser_navigate',
-      arguments: { url: 'https://news.ycombinator.com' },
-      reasoning: 'Navigate to target destination in Chromium browser session.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-2',
-      tool: 'browser_capture_ax',
-      arguments: {},
-      reasoning: 'Capture authentic Chromium CDP Accessibility Tree via Accessibility.getFullAXTree.',
-      status: 'PENDING'
-    });
-  } else {
-    // Dynamic adaptable workflow
-    const targetUrl = lowerGoal.startsWith('http')
-      ? goal
-      : `https://www.google.com/search?q=${encodeURIComponent(goal)}`;
-
-    steps.push({
-      step_id: 'step-1',
-      tool: 'browser_navigate',
-      arguments: { url: targetUrl },
-      reasoning: `Establish browser navigation to target destination: ${targetUrl}`,
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-2',
-      tool: 'browser_extract',
-      arguments: { selector: 'body' },
-      reasoning: 'Extract live DOM content and evaluate state postconditions.',
-      status: 'PENDING'
-    });
-    steps.push({
-      step_id: 'step-3',
-      tool: 'browser_capture_ax',
-      arguments: {},
-      reasoning: 'Verify interactive accessibility hierarchy and controls.',
-      status: 'PENDING'
-    });
-  }
-
-  return {
-    plan_id: planId,
-    goal,
-    planner: 'AdaL Adaptive Planner (SylphAI)',
-    status: 'PENDING',
-    steps,
-    overall_outcome: 'Plan constructed and awaiting execution.',
-    total_time_ms: 0
-  };
-}
-
 app.post('/api/autonomous/plan', async (req, res) => {
   try {
     const { goal } = req.body;
@@ -768,8 +615,10 @@ app.get('/api/multimodal/audio/analyze', (_req, res) => {
   });
 });
 
-// Start Server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[AutoForge Runtime] Server running at http://localhost:${PORT}`);
-  console.log(`[AutoForge Runtime] WebSocket available at ws://localhost:${PORT}/ws`);
-});
+// Start Server (only when directly executed, avoiding port collision during test runner import)
+if (process.env.NODE_ENV !== 'test' && !process.env.AUTOFORGE_TEST_RUNNER) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`[AutoForge Runtime] Server running at http://localhost:${PORT}`);
+    console.log(`[AutoForge Runtime] WebSocket available at ws://localhost:${PORT}/ws`);
+  });
+}
