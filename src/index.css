@@ -3,22 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --forge-bg: #07090e;
-  --forge-surface: #0e121b;
-  --forge-elevated: #141926;
-  --forge-hover: #1b2132;
-  --forge-border: rgba(255, 255, 255, 0.07);
-  --forge-border-subtle: rgba(255, 255, 255, 0.04);
-  --forge-border-accent: rgba(99, 102, 241, 0.4);
-  --forge-accent: #6366f1;
-  --forge-accent-cyan: #06b6d4;
-  --forge-accent-glow: rgba(99, 102, 241, 0.2);
-  --forge-emerald: #10b981;
-  --forge-amber: #f59e0b;
-  --forge-rose: #f43f5e;
-  --forge-purple: #8b5cf6;
-  --forge-muted: #8492a6;
-  --forge-text: #f8fafc;
+  --forge-bg: #F8FAFC;
+  --forge-surface: #FFFFFF;
+  --forge-elevated: #F1F5F9;
+  --forge-hover: #E2E8F0;
+  --forge-border: #E2E8F0;
+  --forge-border-subtle: #F1F5F9;
+  --forge-border-accent: #EA580C;
+  --forge-accent: #EA580C;
+  --forge-accent-hover: #C2410C;
+  --forge-accent-subtle: #FFF7ED;
+  --forge-dark: #0F172A;
+  --forge-emerald: #10B981;
+  --forge-amber: #F59E0B;
+  --forge-rose: #EF4444;
+  --forge-purple: #8B5CF6;
+  --forge-muted: #64748B;
+  --forge-text: #0F172A;
 }
 
 html, body, #root {
@@ -33,38 +34,40 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbars */
+/* Custom scrollbars matching SIH_DEAL_DEMO */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #94a3b8;
 }
 
-/* Glassmorphism & Card Utility Styles */
-.forge-glass {
-  background: rgba(14, 18, 27, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--forge-border);
-}
-
-.forge-card {
-  background: linear-gradient(180deg, rgba(20, 25, 38, 0.8) 0%, rgba(14, 18, 27, 0.95) 100%);
-  border: 1px solid var(--forge-border);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+/* Card & Surface Utility Styles matching SIH_DEAL_DEMO */
+.gov-card, .forge-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .forge-card-elevated {
-  background: linear-gradient(180deg, rgba(24, 30, 46, 0.9) 0%, rgba(17, 22, 34, 0.98) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+}
+
+.forge-glass {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #E2E8F0;
 }

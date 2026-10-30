@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Terminal, Layers, Activity, ChevronRight, Sparkles } from 'lucide-react';
+import { ShieldCheck, Terminal, Sparkles } from 'lucide-react';
 import { ModeChips } from './ModeChips';
 import { ForgeMode } from '../types';
 
@@ -18,66 +18,78 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
   onToggleTelemetry,
   telemetryCount,
 }) => {
+  const modeLabels: Record<ForgeMode, string> = {
+    browse: 'Chromium Shell / CDP',
+    build: '7-Reviewer Council Studio',
+    automate: 'Startup Verification Matrix',
+    create: 'Multimodal GTM Studio',
+  };
+
   return (
-    <header className="h-14 px-4 bg-[#07090e]/95 backdrop-blur-md border-b border-white/[0.08] flex items-center justify-between select-none z-30">
+    <header className="h-14 px-4 sm:px-6 bg-white border-b border-slate-200 shadow-2xs flex items-center justify-between select-none z-30 sticky top-0">
       {/* Brand & Window Accents */}
       <div className="flex items-center gap-3">
-        {/* Sleek macOS/Developer Window Control Dots */}
-        <div className="flex items-center gap-1.5 mr-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80 hover:opacity-100 transition-opacity cursor-pointer" />
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80 hover:opacity-100 transition-opacity cursor-pointer" />
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 hover:opacity-100 transition-opacity cursor-pointer" />
+        {/* Desktop Window Dots */}
+        <div className="hidden sm:flex items-center gap-1.5 mr-1">
+          <div className="w-2.5 h-2.5 rounded-full bg-rose-400 hover:bg-rose-500 transition-colors cursor-pointer" />
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 hover:bg-amber-500 transition-colors cursor-pointer" />
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 hover:bg-emerald-500 transition-colors cursor-pointer" />
         </div>
 
-        <div className="flex items-center gap-2.5 pl-2 border-l border-white/[0.08]">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-[0_2px_10px_rgba(99,102,241,0.3)] ring-1 ring-white/20">
-            <Layers className="w-3.5 h-3.5 text-white" />
+        <div className="flex items-center gap-2.5 sm:pl-2.5 sm:border-l sm:border-slate-200">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-bold text-white shadow-xs">
+            <Sparkles className="w-4 h-4 text-orange-400" />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-sm tracking-tight text-white font-sans">
-              Auto<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Forge</span>
-            </span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-white/[0.04] text-slate-400 border border-white/[0.06]">
-              Chromium
-            </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-base tracking-tight text-slate-900 font-sans">
+                Auto<span className="text-orange-600 ml-0.5">Forge</span>
+              </span>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
+                AdaL Core
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium hidden md:block">
+              AI Browser <span className="mx-1">/</span> {modeLabels[activeMode]}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Center Segmented Floating Mode Chips */}
-      <div className="flex-1 max-w-xl flex justify-center">
+      <div className="flex-1 max-w-xl flex justify-center px-2">
         <ModeChips activeMode={activeMode} onSelectMode={onSelectMode} />
       </div>
 
       {/* Right Telemetry & Status Badges */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         {/* Zero-Trust Merkle Gate Status */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-[11px] font-medium tracking-tight">Local Intent Gate</span>
+        <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="text-[11px] font-bold">VIGIL Intent Gate</span>
         </div>
 
         {/* WebSocket Sync Status Pill */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/[0.08] text-xs font-mono">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs">
           <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              wsConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-400'
+            className={`w-2 h-2 rounded-full ${
+              wsConnected ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-rose-500 ring-2 ring-rose-200'
             }`}
           />
-          <span className="text-[11px] text-slate-300 font-medium">
-            {wsConnected ? 'Backend Sync' : 'Offline'}
+          <span className="text-[11px] text-slate-700 font-semibold">
+            {wsConnected ? 'CDP Live' : 'Offline'}
           </span>
         </div>
 
         {/* Telemetry Feed Drawer Button */}
         <button
           onClick={onToggleTelemetry}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs text-slate-200 font-mono transition-all duration-150 shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-xs text-slate-700 font-bold transition-all shadow-2xs cursor-pointer"
         >
-          <Terminal className="w-3.5 h-3.5 text-indigo-400" />
-          <span className="font-medium text-[11px]">Feed</span>
+          <Terminal className="w-3.5 h-3.5 text-slate-600" />
+          <span className="text-[11px]">Feed</span>
           {telemetryCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-indigo-500 text-white text-[9px] font-bold">
+            <span className="px-1.5 py-0.2 rounded-full bg-orange-600 text-white text-[9px] font-bold">
               {telemetryCount}
             </span>
           )}

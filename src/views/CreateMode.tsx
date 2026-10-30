@@ -3,20 +3,13 @@ import {
   Video,
   Mic,
   MicOff,
-  Play,
   Download,
   Sparkles,
-  Layers,
-  FileCheck,
   Film,
   Volume2,
   RefreshCw,
-  AlertTriangle,
-  Info,
   Image as ImageIcon,
-  Radio,
   Sliders,
-  Check,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { GTMResult } from '../types';
@@ -37,7 +30,7 @@ export const CreateMode: React.FC = () => {
   const [mediaKey, setMediaKey] = useState(Date.now());
 
   // Image Generation State
-  const [imageTitle, setImageTitle] = useState('AutoForge v2.3');
+  const [imageTitle, setImageTitle] = useState('AutoForge v2.0');
   const [imageTagline, setImageTagline] = useState('AI-Native Browser & Autonomous Multimodal Companion');
   const [imageBadge, setImageBadge] = useState('GTM LAUNCH');
   const [imageTheme, setImageTheme] = useState('indigo');
@@ -52,7 +45,6 @@ export const CreateMode: React.FC = () => {
   const [speechSupported, setSpeechSupported] = useState(false);
 
   useEffect(() => {
-    // Check Web Speech API support
     const hasSpeech = typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
     setSpeechSupported(hasSpeech);
   }, []);
@@ -152,81 +144,88 @@ export const CreateMode: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-[#07090e] text-slate-100 font-sans">
-      {/* Top Header & Multimodal Studio Nav */}
-      <div className="p-4 bg-[#0d111a] border-b border-white/[0.08] select-none">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
-              <Film className="w-5 h-5" />
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto bg-[#F8FAFC] text-slate-900 font-sans">
+      {/* Top Header Card */}
+      <div className="p-4 sm:p-5 bg-white border-b border-slate-200 shadow-2xs select-none">
+        <div className="max-w-6xl mx-auto space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gradient-to-r from-slate-50 via-white to-orange-50/30 p-4 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs">
+                <Film className="w-5 h-5 text-orange-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-base font-extrabold text-slate-900 tracking-tight font-sans">
+                    Multimodal Intelligence & GTM Studio
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[10px] font-bold border border-orange-200">
+                    Pillar 2 Multimodal
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  1080p Video Compositor • Creative Image Generator • Spoken Audio Voice Synthesis
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-white tracking-tight font-sans">
-                Multimodal Intelligence & GTM Studio
-              </h2>
-              <p className="text-xs text-slate-400">
-                Pillar 2 Hackathon Suite: 1080p Video Compositor • Creative Image Generator • Audio & Voice Synthesis
-              </p>
-            </div>
-          </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#07090e] border border-white/[0.08] rounded-xl text-xs font-medium">
-            <button
-              onClick={() => setActiveTab('video')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all ${
-                activeTab === 'video'
-                  ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Video className="w-3.5 h-3.5" />
-              <span>1. 1080p Video</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('image')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all ${
-                activeTab === 'image'
-                  ? 'bg-purple-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>2. Image Generator</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('audio')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg transition-all ${
-                activeTab === 'audio'
-                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Volume2 className="w-3.5 h-3.5" />
-              <span>3. Audio & Voice</span>
-            </button>
+            {/* Mode Switcher Tabs matching SIH_DEAL_DEMO */}
+            <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold shadow-2xs">
+              <button
+                onClick={() => setActiveTab('video')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                  activeTab === 'video'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>1. 1080p Video</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('image')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                  activeTab === 'image'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>2. Image Generator</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('audio')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                  activeTab === 'audio'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                }`}
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+                <span>3. Audio & Voice</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Studio Body */}
-      <div className="flex-1 overflow-y-auto p-6 max-w-6xl mx-auto w-full">
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto w-full">
         {/* ================================================================= */}
         {/* TAB 1: 1080p Video Compositor                                     */}
         {/* ================================================================= */}
         {activeTab === 'video' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-5 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0e121b] border border-white/[0.08] shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] text-xs font-bold text-slate-200">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs font-bold text-slate-900">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <Sparkles className="w-4 h-4 text-orange-600" />
                     <span>Video Campaign Metadata</span>
                   </div>
                   <button
                     onClick={handleGenerateVideo}
                     disabled={isVideoLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isVideoLoading ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -238,34 +237,34 @@ export const CreateMode: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
                     Campaign Title
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-indigo-500 outline-none font-sans"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
                     Headline
                   </label>
                   <input
                     type="text"
                     value={headline}
                     onChange={(e) => setHeadline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-indigo-500 outline-none font-sans"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden"
                   />
                   <div className="mt-2 space-y-1">
-                    <span className="text-[10px] text-slate-500 font-mono">Suggested Headlines:</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Suggested Headlines:</span>
                     {headlinesPreset.map((hp, i) => (
                       <button
                         key={i}
                         onClick={() => setHeadline(hp)}
-                        className="block text-left text-[11px] text-indigo-400 hover:text-indigo-300 truncate w-full"
+                        className="block text-left text-[11px] text-slate-600 hover:text-orange-600 truncate w-full cursor-pointer transition-colors"
                       >
                         • {hp}
                       </button>
@@ -275,10 +274,10 @@ export const CreateMode: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-medium text-slate-400">
+                    <label className="text-xs font-bold text-slate-700">
                       Voiceover Script
                     </label>
-                    <span className="text-[10px] font-mono text-slate-500">
+                    <span className="text-[10px] font-mono text-slate-400">
                       {script.length} characters
                     </span>
                   </div>
@@ -286,52 +285,52 @@ export const CreateMode: React.FC = () => {
                     rows={4}
                     value={script}
                     onChange={(e) => setScript(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-indigo-500 outline-none font-sans resize-none leading-relaxed"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden resize-none leading-relaxed"
                   />
-                  <p className="mt-1 text-[10px] text-slate-500 font-mono">
-                    Composited via Pillow frame generator + FFmpeg H.264 / AAC at 1920x1080.
+                  <p className="mt-1 text-[10px] text-slate-400 font-mono">
+                    Composited via genuine frame generator + FFmpeg H.264 / AAC at 1920x1080.
                   </p>
                 </div>
               </div>
 
               {/* Specs Box */}
-              <div className="p-4 rounded-xl bg-[#090d14] border border-white/[0.08] space-y-2 text-xs font-mono">
-                <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+              <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-xs font-mono shadow-2xs">
+                <div className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                   Pipeline Architecture
                 </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Video Engine:</span>
-                  <span className="text-slate-200">Pillow 1080p Canvas + imageio-ffmpeg</span>
+                <div className="flex justify-between text-slate-700">
+                  <span className="font-semibold text-slate-500">Video Engine:</span>
+                  <span className="text-slate-900 font-bold">1080p Canvas + FFmpeg Compositor</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Audio Track:</span>
-                  <span className="text-indigo-400">ElevenLabs Live (or Acoustic Tone)</span>
+                <div className="flex justify-between text-slate-700">
+                  <span className="font-semibold text-slate-500">Audio Track:</span>
+                  <span className="text-orange-600 font-bold">Spoken Narration (SpeechSynthesizer)</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Output Artifact:</span>
-                  <span className="text-emerald-400 font-bold">artifacts/autoforge_gtm_1080p.mp4</span>
+                <div className="flex justify-between text-slate-700">
+                  <span className="font-semibold text-slate-500">Output Artifact:</span>
+                  <span className="text-emerald-700 font-bold">artifacts/autoforge_gtm_1080p.mp4</span>
                 </div>
               </div>
             </div>
 
             {/* Video Player */}
             <div className="lg:col-span-7 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0e121b] border border-white/[0.08] shadow-xl flex flex-col">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.08]">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-purple-400" />
-                    <span className="text-xs font-bold text-slate-200">
+                    <Video className="w-4 h-4 text-orange-600" />
+                    <span className="text-xs font-bold text-slate-900">
                       1080p MP4 Video Preview
                     </span>
                   </div>
                   {videoResult?.success && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold">
                       1920x1080 ({videoResult.video_size_bytes ? `${Math.round(videoResult.video_size_bytes / 1024)} KB` : 'Verified'})
                     </span>
                   )}
                 </div>
 
-                <div className="w-full aspect-video rounded-xl bg-[#07090e] border border-white/[0.08] overflow-hidden flex items-center justify-center relative">
+                <div className="w-full aspect-video rounded-xl bg-slate-900 border border-slate-300 overflow-hidden flex items-center justify-center relative shadow-inner">
                   <video
                     key={mediaKey}
                     controls
@@ -342,14 +341,14 @@ export const CreateMode: React.FC = () => {
                   </video>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/[0.08]">
-                  <span className="text-xs text-slate-400 font-mono truncate max-w-xs">
+                <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+                  <span className="text-xs text-slate-500 font-mono truncate max-w-xs">
                     Path: artifacts/autoforge_gtm_1080p.mp4
                   </span>
                   <a
                     href="http://127.0.0.1:4000/artifacts/autoforge_gtm_1080p.mp4"
                     download="autoforge_gtm_1080p.mp4"
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-semibold transition-colors"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download MP4</span>
@@ -361,21 +360,21 @@ export const CreateMode: React.FC = () => {
         )}
 
         {/* ================================================================= */}
-        {/* TAB 2: Creative Image Generator (1200x630 Social & Hero Card)     */}
+        {/* TAB 2: Creative Image Generator                                   */}
         {/* ================================================================= */}
         {activeTab === 'image' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-5 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0e121b] border border-white/[0.08] shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] text-xs font-bold text-slate-200">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs font-bold text-slate-900">
                   <div className="flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-purple-400" />
+                    <ImageIcon className="w-4 h-4 text-orange-600" />
                     <span>GTM Creative Banner Specs</span>
                   </div>
                   <button
                     onClick={handleGenerateImage}
                     disabled={isImageLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {isImageLoading ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -387,93 +386,93 @@ export const CreateMode: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
                     Banner Title
                   </label>
                   <input
                     type="text"
                     value={imageTitle}
                     onChange={(e) => setImageTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-purple-500 outline-none font-sans"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
                     Subtitle / Value Proposition
                   </label>
                   <input
                     type="text"
                     value={imageTagline}
                     onChange={(e) => setImageTagline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-purple-500 outline-none font-sans"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
                       Badge Text
                     </label>
                     <input
                       type="text"
                       value={imageBadge}
                       onChange={(e) => setImageBadge(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-purple-500 outline-none font-sans"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
-                      Color Palette Theme
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Theme
                     </label>
                     <select
                       value={imageTheme}
                       onChange={(e) => setImageTheme(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs text-slate-100 focus:border-purple-500 outline-none font-sans"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:bg-white focus:border-orange-500 outline-hidden cursor-pointer"
                     >
-                      <option value="indigo">Indigo Cyberpunk</option>
-                      <option value="emerald">Emerald Neon</option>
-                      <option value="cyan">Deep Cyan</option>
-                      <option value="purple">Cosmic Purple</option>
+                      <option value="indigo">GovTech / Enterprise</option>
+                      <option value="emerald">Emerald Verified</option>
+                      <option value="orange">Saffron Brand</option>
+                      <option value="slate">Deep Slate</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-[#07090e] border border-white/[0.06] text-xs text-slate-400 font-mono space-y-1">
-                  <div className="text-white font-bold">Image Resolution: 1200 x 630 px</div>
-                  <div>Standard OpenGraph / Twitter Card high-res raster asset generated with Pillow canvas.</div>
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 font-mono space-y-1">
+                  <div className="text-slate-900 font-bold">Image Resolution: 1200 x 630 px</div>
+                  <div>OpenGraph high-res raster asset generated for developer community distribution.</div>
                 </div>
               </div>
             </div>
 
             {/* Image Preview Canvas */}
             <div className="lg:col-span-7 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0e121b] border border-white/[0.08] shadow-xl flex flex-col">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.08]">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-purple-400" />
-                    <span className="text-xs font-bold text-slate-200">
+                    <ImageIcon className="w-4 h-4 text-orange-600" />
+                    <span className="text-xs font-bold text-slate-900">
                       1200x630 Marketing Banner Preview
                     </span>
                   </div>
                   {imageResult?.success && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono">
-                      Generated: {imageResult.filename}
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono font-bold">
+                      Generated: {imageResult.badge || 'GTM LAUNCH'}
                     </span>
                   )}
                 </div>
 
-                <div className="w-full aspect-[1200/630] rounded-xl bg-[#07090e] border border-white/[0.08] overflow-hidden flex items-center justify-center relative">
-                  {imageResult?.base64 ? (
+                <div className="w-full aspect-[1200/630] rounded-xl bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center relative">
+                  {imageResult?.image_base64 || imageResult?.base64 ? (
                     <img
-                      src={imageResult.base64}
+                      src={`data:image/png;base64,${imageResult.image_base64 || imageResult.base64}`}
                       alt="Generated GTM Creative Asset"
                       className="w-full h-full object-contain"
                     />
                   ) : (
                     <div className="text-center p-6 space-y-2">
-                      <ImageIcon className="w-12 h-12 text-slate-600 mx-auto" />
-                      <p className="text-xs text-slate-400 font-sans">
+                      <ImageIcon className="w-10 h-10 text-slate-400 mx-auto" />
+                      <p className="text-xs text-slate-500 font-sans">
                         Click "Generate Banner" to composite a 1200x630 launch graphic with typography and badges.
                       </p>
                     </div>
@@ -481,14 +480,14 @@ export const CreateMode: React.FC = () => {
                 </div>
 
                 {imageResult?.success && (
-                  <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/[0.08]">
-                    <span className="text-xs text-slate-400 font-mono truncate max-w-xs">
-                      Path: artifacts/launch_banner.png
+                  <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
+                    <span className="text-xs text-slate-500 font-mono truncate max-w-xs">
+                      Resolution: 1200x630 HD
                     </span>
                     <a
-                      href={imageResult.base64}
+                      href={`data:image/png;base64,${imageResult.image_base64 || imageResult.base64}`}
                       download="launch_banner.png"
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-semibold transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Download PNG</span>
@@ -506,31 +505,30 @@ export const CreateMode: React.FC = () => {
         {activeTab === 'audio' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-6 space-y-4">
-              {/* Voice Transcription (Speech-to-Text) Card */}
-              <div className="p-5 rounded-2xl bg-[#0e121b] border border-white/[0.08] shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] text-xs font-bold text-slate-200">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs font-bold text-slate-900">
                   <div className="flex items-center gap-2">
-                    <Mic className="w-4 h-4 text-emerald-400" />
+                    <Mic className="w-4 h-4 text-orange-600" />
                     <span>Voice Input & Transcription (Speech-to-Text)</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono ${
-                    speechSupported ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                    speechSupported ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}>
-                    {speechSupported ? 'Web Speech API Ready' : 'API Unsupported'}
+                    {speechSupported ? 'Speech API Ready' : 'API Unsupported'}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                <p className="text-xs text-slate-600 font-sans leading-relaxed">
                   Click the microphone to speak your command aloud. The companion transcribes your spoken words in real time.
                 </p>
 
                 <div className="flex items-center gap-3">
                   <button
                     onClick={toggleVoiceRecording}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs shadow-lg transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-xs shadow-xs transition-all cursor-pointer ${
                       isRecording
-                        ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
-                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
+                        : 'bg-orange-600 hover:bg-orange-700 text-white'
                     }`}
                   >
                     {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -540,22 +538,22 @@ export const CreateMode: React.FC = () => {
                   {transcribedText && (
                     <button
                       onClick={() => handleSpeakAloud(transcribedText)}
-                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 text-xs font-semibold transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold transition-colors cursor-pointer shadow-2xs"
                     >
-                      <Volume2 className="w-4 h-4 text-indigo-400" />
+                      <Volume2 className="w-4 h-4 text-orange-600" />
                       <span>Speak Aloud</span>
                     </button>
                   )}
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#07090e] border border-white/[0.08] min-h-[90px] font-mono text-xs text-slate-200">
+                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 min-h-[90px] font-mono text-xs text-slate-800">
                   {transcribedText ? (
                     <div>
-                      <span className="text-[10px] text-slate-500 block mb-1">TRANSCRIBED TEXT:</span>
-                      <p className="leading-relaxed text-emerald-300 font-sans">{transcribedText}</p>
+                      <span className="text-[10px] text-slate-400 block mb-1 font-bold">TRANSCRIBED TEXT:</span>
+                      <p className="leading-relaxed text-slate-900 font-sans font-medium">{transcribedText}</p>
                     </div>
                   ) : (
-                    <span className="text-slate-500 italic">
+                    <span className="text-slate-400 italic font-sans text-xs">
                       {isRecording ? 'Listening to speech...' : 'Press "Start Voice Input" and speak into your microphone.'}
                     </span>
                   )}
@@ -565,16 +563,16 @@ export const CreateMode: React.FC = () => {
 
             {/* Audio Track Parameters & Analysis */}
             <div className="lg:col-span-6 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0e121b] border border-white/[0.08] shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] text-xs font-bold text-slate-200">
+              <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs font-bold text-slate-900">
                   <div className="flex items-center gap-2">
-                    <Sliders className="w-4 h-4 text-indigo-400" />
+                    <Sliders className="w-4 h-4 text-orange-600" />
                     <span>Audio Track Parameter Inspection</span>
                   </div>
                   <button
                     onClick={handleAnalyzeAudio}
                     disabled={isAnalyzingAudio}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzingAudio ? 'animate-spin' : ''}`} />
                     <span>Analyze Track</span>
@@ -582,28 +580,28 @@ export const CreateMode: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                  <div className="p-3 rounded-xl bg-[#07090e] border border-white/[0.06]">
-                    <span className="text-slate-500 text-[10px]">Track Duration</span>
-                    <div className="text-sm font-bold text-emerald-400">
-                      {audioAnalysis?.duration_seconds ? `${audioAnalysis.duration_seconds}s` : '4.00s'}
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Track Duration</span>
+                    <div className="text-sm font-bold text-emerald-700 mt-0.5">
+                      {audioAnalysis?.duration_seconds ? `${audioAnalysis.duration_seconds}s` : '6.00s'}
                     </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#07090e] border border-white/[0.06]">
-                    <span className="text-slate-500 text-[10px]">Sample Rate</span>
-                    <div className="text-sm font-bold text-indigo-400">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Sample Rate</span>
+                    <div className="text-sm font-bold text-slate-900 mt-0.5">
                       {audioAnalysis?.sample_rate ? `${audioAnalysis.sample_rate} Hz` : '44,100 Hz'}
                     </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#07090e] border border-white/[0.06]">
-                    <span className="text-slate-500 text-[10px]">Channels</span>
-                    <div className="text-sm font-bold text-purple-400">
-                      {audioAnalysis?.channels || 'Mono (1 Ch)'}
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Channels</span>
+                    <div className="text-sm font-bold text-slate-900 mt-0.5">
+                      {audioAnalysis?.channels || 'Stereo (2 Ch)'}
                     </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#07090e] border border-white/[0.06]">
-                    <span className="text-slate-500 text-[10px]">Encoding Format</span>
-                    <div className="text-sm font-bold text-slate-200">
-                      {audioAnalysis?.format || '16-bit PCM WAV'}
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Encoding Format</span>
+                    <div className="text-sm font-bold text-slate-900 mt-0.5">
+                      {audioAnalysis?.format || 'MPEG Audio / WAV'}
                     </div>
                   </div>
                 </div>
@@ -612,7 +610,7 @@ export const CreateMode: React.FC = () => {
                   <audio
                     key={`audio-track-${mediaKey}`}
                     controls
-                    className="w-full h-10 rounded-lg outline-none"
+                    className="w-full h-10 rounded-lg outline-hidden"
                     src={`http://127.0.0.1:4000/artifacts/latest_gtm_audio.wav?v=${mediaKey}`}
                   >
                     Your browser does not support audio playback.

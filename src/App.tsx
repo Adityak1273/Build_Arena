@@ -134,7 +134,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0a0d14] text-slate-100 font-sans">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F8FAFC] text-slate-900 font-sans selection:bg-orange-500 selection:text-white">
       {/* Top Main Navigation Bar */}
       <NavigationBar
         activeMode={activeMode}
