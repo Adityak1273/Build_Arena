@@ -1,7 +1,9 @@
-// AutoForge v1.6 Electron Main Process
+// AutoForge v1.7 Electron Main Process
 import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import http from 'http';
+import { spawn, ChildProcess } from 'child_process';
 import { fileURLToPath } from 'url';
 import { extractSemanticNodes, verifyAndClickBackendNode, SemanticAXNode } from './semanticBrowser';
 
@@ -19,6 +21,54 @@ let lastNavigatedUrl = 'https://news.ycombinator.com';
 
 const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 app.userAgentFallback = CHROME_UA;
+
+let runtimeProcess: ChildProcess | null = null;
+
+function checkHealth(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const req = http.get('http://127.0.0.1:4000/api/health', (res) => {
+      resolve(res.statusCode === 200);
+    });
+    req.on('error', () => resolve(false));
+    req.setTimeout(800, () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+
+async function ensureRuntimeServerRunning() {
+  const healthy = await checkHealth();
+  if (healthy) {
+    console.log('[AutoForge] Runtime server on port 4000 is active and healthy.');
+    return;
+  }
+
+  console.log('[AutoForge] Spawning local runtime server (src/runtime/server.ts)...');
+  const serverScript = path.join(__dirname, '../src/runtime/server.ts');
+  const isWindows = process.platform === 'win32';
+  const cmd = isWindows ? 'npx.cmd' : 'npx';
+
+  runtimeProcess = spawn(cmd, ['tsx', serverScript], {
+    cwd: path.join(__dirname, '..'),
+    env: { ...process.env, PORT: '4000' },
+    stdio: 'inherit',
+    shell: true
+  });
+
+  runtimeProcess.on('error', (err) => {
+    console.error('[AutoForge] Failed to spawn runtime server:', err);
+  });
+
+  const startTime = Date.now();
+  while (Date.now() - startTime < 12000) {
+    await new Promise((r) => setTimeout(r, 400));
+    if (await checkHealth()) {
+      console.log('[AutoForge] Runtime server successfully started and verified healthy on :4000.');
+      break;
+    }
+  }
+}
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
@@ -314,7 +364,9 @@ ipcMain.handle('browser:getVersion', async () => {
 });
 
 // App Lifecycle - Allow guest browser webviews to render target developer sites and OAuth sign-in
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await ensureRuntimeServerRunning();
+
   const sessions = [session.defaultSession, session.fromPartition('persist:autoforge')];
 
   sessions.forEach((ses) => {
@@ -349,6 +401,20 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('will-quit', () => {
+  if (runtimeProcess) {
+    console.log('[AutoForge] Cleaning up runtime server child process...');
+    if (process.platform === 'win32' && runtimeProcess.pid) {
+      try {
+        spawn('taskkill', ['/pid', runtimeProcess.pid.toString(), '/f', '/t']);
+      } catch {}
+    } else {
+      runtimeProcess.kill('SIGTERM');
+    }
+    runtimeProcess = null;
   }
 });
 

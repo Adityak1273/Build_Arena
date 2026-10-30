@@ -1,4 +1,4 @@
-// AutoForge v1.6 Semantic Browser CDP
+// AutoForge v1.7 Semantic Browser CDP
 /**
  * AutoForge Semantic Browser Engine
  * Chrome DevTools Protocol (CDP 1.3) Accessibility Tree Extraction & Postcondition Verification

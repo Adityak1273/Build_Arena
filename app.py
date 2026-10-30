@@ -1,5 +1,5 @@
 """
-AutoForge v1.6 Root Application Server Entry Point
+AutoForge v1.7 Root Application Server Entry Point
 """
 
 import sys

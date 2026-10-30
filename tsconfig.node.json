@@ -1,4 +1,4 @@
-// AutoForge v1.6 TypeScript Node Configuration
+// AutoForge v1.7 TypeScript Node Configuration
 {
   "compilerOptions": {
     "composite": true,

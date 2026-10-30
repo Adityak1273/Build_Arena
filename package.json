@@ -1,6 +1,6 @@
 {
   "name": "autoforge",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "description": "AutoForge — The AI-Native Developer Browser with Multimodal Companion",
   "main": "dist-electron/main.js",
@@ -9,6 +9,7 @@
     "build": "tsc && vite build && esbuild electron/preload.ts --format=cjs --platform=node --outfile=dist-electron/preload.cjs",
     "preview": "vite preview",
     "start": "electron .",
+    "launch": "node scripts/launch.js",
     "server": "tsx src/runtime/server.ts",
     "start:runtime": "tsx src/runtime/server.ts",
     "test:runtime": "tsx src/verifier/test_suite.ts",
