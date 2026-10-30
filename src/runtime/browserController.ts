@@ -285,6 +285,61 @@ export class BrowserController {
     return { url, title, screenshotBase64, domExcerpt };
   }
 
+  public async interact(params: {
+    type: 'click' | 'wheel' | 'type' | 'key' | 'hover';
+    x?: number;
+    y?: number;
+    deltaX?: number;
+    deltaY?: number;
+    text?: string;
+    key?: string;
+  }): Promise<{
+    success: boolean;
+    url: string;
+    title: string;
+    screenshotBase64: string;
+    error?: string;
+  }> {
+    await this.initialize();
+    if (!this.page) {
+      throw new Error('Browser page is not initialized');
+    }
+
+    try {
+      if (params.type === 'click' && typeof params.x === 'number' && typeof params.y === 'number') {
+        await this.page.mouse.click(params.x, params.y);
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 3000 }).catch(() => {});
+      } else if (params.type === 'wheel') {
+        await this.page.mouse.wheel(params.deltaX || 0, params.deltaY || 100);
+      } else if (params.type === 'type' && params.text) {
+        await this.page.keyboard.type(params.text);
+      } else if (params.type === 'key' && params.key) {
+        await this.page.keyboard.press(params.key);
+      } else if (params.type === 'hover' && typeof params.x === 'number' && typeof params.y === 'number') {
+        await this.page.mouse.move(params.x, params.y);
+      }
+
+      await new Promise((r) => setTimeout(r, 100));
+
+      const state = await this.getCurrentState();
+      return {
+        success: true,
+        url: state.url,
+        title: state.title,
+        screenshotBase64: state.screenshotBase64
+      };
+    } catch (err: any) {
+      const state = await this.getCurrentState().catch(() => ({ url: 'about:blank', title: '', screenshotBase64: '' }));
+      return {
+        success: false,
+        url: state.url,
+        title: state.title,
+        screenshotBase64: state.screenshotBase64,
+        error: err.message
+      };
+    }
+  }
+
   public async close(): Promise<void> {
     try {
       if (this.page) {

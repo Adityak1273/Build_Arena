@@ -143,6 +143,28 @@ export const api = {
 
   getDownloadUrl: () => `${API_BASE}/api/spreadsheet/download`,
 
+  interactWithBrowser: async (interaction: {
+    type: 'click' | 'wheel' | 'type' | 'key' | 'hover';
+    x?: number;
+    y?: number;
+    deltaX?: number;
+    deltaY?: number;
+    text?: string;
+    key?: string;
+  }) => {
+    const res = await fetch(`${API_BASE}/api/browser/interact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(interaction)
+    });
+    return await res.json();
+  },
+
+  getBrowserState: async () => {
+    const res = await fetch(`${API_BASE}/api/browser/state`);
+    return await res.json();
+  },
+
   generateGTM: async (title: string, headline: string, script?: string): Promise<GTMResult> => {
     const res = await fetch(`${API_BASE}/api/gtm/generate`, {
       method: 'POST',

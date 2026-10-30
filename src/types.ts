@@ -146,3 +146,35 @@ export interface TelemetryEvent {
   type: string;
   payload: any;
 }
+
+export type SwarmAgentId = 'orchestrator' | 'navigator' | 'researcher' | 'coder' | 'verifier';
+
+export type SwarmAgentState = 'IDLE' | 'THINKING' | 'ACTING ON TAB' | 'VERIFYING' | 'AWAITING APPROVAL';
+
+export interface SwarmAgentProfile {
+  id: SwarmAgentId;
+  name: string;
+  role: string;
+  avatar: string;
+  color: string;
+  state: SwarmAgentState;
+  lastMessage: string;
+}
+
+export interface AgentHandoffMessage {
+  id: string;
+  timestamp: string;
+  fromAgent: SwarmAgentId;
+  toAgent: SwarmAgentId;
+  action: string;
+  details?: string;
+  status: 'DISPATCHED' | 'PROCESSING' | 'COMPLETED' | 'HALTED';
+}
+
+export interface BrowserTab {
+  id: string;
+  title: string;
+  url: string;
+  activeAgent?: SwarmAgentId;
+  loading?: boolean;
+}

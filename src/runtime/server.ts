@@ -563,6 +563,28 @@ app.get('/api/browser/preview/ax', async (req, res) => {
   }
 });
 
+app.post('/api/browser/interact', async (req, res) => {
+  try {
+    const { type, x, y, deltaX, deltaY, text, key } = req.body;
+    const result = await browserController.interact({ type, x, y, deltaX, deltaY, text, key });
+    if (result.screenshotBase64) {
+      broadcast('BROWSER_SCREENSHOT', { screenshot: result.screenshotBase64, url: result.url });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/browser/state', async (_req, res) => {
+  try {
+    const state = await browserController.getCurrentState();
+    res.json({ success: true, ...state });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 9. Multimodal Creative & Analysis Services
 app.post('/api/multimodal/image/generate', (req, res) => {
   const { title, tagline, badge, theme } = req.body;
