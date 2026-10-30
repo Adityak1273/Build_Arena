@@ -10,6 +10,9 @@ import {
   RefreshCw,
   Image as ImageIcon,
   Sliders,
+  FileText,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { GTMResult } from '../types';
@@ -17,17 +20,18 @@ import { GTMResult } from '../types';
 export const CreateMode: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'video' | 'image' | 'audio'>('video');
 
-  // Video State
-  const [title, setTitle] = useState('AutoForge Launchpad');
+  // Video & Campaign State
+  const [title, setTitle] = useState('AutoForge v2.0 Launch');
   const [headline, setHeadline] = useState(
-    'AI-Native Developer Browser with CDP Accessibility Trees & 7-Reviewer Council'
+    'The AI-Native Browser with Multimodal Companion Powered by AdaL × VIGIL'
   );
   const [script, setScript] = useState(
-    'Introducing AutoForge. The AI-native desktop developer browser. Featuring native Chromium CDP accessibility automation, a seven-reviewer anti-boilerplate council, and independent disk outcome assertions.'
+    'Introducing AutoForge. Traditional browsers only render web pages. AutoForge understands developer intent, operates live Playwright CDP sessions, executes multi-step workflows, and verifies outcomes with cryptographic integrity checks. Build faster with AdaL.'
   );
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [videoResult, setVideoResult] = useState<GTMResult | null>(null);
   const [mediaKey, setMediaKey] = useState(Date.now());
+  const [cinemaView, setCinemaView] = useState<'video' | 'poster'>('video');
 
   // Image Generation State
   const [imageTitle, setImageTitle] = useState('AutoForge v2.0');
@@ -161,9 +165,12 @@ export const CreateMode: React.FC = () => {
                   <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.15)]">
                     Pillar 2 Multimodal
                   </span>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-mono font-bold border border-indigo-500/30">
+                    AdaL × VIGIL Powered
+                  </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5 font-sans">
-                  1080p Video Compositor • Creative Image Generator • Spoken Audio Voice Synthesis
+                  Playwright High-Res Poster Render • 1280x720 FFmpeg Muxer • OpenGraph Canvas • Spoken Audio Voice Synthesis
                 </p>
               </div>
             </div>
@@ -179,7 +186,7 @@ export const CreateMode: React.FC = () => {
                 }`}
               >
                 <Video className="w-3.5 h-3.5" />
-                <span>1. 1080p Video</span>
+                <span>1. Launch Studio (Bento)</span>
               </button>
               <button
                 onClick={() => setActiveTab('image')}
@@ -190,7 +197,7 @@ export const CreateMode: React.FC = () => {
                 }`}
               >
                 <ImageIcon className="w-3.5 h-3.5" />
-                <span>2. Image Generator</span>
+                <span>2. Image Banner</span>
               </button>
               <button
                 onClick={() => setActiveTab('audio')}
@@ -201,7 +208,7 @@ export const CreateMode: React.FC = () => {
                 }`}
               >
                 <Volume2 className="w-3.5 h-3.5" />
-                <span>3. Audio & Voice</span>
+                <span>3. Voice Deck</span>
               </button>
             </div>
           </div>
@@ -211,148 +218,224 @@ export const CreateMode: React.FC = () => {
       {/* Main Studio Body */}
       <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
         {/* ================================================================= */}
-        {/* TAB 1: 1080p Video Compositor                                     */}
+        {/* TAB 1: 3-Panel Bento Grid Studio                                 */}
         {/* ================================================================= */}
         {activeTab === 'video' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-5 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.5)] space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] text-xs font-bold text-white font-display">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span>Video Campaign Metadata</span>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Panel 1: Campaign Metadata & Settings */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="p-5 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.5)] space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] text-xs font-bold text-white font-display">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <span>Campaign Configuration</span>
+                    </div>
+                    <button
+                      onClick={handleGenerateVideo}
+                      disabled={isVideoLoading}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-xs font-mono font-bold shadow-[0_0_20px_rgba(99,102,241,0.35)] transition-all disabled:opacity-50 cursor-pointer border border-white/20"
+                    >
+                      {isVideoLoading ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Film className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isVideoLoading ? 'Rendering Poster & Video...' : 'Composite All Assets'}</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={handleGenerateVideo}
-                    disabled={isVideoLoading}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-xs font-mono font-bold shadow-[0_0_20px_rgba(99,102,241,0.35)] transition-all disabled:opacity-50 cursor-pointer border border-white/20"
-                  >
-                    {isVideoLoading ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Film className="w-3.5 h-3.5" />
-                    )}
-                    <span>{isVideoLoading ? 'Compositing...' : 'Render MP4'}</span>
-                  </button>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-300 mb-1">
-                    Campaign Title
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs text-white font-mono focus:border-indigo-500 outline-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-slate-300 mb-1">
-                    Headline
-                  </label>
-                  <input
-                    type="text"
-                    value={headline}
-                    onChange={(e) => setHeadline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs text-white font-mono focus:border-indigo-500 outline-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                  />
-                  <div className="mt-2 space-y-1">
-                    <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">Suggested Headlines:</span>
-                    {headlinesPreset.map((hp, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setHeadline(hp)}
-                        className="block text-left text-[11px] text-slate-400 hover:text-cyan-300 truncate w-full cursor-pointer transition-colors font-sans"
-                      >
-                        • {hp}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-mono font-bold text-slate-300">
-                      Voiceover Script
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-slate-300 mb-1">
+                      Campaign Title
                     </label>
-                    <span className="text-[10px] font-mono text-slate-500">
-                      {script.length} characters
-                    </span>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs text-white font-mono focus:border-indigo-500 outline-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                    />
                   </div>
-                  <textarea
-                    rows={4}
-                    value={script}
-                    onChange={(e) => setScript(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs text-white font-mono focus:border-indigo-500 outline-hidden resize-none leading-relaxed shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                  />
-                  <p className="mt-1 text-[10px] text-slate-500 font-mono">
-                    Composited via genuine frame generator + FFmpeg H.264 / AAC at 1920x1080.
-                  </p>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold text-slate-300 mb-1">
+                      Value Proposition Headline
+                    </label>
+                    <input
+                      type="text"
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs text-white font-mono focus:border-indigo-500 outline-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                    />
+                    <div className="mt-2 space-y-1">
+                      <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">Suggested Headlines:</span>
+                      {headlinesPreset.map((hp, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setHeadline(hp)}
+                          className="block text-left text-[11px] text-slate-400 hover:text-cyan-300 truncate w-full cursor-pointer transition-colors font-sans"
+                        >
+                          • {hp}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-mono font-bold text-slate-300">
+                        Voiceover Narration Script
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {script.length} characters
+                      </span>
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={script}
+                      onChange={(e) => setScript(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs text-white font-mono focus:border-indigo-500 outline-hidden resize-none leading-relaxed shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                    />
+                  </div>
+                </div>
+
+                {/* Strategic Competitor Brief Card */}
+                <div className="p-4 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] space-y-2.5 text-xs font-mono shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                  <div className="flex items-center justify-between text-slate-300 font-bold">
+                    <span className="flex items-center gap-1.5 text-cyan-300 font-display">
+                      <FileText className="w-4 h-4 text-cyan-400" />
+                      Strategic Positioning Brief
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono">AdaL GTM Matrix</span>
+                  </div>
+                  <div className="space-y-1.5 text-[11px] text-slate-300 font-sans leading-relaxed">
+                    <div className="p-2 rounded-lg bg-[#06080D] border border-white/[0.06]">
+                      <strong className="text-white block font-mono text-[10px] text-indigo-300 mb-0.5">VS. GOOGLE CHROME:</strong>
+                      Passive display vs. AutoForge's native CDP autonomous action controller.
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#06080D] border border-white/[0.06]">
+                      <strong className="text-white block font-mono text-[10px] text-cyan-300 mb-0.5">VS. ARC / DIA:</strong>
+                      Tab summaries vs. AutoForge's physical disk outcome verification & SHA-256 assertions.
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#06080D] border border-white/[0.06]">
+                      <strong className="text-white block font-mono text-[10px] text-amber-300 mb-0.5">VS. PERPLEXITY AI:</strong>
+                      Read-only retrieval vs. AutoForge's full browser workspace & 7-reviewer code council.
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Specs Box */}
-              <div className="p-4 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] space-y-2 text-xs font-mono shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                <div className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                  Pipeline Architecture
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span className="font-semibold text-slate-400">Video Engine:</span>
-                  <span className="text-white font-bold">1080p Canvas + FFmpeg Compositor</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span className="font-semibold text-slate-400">Audio Track:</span>
-                  <span className="text-cyan-300 font-bold">Spoken Narration (SpeechSynthesizer)</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span className="font-semibold text-slate-400">Output Artifact:</span>
-                  <span className="text-emerald-400 font-bold">artifacts/autoforge_gtm_1080p.mp4</span>
-                </div>
-              </div>
-            </div>
+              {/* Panel 2: 16:9 Cinema Stage (Video & High-Res Poster) */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="p-5 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-2">
+                      <Film className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-display font-bold text-white">
+                        16:9 Cinema Stage
+                      </span>
+                    </div>
 
-            {/* Video Player */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="p-5 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.08]">
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-cyan-400" />
-                    <span className="text-xs font-display font-bold text-white">
-                      1080p MP4 Video Preview
-                    </span>
+                    <div className="flex items-center gap-1 p-0.5 bg-[#06080D] border border-white/[0.08] rounded-lg text-[10px] font-mono font-bold">
+                      <button
+                        onClick={() => setCinemaView('video')}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                          cinemaView === 'video'
+                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        Play Video (MP4)
+                      </button>
+                      <button
+                        onClick={() => setCinemaView('poster')}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                          cinemaView === 'poster'
+                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        High-Res Poster (PNG)
+                      </button>
+                    </div>
                   </div>
-                  {videoResult?.success && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(16,185,129,0.15)]">
-                      1920x1080 ({videoResult.video_size_bytes ? `${Math.round(videoResult.video_size_bytes / 1024)} KB` : 'Verified'})
-                    </span>
-                  )}
+
+                  {/* Cinema Bezel */}
+                  <div className="w-full aspect-video rounded-xl bg-[#05070B] border border-white/[0.1] overflow-hidden flex items-center justify-center relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
+                    {cinemaView === 'video' ? (
+                      <video
+                        key={`gtm-video-${mediaKey}`}
+                        controls
+                        className="w-full h-full object-cover"
+                        src={`http://127.0.0.1:4000/public/gtm-assets/launch_video.mp4?v=${mediaKey}`}
+                      >
+                        Your browser does not support video playback.
+                      </video>
+                    ) : (
+                      <img
+                        key={`gtm-poster-${mediaKey}`}
+                        src={`http://127.0.0.1:4000/public/gtm-assets/hero_frame.png?v=${mediaKey}`}
+                        alt="High-Res Promotional Launch Poster"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+
+                  {/* Badges & Downloads */}
+                  <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/[0.08] flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        1280x720 HD Verified
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold">
+                        H.264 / AAC Muxed
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`http://127.0.0.1:4000/public/gtm-assets/hero_frame.png?v=${mediaKey}`}
+                        download="hero_frame.png"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-mono font-bold transition-colors border border-white/[0.1] cursor-pointer"
+                      >
+                        <Download className="w-3 h-3 text-cyan-400" />
+                        <span>Poster PNG</span>
+                      </a>
+                      <a
+                        href={`http://127.0.0.1:4000/public/gtm-assets/launch_video.mp4?v=${mediaKey}`}
+                        download="launch_video.mp4"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-xs font-mono font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] cursor-pointer"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>Video MP4</span>
+                      </a>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="w-full aspect-video rounded-xl bg-[#05070B] border border-white/[0.1] overflow-hidden flex items-center justify-center relative shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
-                  <video
-                    key={mediaKey}
+                {/* Panel 3: Voiceover Audio Narration Deck */}
+                <div className="p-4 rounded-2xl bg-[#0F121C]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.5)] space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold font-display text-white">
+                    <span className="flex items-center gap-1.5">
+                      <Volume2 className="w-4 h-4 text-cyan-400" />
+                      Narration Audio Track (Spoken Narration)
+                    </span>
+                    <button
+                      onClick={() => handleSpeakAloud(script)}
+                      className="px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-cyan-300 border border-white/[0.08] text-[10px] font-mono transition-colors cursor-pointer"
+                    >
+                      Speak Aloud Now
+                    </button>
+                  </div>
+                  <audio
+                    key={`voiceover-audio-${mediaKey}`}
                     controls
-                    className="w-full h-full object-cover"
-                    src={`http://127.0.0.1:4000/artifacts/autoforge_gtm_1080p.mp4?v=${mediaKey}`}
+                    className="w-full h-9 rounded-xl outline-hidden"
+                    src={`http://127.0.0.1:4000/public/gtm-assets/voiceover.mp3?v=${mediaKey}`}
                   >
-                    Your browser does not support video playback.
-                  </video>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/[0.08]">
-                  <span className="text-xs text-slate-400 font-mono truncate max-w-xs">
-                    Path: artifacts/autoforge_gtm_1080p.mp4
-                  </span>
-                  <a
-                    href="http://127.0.0.1:4000/artifacts/autoforge_gtm_1080p.mp4"
-                    download="autoforge_gtm_1080p.mp4"
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-mono font-bold transition-colors border border-white/[0.1] cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Download MP4</span>
-                  </a>
+                    Your browser does not support audio playback.
+                  </audio>
                 </div>
               </div>
             </div>
@@ -611,7 +694,7 @@ export const CreateMode: React.FC = () => {
                     key={`audio-track-${mediaKey}`}
                     controls
                     className="w-full h-10 rounded-xl outline-hidden"
-                    src={`http://127.0.0.1:4000/artifacts/latest_gtm_audio.wav?v=${mediaKey}`}
+                    src={`http://127.0.0.1:4000/public/gtm-assets/voiceover.mp3?v=${mediaKey}`}
                   >
                     Your browser does not support audio playback.
                   </audio>

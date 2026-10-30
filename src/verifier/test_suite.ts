@@ -72,18 +72,21 @@ async function runTestSuite() {
     failures++;
   }
 
-  // 5. Verify Multimodal PNG Generation Binary Headers
-  console.log('\n[Test 5] Multimodal Binary Assets: Valid PNG generation');
-  const pngBuffer = GTMMultimodalPipeline.createValidPng(100, 100, 10, 20, 30);
+  // 5. Verify Multimodal PNG Generation Binary Headers & High-Res Size
+  console.log('\n[Test 5] Multimodal Binary Assets: High-Res PNG generation');
+  const pngBuffer = await GTMMultimodalPipeline.renderHighResHeroPoster(
+    'AutoForge Launch Verification',
+    'AI-Native Developer Browser with Multimodal Companion'
+  );
   const isPng =
     pngBuffer[0] === 0x89 &&
     pngBuffer[1] === 0x50 &&
     pngBuffer[2] === 0x4e &&
     pngBuffer[3] === 0x47;
-  if (isPng && pngBuffer.length > 50) {
-    console.log(`✓ PASS: Valid PNG binary created (${pngBuffer.length} bytes).`);
+  if (isPng && pngBuffer.length > 20000) {
+    console.log(`✓ PASS: Valid high-res PNG binary created (${pngBuffer.length} bytes, >20,000 bytes threshold verified).`);
   } else {
-    console.error('✗ FAIL: PNG generation invalid');
+    console.error(`✗ FAIL: High-res PNG generation invalid or below 20KB (${pngBuffer.length} bytes)`);
     failures++;
   }
 

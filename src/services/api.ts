@@ -131,6 +131,16 @@ export const api = {
     return await res.json();
   },
 
+  updateSpreadsheet: async (rows: any[]): Promise<VerificationOutcome> => {
+    const res = await fetch(`${API_BASE}/api/spreadsheet/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows })
+    });
+    if (!res.ok) throw new Error('Spreadsheet update failed');
+    return await res.json();
+  },
+
   getDownloadUrl: () => `${API_BASE}/api/spreadsheet/download`,
 
   generateGTM: async (title: string, headline: string, script?: string): Promise<GTMResult> => {

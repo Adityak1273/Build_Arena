@@ -206,6 +206,19 @@ app.post('/api/spreadsheet/export', async (req, res) => {
   }
 });
 
+app.post('/api/spreadsheet/update', async (req, res) => {
+  try {
+    const { rows } = req.body;
+    if (!Array.isArray(rows)) {
+      return res.status(400).json({ error: 'Expected rows array in request body' });
+    }
+    const outcome = await StartupSpreadsheetWorkflow.updateSpreadsheetArtifact(rows);
+    res.json(outcome);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/spreadsheet/download', (_req, res) => {
   const csvPath = path.resolve(process.cwd(), 'artifacts', 'ai_startups_comparison.csv');
   const legacyPath = path.resolve(process.cwd(), 'artifacts', 'ai_startups_matrix.csv');
