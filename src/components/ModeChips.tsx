@@ -16,27 +16,27 @@ export const ModeChips: React.FC<ModeChipsProps> = ({ activeMode, onSelectMode }
   ];
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-lg shadow-2xs">
+    <div className="flex items-center gap-1 p-1 bg-[#07090E]/80 backdrop-blur-md border border-white/[0.08] rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
       {modes.map((m) => {
         const isActive = activeMode === m.id;
         return (
           <button
             key={m.id}
             onClick={() => onSelectMode(m.id)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all select-none cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all select-none cursor-pointer ${
               isActive
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                ? 'bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] border border-white/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
             <span className="shrink-0">{m.icon}</span>
-            <span className="font-bold tracking-tight">{m.label}</span>
+            <span className="font-semibold tracking-tight">{m.label}</span>
             {m.badge && (
               <span
                 className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold uppercase transition-colors ${
                   isActive
-                    ? 'bg-orange-700/80 text-white'
-                    : 'bg-slate-200 text-slate-600'
+                    ? 'bg-white/20 text-white border border-white/30'
+                    : 'bg-white/[0.06] text-slate-400 border border-white/[0.05]'
                 }`}
               >
                 {m.badge}

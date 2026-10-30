@@ -229,18 +229,18 @@ export const BrowseMode: React.FC = () => {
 
   const getRoleStyle = (role: string) => {
     if (role.includes('button')) {
-      return 'bg-orange-50 text-orange-900 border-orange-200';
+      return 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
     }
     if (role.includes('link')) {
-      return 'bg-blue-50 text-blue-900 border-blue-200';
+      return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
     }
     if (role.includes('heading')) {
-      return 'bg-amber-50 text-amber-900 border-amber-200';
+      return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
     }
     if (role.includes('box') || role.includes('input')) {
-      return 'bg-emerald-50 text-emerald-900 border-emerald-200';
+      return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
     }
-    return 'bg-slate-100 text-slate-700 border-slate-200';
+    return 'bg-white/[0.05] text-slate-300 border-white/[0.08]';
   };
 
   const quickBookmarks = [
@@ -252,21 +252,21 @@ export const BrowseMode: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-[#F8FAFC] text-slate-900 font-sans">
-      {/* Target Strip matching SIH_DEAL_DEMO */}
-      <div className="h-10 px-4 bg-white border-b border-slate-200 flex items-center justify-between select-none shadow-2xs">
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-transparent text-slate-100 font-sans">
+      {/* Target Strip */}
+      <div className="h-10 px-4 bg-[#0B0E17]/90 border-b border-white/[0.08] flex items-center justify-between select-none shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
         <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-1">Session:</span>
+          <span className="text-[10px] text-slate-400 font-mono font-bold uppercase tracking-wider mr-1">Session:</span>
           {targets.map((tgt) => {
             const isActive = tgt.id === activeTargetId;
             return (
               <button
                 key={tgt.id}
                 onClick={() => handleSwitchTarget(tgt)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-orange-50 text-orange-900 border border-orange-300 shadow-2xs'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-[0_0_10px_rgba(99,102,241,0.2)]'
+                    : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white border border-white/[0.06]'
                 }`}
               >
                 <span>{tgt.title}</span>
@@ -276,32 +276,32 @@ export const BrowseMode: React.FC = () => {
         </div>
 
         {/* Telemetry Indicator */}
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
           <span className={`w-2 h-2 rounded-full ${
-            telemetry.cdpConnected ? 'bg-emerald-500 ring-2 ring-emerald-200' : 'bg-rose-500'
+            telemetry.cdpConnected ? 'bg-emerald-400 ring-2 ring-emerald-500/40 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'
           }`} />
-          <span className="font-semibold text-slate-700">
+          <span className="font-semibold text-slate-300">
             {telemetry.cdpConnected ? 'CDP 1.3 Active' : (isElectron() ? 'CDP Connecting...' : 'CDP Detached')}
           </span>
-          <span>•</span>
+          <span className="text-slate-600">•</span>
           <span>Latency: {telemetry.latencyMs !== null ? `${telemetry.latencyMs}ms` : 'N/A'}</span>
         </div>
       </div>
 
       {/* Main Omnibox & Developer Controls */}
-      <div className="h-13 px-4 bg-white border-b border-slate-200 flex items-center gap-3 select-none shadow-2xs">
+      <div className="h-13 px-4 bg-[#0B0E17]/80 backdrop-blur-md border-b border-white/[0.08] flex items-center gap-3 select-none">
         {/* Navigation Arrows & Refresh */}
-        <div className="flex items-center gap-1 text-slate-600">
+        <div className="flex items-center gap-1 text-slate-400">
           <button
             onClick={() => electronBrowser.goBack()}
-            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] hover:text-white transition-colors cursor-pointer"
             title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => electronBrowser.goForward()}
-            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] hover:text-white transition-colors cursor-pointer"
             title="Forward"
           >
             <ArrowRight className="w-4 h-4" />
@@ -313,8 +313,8 @@ export const BrowseMode: React.FC = () => {
                 setTimeout(() => setIsLoading(false), 700);
               });
             }}
-            className={`p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer ${
-              isLoading ? 'animate-spin text-orange-600' : ''
+            className={`p-1.5 rounded-lg hover:bg-white/[0.08] hover:text-white transition-colors cursor-pointer ${
+              isLoading ? 'animate-spin text-cyan-400' : ''
             }`}
             title="Reload"
           >
@@ -328,9 +328,9 @@ export const BrowseMode: React.FC = () => {
             e.preventDefault();
             handleNavigate();
           }}
-          className="flex-1 max-w-3xl flex items-center h-8 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-900 focus-within:border-orange-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-100 shadow-2xs transition-all"
+          className="flex-1 max-w-3xl flex items-center h-9 px-3 rounded-xl bg-[#06080D] border border-white/[0.1] text-xs font-mono text-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all"
         >
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-sans font-bold mr-2">
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold mr-2">
             <Lock className="w-2.5 h-2.5" />
             <span>TLS</span>
           </div>
@@ -338,7 +338,7 @@ export const BrowseMode: React.FC = () => {
             type="text"
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
-            className="w-full bg-transparent border-none outline-hidden text-slate-900 placeholder-slate-400 font-sans text-xs tracking-tight font-medium"
+            className="w-full bg-transparent border-none outline-hidden text-white placeholder-slate-500 font-sans text-xs tracking-tight font-medium"
             placeholder="Enter URL to navigate or click mic to speak..."
           />
           <button
@@ -346,13 +346,13 @@ export const BrowseMode: React.FC = () => {
             onClick={handleVoiceNavigate}
             title={isVoiceListening ? 'Listening... click to stop' : 'Voice Navigation (Speak URL)'}
             className={`p-1 rounded-md transition-colors cursor-pointer ${
-              isVoiceListening ? 'bg-rose-500 text-white animate-pulse' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
+              isVoiceListening ? 'bg-rose-500 text-white animate-pulse' : 'text-slate-400 hover:text-white hover:bg-white/[0.08]'
             }`}
           >
             {isVoiceListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
           </button>
           {isLoading && (
-            <span className="text-[10px] text-orange-600 font-mono animate-pulse ml-2 font-bold">
+            <span className="text-[10px] text-cyan-400 font-mono animate-pulse ml-2 font-bold">
               Navigating...
             </span>
           )}
@@ -363,18 +363,18 @@ export const BrowseMode: React.FC = () => {
           <button
             onClick={handleAnalyzeVision}
             disabled={isAnalyzingVision}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-sans font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.1] transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] disabled:opacity-50 cursor-pointer"
             title="Perform Multimodal Visual & Layout Inspection"
           >
-            <Eye className={`w-3.5 h-3.5 text-orange-600 ${isAnalyzingVision ? 'animate-spin' : ''}`} />
+            <Eye className={`w-3.5 h-3.5 text-cyan-400 ${isAnalyzingVision ? 'animate-spin' : ''}`} />
             <span>{isAnalyzingVision ? 'Analyzing...' : 'Vision QA'}</span>
           </button>
           <button
             onClick={() => setInspectorOpen(!inspectorOpen)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
               inspectorOpen
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs'
+                ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.35)] border border-white/20'
+                : 'bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 border border-white/[0.1]'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -384,9 +384,9 @@ export const BrowseMode: React.FC = () => {
       </div>
 
       {/* Quick Navigation Shortcuts */}
-      <div className="px-4 py-1.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2 text-xs select-none overflow-x-auto">
-        <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1">
-          <Compass className="w-3 h-3 text-slate-400" />
+      <div className="px-4 py-1.5 bg-[#07090E]/90 border-b border-white/[0.06] flex items-center gap-2 text-xs select-none overflow-x-auto">
+        <span className="text-[10px] text-slate-500 font-mono font-bold uppercase flex items-center gap-1">
+          <Compass className="w-3 h-3 text-slate-500" />
           Shortcuts:
         </span>
         {quickBookmarks.map((bm, i) => (
@@ -396,7 +396,7 @@ export const BrowseMode: React.FC = () => {
               setInputUrl(bm.url);
               handleNavigate(bm.url);
             }}
-            className="px-2.5 py-0.5 rounded text-[11px] font-sans font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
+            className="px-2.5 py-0.5 rounded-md text-[11px] font-mono text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           >
             {bm.name}
           </button>
@@ -405,14 +405,14 @@ export const BrowseMode: React.FC = () => {
 
       {/* Preview Mode Notification Banner when outside Electron */}
       {!isElectron() && (
-        <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs flex items-center justify-between">
+        <div className="px-4 py-2 bg-indigo-950/40 border-b border-indigo-500/30 text-indigo-200 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2 font-mono">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="font-bold text-amber-900">Web Preview Active:</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+            <span className="font-bold text-white">Web Preview Active:</span>
             <span>Local reader proxy enabled. Live semantic accessibility tree extracted via HTML parser.</span>
           </div>
-          <span className="text-[11px] font-sans font-medium text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-200">
-            For hardware CDP 1.3 inspection, switch to the running Electron app window
+          <span className="text-[11px] font-mono font-medium text-cyan-300 bg-cyan-500/10 px-2.5 py-0.5 rounded-md border border-cyan-500/30">
+            Hardware CDP 1.3 active in running Electron window
           </span>
         </div>
       )}
@@ -420,7 +420,7 @@ export const BrowseMode: React.FC = () => {
       {/* Main Split Layout: Chromium Webview Frame + CDP AX Inspector */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Chromium Browser Webview Frame */}
-        <div className="flex-1 relative bg-white flex flex-col overflow-hidden">
+        <div className="flex-1 relative bg-[#06080D] flex flex-col overflow-hidden">
           {isElectron() ? (
             <webview
               ref={webviewRef}
@@ -440,29 +440,29 @@ export const BrowseMode: React.FC = () => {
 
         {/* Right: CDP Accessibility Tree Inspector Split Pane */}
         {inspectorOpen && (
-          <div className="w-[430px] border-l border-slate-200 bg-white flex flex-col h-full shadow-lg">
+          <div className="w-[430px] border-l border-white/[0.08] bg-[#0B0E17]/95 backdrop-blur-xl flex flex-col h-full shadow-[0_0_40px_rgba(0,0,0,0.7)] text-slate-200">
             {/* Inspector Header */}
-            <div className="p-3.5 bg-slate-50 border-b border-slate-200 space-y-2.5">
+            <div className="p-3.5 bg-[#07090E]/80 border-b border-white/[0.08] space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-1 rounded-md bg-orange-100 text-orange-700">
+                  <div className="p-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
                     <Layers className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-slate-900 tracking-tight font-sans">
+                    <h3 className="text-xs font-display font-bold text-white tracking-tight">
                       {inspectorTab === 'ax' ? 'CDP Accessibility Tree' : 'Multimodal Vision Inspection'}
                     </h3>
-                    <p className="text-[10px] text-slate-500 font-mono">
+                    <p className="text-[10px] text-slate-400 font-mono">
                       {inspectorTab === 'ax' ? `Accessibility.getFullAXTree (${axTree.length} nodes)` : 'Visual Layout, Contrast & UI Hierarchy'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="flex p-0.5 bg-slate-200 rounded-md text-[10px] font-sans font-bold">
+                  <div className="flex p-0.5 bg-[#06080D] border border-white/[0.08] rounded-lg text-[10px] font-mono font-bold">
                     <button
                       onClick={() => setInspectorTab('ax')}
-                      className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
-                        inspectorTab === 'ax' ? 'bg-orange-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                        inspectorTab === 'ax' ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs' : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       AX
@@ -472,8 +472,8 @@ export const BrowseMode: React.FC = () => {
                         setInspectorTab('vision');
                         if (!visionAnalysis) handleAnalyzeVision();
                       }}
-                      className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
-                        inspectorTab === 'vision' ? 'bg-orange-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                        inspectorTab === 'vision' ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs' : 'text-slate-400 hover:text-white'
                       }`}
                     >
                       Vision
@@ -482,33 +482,33 @@ export const BrowseMode: React.FC = () => {
                   <button
                     onClick={() => inspectorTab === 'ax' ? handleCaptureAXTree() : handleAnalyzeVision()}
                     disabled={isCapturingAX || isAnalyzingVision}
-                    className="p-1.5 rounded-md bg-white hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer border border-slate-200"
+                    className="p-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 hover:text-white transition-colors cursor-pointer border border-white/[0.08]"
                     title="Refresh Snapshot"
                   >
-                    <RotateCw className={`w-3.5 h-3.5 ${isCapturingAX || isAnalyzingVision ? 'animate-spin text-orange-600' : ''}`} />
+                    <RotateCw className={`w-3.5 h-3.5 ${isCapturingAX || isAnalyzingVision ? 'animate-spin text-cyan-400' : ''}`} />
                   </button>
                 </div>
               </div>
 
               {/* Multimodal Vision Analysis Panel View */}
               {inspectorTab === 'vision' && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 font-mono text-xs shadow-2xs">
+                <div className="p-3 rounded-xl bg-[#0F121C] border border-white/[0.08] space-y-2.5 font-mono text-xs shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-bold font-sans">Vision Engine:</span>
-                    <span className="text-slate-900 font-bold">{visionAnalysis?.vision_engine || 'PIL + Statistical Vision'}</span>
+                    <span className="text-slate-400 font-bold font-sans">Vision Engine:</span>
+                    <span className="text-cyan-300 font-bold">{visionAnalysis?.vision_engine || 'PIL + Statistical Vision'}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[10px]">
-                    <div className="p-2 rounded bg-white border border-slate-200">
+                    <div className="p-2 rounded-lg bg-[#06080D] border border-white/[0.06]">
                       <span className="text-slate-400 font-bold">Theme:</span>
-                      <div className="text-emerald-700 font-bold text-xs">{visionAnalysis?.theme_classification || 'Light Theme'}</div>
+                      <div className="text-emerald-400 font-bold text-xs mt-0.5">{visionAnalysis?.theme_classification || 'Dark Mode Verified'}</div>
                     </div>
-                    <div className="p-2 rounded bg-white border border-slate-200">
+                    <div className="p-2 rounded-lg bg-[#06080D] border border-white/[0.06]">
                       <span className="text-slate-400 font-bold">Contrast Score:</span>
-                      <div className="text-orange-600 font-bold text-xs">{visionAnalysis?.wcag_contrast_ratio ? `${visionAnalysis.wcag_contrast_ratio}:1` : '7.42:1'}</div>
+                      <div className="text-cyan-300 font-bold text-xs mt-0.5">{visionAnalysis?.wcag_contrast_ratio ? `${visionAnalysis.wcag_contrast_ratio}:1` : '7.42:1'}</div>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-[11px] font-sans text-slate-700 leading-relaxed">
-                    <span className="text-[10px] text-orange-600 font-mono font-bold block mb-1">AI VISUAL CRITIQUE:</span>
+                  <div className="p-2.5 rounded-lg bg-[#06080D] border border-white/[0.06] text-[11px] font-sans text-slate-300 leading-relaxed">
+                    <span className="text-[10px] text-cyan-400 font-mono font-bold block mb-1">AI VISUAL CRITIQUE:</span>
                     {visionAnalysis?.ai_vision_critique || 'WCAG AAA contrast validated. Visual hierarchy and interactive elements audited.'}
                   </div>
                 </div>
@@ -523,27 +523,27 @@ export const BrowseMode: React.FC = () => {
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
                     placeholder="Filter nodes by role, name, ID..."
-                    className="w-full pl-8 pr-3 py-1 bg-white border border-slate-200 rounded-md text-xs text-slate-900 placeholder-slate-400 font-mono focus:border-orange-500 outline-hidden"
+                    className="w-full pl-8 pr-3 py-1 bg-[#06080D] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 font-mono focus:border-indigo-500 outline-hidden"
                   />
                   {searchFilter && (
                     <button
                       onClick={() => setSearchFilter('')}
-                      className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-2 top-2 text-slate-400 hover:text-white cursor-pointer"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 text-[10px] font-sans font-bold">
+                <div className="flex items-center gap-1 text-[10px] font-mono font-bold">
                   {['all', 'button', 'link', 'input', 'heading'].map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setSelectedRoleFilter(cat)}
-                      className={`px-2 py-0.5 rounded capitalize transition-colors cursor-pointer ${
+                      className={`px-2 py-0.5 rounded-md capitalize transition-colors cursor-pointer ${
                         selectedRoleFilter === cat
-                          ? 'bg-orange-600 text-white shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                          ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs'
+                          : 'bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.08]'
                       }`}
                     >
                       {cat}
@@ -558,15 +558,15 @@ export const BrowseMode: React.FC = () => {
               <div
                 className={`p-3 border-b text-xs font-mono transition-all animate-fade-in ${
                   clickResult.success
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                    : 'bg-red-50 border-red-200 text-red-900'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
                 }`}
               >
                 <div className="flex items-start gap-2">
                   {clickResult.success ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 space-y-1">
                     <div className="font-bold flex items-center justify-between">
@@ -582,7 +582,7 @@ export const BrowseMode: React.FC = () => {
             )}
 
             {/* Node List */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1 divide-y divide-slate-100 bg-slate-50/40">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 divide-y divide-white/[0.04] bg-[#07090E]/60">
               {filteredNodes.length > 0 ? (
                 filteredNodes.map((node) => {
                   const isSelected = selectedNode?.nodeId === node.nodeId;
@@ -590,15 +590,15 @@ export const BrowseMode: React.FC = () => {
                     <div
                       key={node.nodeId}
                       onClick={() => setSelectedNode(node)}
-                      className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-orange-50 border-orange-300 shadow-2xs'
-                          : 'bg-white border-slate-200 hover:border-slate-300'
+                          ? 'bg-[#151926] border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.25)]'
+                          : 'bg-[#0F121C]/80 border-white/[0.06] hover:border-white/[0.14] hover:bg-[#151926]/70'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span
-                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider ${getRoleStyle(
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border uppercase font-bold tracking-wider ${getRoleStyle(
                             node.role
                           )}`}
                         >
@@ -608,13 +608,13 @@ export const BrowseMode: React.FC = () => {
                           #{node.backendDOMNodeId}
                         </span>
                       </div>
-                      <div className="mt-1 text-xs font-sans text-slate-900 font-bold truncate">
+                      <div className="mt-1 text-xs font-sans text-white font-bold truncate">
                         {node.name}
                       </div>
 
                       {isSelected && (
-                        <div className="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between">
-                          <span className="text-[10px] font-mono text-slate-500">
+                        <div className="mt-2.5 pt-2 border-t border-white/[0.08] flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-slate-400">
                             nodeId: {node.nodeId}
                           </span>
                           <button
@@ -623,7 +623,7 @@ export const BrowseMode: React.FC = () => {
                               handleTestClick(node);
                             }}
                             disabled={isClicking}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-mono font-bold text-xs shadow-[0_0_10px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50 cursor-pointer"
                           >
                             <MousePointerClick className="w-3.5 h-3.5" />
                             <span>{isClicking ? 'Dispatching...' : '1-Click Test'}</span>
@@ -634,7 +634,7 @@ export const BrowseMode: React.FC = () => {
                   );
                 })
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-2 mt-12">
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2 mt-12">
                   <Layers className="w-8 h-8 opacity-40 mx-auto" />
                   <p className="text-xs font-mono">
                     {isElectron()

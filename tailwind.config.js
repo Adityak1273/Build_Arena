@@ -7,22 +7,23 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
+        display: ['"Outfit"', 'sans-serif'],
+        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        mono: ['"Space Grotesk"', '"JetBrains Mono"', 'monospace'],
       },
       colors: {
         forge: {
-          bg: '#0a0d14',
-          surface: '#111520',
-          elevated: '#171c2b',
-          border: '#23293d',
-          accent: '#3b82f6',
-          accentGlow: '#60a5fa',
-          emerald: '#10b981',
-          amber: '#f59e0b',
-          rose: '#f43f5e',
-          purple: '#8b5cf6',
-          muted: '#8e9bb5',
+          bg: '#07090E',
+          surface: '#0F121C',
+          elevated: '#151926',
+          border: 'rgba(255, 255, 255, 0.08)',
+          borderHover: 'rgba(255, 255, 255, 0.16)',
+          accent: '#6366F1',
+          cyan: '#06B6D4',
+          emerald: '#10B981',
+          amber: '#F59E0B',
+          rose: '#F43F5E',
+          muted: '#8E9BB5',
         }
       }
     },
