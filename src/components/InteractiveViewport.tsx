@@ -136,7 +136,7 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
       onKeyDown={handleKeyDown}
       onClick={handleCanvasClick}
       onWheel={handleCanvasWheel}
-      className="relative w-full h-full bg-[#05070B] overflow-hidden outline-hidden select-none cursor-default group"
+      className="relative w-full h-full bg-[#07090D] overflow-hidden outline-hidden select-none cursor-default group"
     >
       {/* Live AI Agent Cursor Overlay */}
       <LiveAgentCursor
@@ -148,22 +148,22 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
       />
 
       {/* Interactive Mode Badge & Keyboard Focus Ring */}
-      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-        <span className="px-2.5 py-1 rounded-full bg-[#0B0E17]/90 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40 shadow-[0_2px_10px_rgba(0,0,0,0.6)] backdrop-blur-md flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+        <span className="px-3 py-1 rounded-full bg-[#07090D]/95 text-[#00F2FE] text-[10px] font-mono font-bold border border-[#00F2FE]/50 shadow-[0_2px_14px_rgba(0,242,254,0.3)] backdrop-blur-md flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00F2FE] animate-ping" />
           Interactive CDP Viewport ({inElectron ? 'Electron Webview' : 'Hardware Mouse/Scroll Forwarding'})
         </span>
 
         {isTypingFocus && (
-          <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-mono border border-indigo-500/30">
+          <span className="px-2 py-0.5 rounded-full bg-[#00F2FE]/15 text-[#00F2FE] text-[10px] font-mono border border-[#00F2FE]/40">
             Keyboard Active
           </span>
         )}
       </div>
 
       {isLoading && (
-        <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-[#0B0E17]/90 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/40 shadow-lg flex items-center gap-1.5">
-          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+        <div className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full bg-[#07090D]/95 text-[#00F2FE] text-[10px] font-mono font-bold border border-[#00F2FE]/50 shadow-[0_0_12px_rgba(0,242,254,0.3)] flex items-center gap-1.5">
+          <RefreshCw className="w-3 h-3 animate-spin text-[#00F2FE]" />
           <span>Dispatching CDP Input...</span>
         </div>
       )}

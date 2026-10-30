@@ -3,23 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --forge-bg: #07090E;
-  --forge-surface: #0F121C;
-  --forge-elevated: #151926;
-  --forge-hover: #1E2337;
-  --forge-border: rgba(255, 255, 255, 0.08);
-  --forge-border-subtle: rgba(255, 255, 255, 0.04);
-  --forge-border-hover: rgba(255, 255, 255, 0.16);
-  --forge-accent: #6366F1;
-  --forge-accent-hover: #4F46E5;
-  --forge-cyan: #06B6D4;
+  /* Warm Ivory Palette */
+  --ivory-base: #FAF7F2;
+  --ivory-surface: #F4EFE6;
+  --ivory-card: #FFFFFF;
+  --ivory-border: #E5DEC9;
+  --ivory-border-subtle: rgba(13, 17, 23, 0.08);
+
+  /* Ink Black Palette */
+  --ink-950: #07090D;
+  --ink-900: #0D1117;
+  --ink-850: #121620;
+  --ink-800: #171C28;
+  --ink-text: #0D1117;
+  --ink-muted: #525B6F;
+
+  /* Electric Teal Texture & Glow */
+  --electric-teal: #00F2FE;
+  --electric-teal-alt: #00E5FF;
+  --electric-teal-dark: #0D9488;
+  --electric-teal-glow: rgba(0, 242, 254, 0.35);
+  --electric-teal-subtle: rgba(0, 242, 254, 0.12);
+
+  /* Legacy Forge Variables mapped to new theme */
+  --forge-bg: #07090D;
+  --forge-surface: #FAF7F2;
+  --forge-elevated: #F4EFE6;
+  --forge-hover: #EAE4D8;
+  --forge-border: rgba(0, 242, 254, 0.25);
+  --forge-border-subtle: rgba(0, 242, 254, 0.12);
+  --forge-border-hover: rgba(0, 242, 254, 0.5);
+  --forge-accent: #00F2FE;
+  --forge-cyan: #00F2FE;
   --forge-emerald: #10B981;
   --forge-amber: #F59E0B;
   --forge-rose: #F43F5E;
-  --forge-purple: #A855F7;
-  --forge-muted: #8E9BB5;
-  --forge-text: #F1F5F9;
-  --forge-subtext: #94A3B8;
+  --forge-purple: #8B5CF6;
+  --forge-muted: #525B6F;
+  --forge-text: #0D1117;
+  --forge-subtext: #525B6F;
 }
 
 html, body, #root {
@@ -36,87 +58,83 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* Ambient Radial Mesh Background Glow */
+/* Ambient Radial Mesh: Ink Black + Warm Ivory with Electric Teal Texture */
 .forge-ambient-bg {
-  background-color: #07090E;
+  background-color: #07090D;
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 50% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 12% 16%, rgba(0, 242, 254, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 88% 20%, rgba(0, 229, 255, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(13, 148, 136, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(250, 247, 242, 0.03) 0%, transparent 60%);
   background-attachment: fixed;
 }
 
-/* Custom Obsidian Slim Scrollbars */
+/* Electric Teal Micro-Texture Pattern */
+.teal-texture-grid {
+  background-size: 24px 24px;
+  background-image: 
+    radial-gradient(circle, rgba(0, 242, 254, 0.15) 1px, transparent 1px);
+}
+
+/* Custom Electric Teal Slim Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(7, 9, 14, 0.7);
+  background: #FAF7F2;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 242, 254, 0.35);
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(0, 242, 254, 0.15);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #00F2FE;
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
 }
 
-/* Obsidian Glassmorphic Surface Utilities */
-.forge-card {
-  background: rgba(15, 18, 28, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Warm Ivory Light Cards with Electric Teal Texture */
+.ivory-card {
+  background: #FAF7F2;
+  border: 1px solid rgba(0, 242, 254, 0.25);
   border-radius: 0.875rem;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.05), 0 0 12px -2px rgba(0, 242, 254, 0.12);
+  color: #0D1117;
 }
 
-.forge-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+.ivory-card:hover {
+  border-color: rgba(0, 242, 254, 0.55);
+  box-shadow: 0 6px 22px -2px rgba(0, 0, 0, 0.08), 0 0 18px -2px rgba(0, 242, 254, 0.22);
 }
 
-.forge-card-elevated {
-  background: rgba(21, 25, 38, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.ivory-card-elevated {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 242, 254, 0.3);
   border-radius: 0.875rem;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.07), 0 0 16px -2px rgba(0, 242, 254, 0.18);
+  color: #0D1117;
 }
 
-.forge-glass {
-  background: rgba(11, 14, 23, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.ink-card {
+  background: #0D1117;
+  border: 1px solid rgba(0, 242, 254, 0.2);
+  border-radius: 0.875rem;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 15px -3px rgba(0, 242, 254, 0.15);
+  color: #F8FAFC;
 }
 
-.forge-recessed {
-  background: #06080D;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+/* Electric Teal Glow Utilities */
+.electric-glow {
+  box-shadow: 0 0 20px -2px rgba(0, 242, 254, 0.45);
 }
 
-.forge-glow-indigo {
-  box-shadow: 0 0 25px -4px rgba(99, 102, 241, 0.35);
+.electric-glow-sm {
+  box-shadow: 0 0 10px -1px rgba(0, 242, 254, 0.35);
 }
 
-.forge-glow-cyan {
-  box-shadow: 0 0 25px -4px rgba(6, 182, 212, 0.35);
-}
-
-.forge-glow-emerald {
-  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.3);
-}
-
-.forge-glow-amber {
-  box-shadow: 0 0 25px -4px rgba(245, 158, 11, 0.3);
-}
-
-.forge-glow-rose {
-  box-shadow: 0 0 25px -4px rgba(244, 63, 94, 0.35);
+.electric-border {
+  border-color: rgba(0, 242, 254, 0.4);
 }
 
 /* Animations */

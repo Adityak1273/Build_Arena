@@ -510,7 +510,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#07090E] text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-white">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#07090D] text-[#0D1117] font-sans selection:bg-[#00F2FE]/30 selection:text-[#0D1117]">
       {/* 1. TOP BROWSER CHROME: Multi-Tab Strip & Omnibar */}
       <BrowserChrome
         tabs={tabs}
@@ -535,9 +535,9 @@ export const App: React.FC = () => {
       />
 
       {/* 2. MAIN WORKSPACE: 68% Browser Viewport + 32% Multi-Agent Swarm Sidebar */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative forge-ambient-bg">
         {/* Left / Center: Interactive Browser Viewport (68%) */}
-        <div className="flex-1 relative flex flex-col overflow-hidden bg-[#05070B]">
+        <div className="flex-1 relative flex flex-col overflow-hidden bg-[#FAF7F2]">
           <InteractiveViewport
             url={activeTab.url}
             onUrlChange={(newUrl) => handleNavigate(newUrl)}
@@ -567,7 +567,7 @@ export const App: React.FC = () => {
         </div>
 
         {/* Right: Embedded Multi-Agent Swarm Sidebar (32%) */}
-        <div className="w-[380px] lg:w-[420px] h-full shrink-0 shadow-[-4px_0_25px_rgba(0,0,0,0.5)] z-20">
+        <div className="w-[380px] lg:w-[420px] h-full shrink-0 shadow-[-4px_0_25px_rgba(0,0,0,0.15)] z-20">
           <MultiAgentSidebar
             agents={agents}
             handoffs={handoffs}
