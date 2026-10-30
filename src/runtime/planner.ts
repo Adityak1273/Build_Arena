@@ -94,7 +94,7 @@ export async function createPlanForGoal(goal: string): Promise<AutonomousPlanRes
     // Dynamic adaptable workflow
     const targetUrl = lowerGoal.startsWith('http')
       ? goal
-      : `https://www.google.com/search?q=${encodeURIComponent(goal)}`;
+      : `https://duckduckgo.com/?q=${encodeURIComponent(goal)}`;
 
     steps.push({
       step_id: 'step-1',

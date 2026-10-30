@@ -1,5 +1,103 @@
 [
   {
+    "task_id": "test-task-1793351420447",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T09:10:20.447Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
+    "task_id": "plan-1793351135063",
+    "goal": "BACKEND",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T09:05:35.079Z",
+    "duration_ms": 2720,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793351018174",
+    "goal": "TELL ME THE TOLTAL SCHOOLS IN NOIDA",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T09:03:38.185Z",
+    "duration_ms": 1238,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793350971704",
+    "goal": "tell me how many hospitals WERE AVALIABLE IN NOIDA",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T09:02:51.715Z",
+    "duration_ms": 5220,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
     "task_id": "plan-1793350267454",
     "goal": "i want to collect the information how many hospitals in greater  noida and distance from the microsoft noida sector 16 A",
     "status": "COMPLETED",

@@ -1,4 +1,4 @@
-# AutoForge v1.5 Backend Server
+# AutoForge v1.6 Backend Server
 """
 AutoForge Backend Engine
 FastAPI Server, Full-Duplex WebSockets Telemetry, REST Endpoints,
@@ -483,7 +483,7 @@ def resolve_smart_url(query_or_url: str) -> str:
         return "http://" + cleaned
     if " " in cleaned:
         from urllib.parse import quote_plus
-        return f"https://www.google.com/search?q={quote_plus(cleaned)}"
+        return f"https://duckduckgo.com/?q={quote_plus(cleaned)}"
     if "." not in cleaned:
         return f"https://www.{cleaned}.com"
     return "https://" + cleaned

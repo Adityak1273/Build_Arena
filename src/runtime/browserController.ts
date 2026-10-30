@@ -41,17 +41,23 @@ export class BrowserController {
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--disable-blink-features=AutomationControlled'
         ]
       });
 
       this.context = await this.browser.newContext({
         viewport: { width: 1280, height: 800 },
         userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 AutoForge/2.0'
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
       });
 
       this.page = await this.context.newPage();
+      await this.page.addInitScript(() => {
+        Object.defineProperty(navigator, 'webdriver', {
+          get: () => undefined
+        });
+      });
       await this.page.goto('about:blank');
     } catch (err: any) {
       console.error('[BrowserController] Launch failed:', err.message);
@@ -73,7 +79,7 @@ export class BrowserController {
       return `https://${trimmed}`;
     }
 
-    return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
+    return `https://duckduckgo.com/?q=${encodeURIComponent(trimmed)}`;
   }
 
   public async executeAction(

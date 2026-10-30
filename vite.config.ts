@@ -1,4 +1,4 @@
-// AutoForge v1.5 Vite Configuration
+// AutoForge v1.6 Vite Configuration
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron'
@@ -28,10 +28,6 @@ export default defineConfig({
         vite: {
           build: {
             outDir: 'dist-electron',
-            lib: {
-              entry: 'electron/preload.ts',
-              formats: ['cjs'],
-            },
             rollupOptions: {
               external: ['electron'],
               output: {

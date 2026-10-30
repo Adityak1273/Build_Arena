@@ -1,4 +1,4 @@
-# AutoForge v1.5 — 3-Minute Live Hackathon Demo Script
+# AutoForge v1.6 — 3-Minute Live Hackathon Demo Script
 
 **Track**: AI-Native Browser with an Autonomous Multimodal Companion Using AdaL  
 **Demo Duration**: Exactly 3 Minutes (180 Seconds)  

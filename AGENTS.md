@@ -1,4 +1,4 @@
-# AutoForge v1.5 — Build Arena Track 3 Submission with AdaL
+# AutoForge v1.6 — Build Arena Track 3 Submission with AdaL
 
 ## 1. Project Overview & Architecture
 **AutoForge** is an AI-native desktop browser and browser-integrated workspace featuring an autonomous multimodal companion built for **HackBriven Build Arena Track 3: AI-Native Browser with an Autonomous Multimodal Companion Using AdaL**.

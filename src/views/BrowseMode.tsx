@@ -30,7 +30,7 @@ export const resolveSmartUrl = (input: string): string => {
   if (/^https?:\/\//i.test(clean)) return clean;
   if (/^localhost[:\/]/i.test(clean) || /^127\.0\.0\.1/i.test(clean)) return 'http://' + clean;
   if (clean.includes(' ')) {
-    return `https://www.google.com/search?q=${encodeURIComponent(clean)}`;
+    return `https://duckduckgo.com/?q=${encodeURIComponent(clean)}`;
   }
   if (!clean.includes('.')) {
     return `https://www.${clean}.com`;
