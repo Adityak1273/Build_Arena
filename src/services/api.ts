@@ -27,7 +27,8 @@ declare global {
 }
 
 export const isElectron = (): boolean => {
-  return typeof window !== 'undefined' && Boolean(window.electronAPI);
+  if (typeof window === 'undefined') return false;
+  return Boolean(window.electronAPI) || Boolean((window as any).process?.versions?.electron) || (typeof navigator !== 'undefined' && /electron/i.test(navigator.userAgent));
 };
 
 export const electronBrowser = {
@@ -157,6 +158,16 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(interaction)
     });
+    return await res.json();
+  },
+
+  navigateBrowser: async (url: string) => {
+    const res = await fetch(`${API_BASE}/api/browser/navigate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (!res.ok) throw new Error('Browser navigation failed');
     return await res.json();
   },
 

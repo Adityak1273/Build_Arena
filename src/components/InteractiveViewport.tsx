@@ -22,6 +22,7 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
   agentCursor,
   liveScreenshotBase64,
 }) => {
+  const inElectron = isElectron();
   const containerRef = useRef<HTMLDivElement>(null);
   const webviewRef = useRef<any>(null);
   const [screenshot, setScreenshot] = useState<string | null>(liveScreenshotBase64 || null);
@@ -33,6 +34,18 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
       setScreenshot(liveScreenshotBase64);
     }
   }, [liveScreenshotBase64]);
+
+  useEffect(() => {
+    if (inElectron && webviewRef.current && url) {
+      try {
+        if (typeof webviewRef.current.loadURL === 'function') {
+          webviewRef.current.loadURL(url);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [url, inElectron]);
 
   // Initial load
   useEffect(() => {
@@ -114,9 +127,6 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
     }
   };
 
-  // If in Electron and webview is active, render the real Chromium webview tag
-  const inElectron = isElectron();
-
   return (
     <div
       ref={containerRef}
@@ -162,6 +172,7 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
       {inElectron ? (
         <div className="w-full h-full relative">
           <webview
+            key={url}
             ref={webviewRef}
             src={url}
             className="w-full h-full"

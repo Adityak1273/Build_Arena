@@ -280,17 +280,26 @@ export const App: React.FC = () => {
       if (isElectron()) {
         await electronBrowser.navigate(targetUrl);
       }
-      const state = await api.interactWithBrowser({ type: 'hover', x: 100, y: 100 });
-      if (state?.screenshotBase64) {
-        setLiveScreenshot(state.screenshotBase64);
+      // Always instruct the backend Playwright controller to navigate & capture real page
+      const navRes = await api.navigateBrowser(targetUrl);
+      if (navRes?.screenshotBase64) {
+        setLiveScreenshot(navRes.screenshotBase64);
       }
-    } catch {
-      // ignore
+      if (navRes?.axNodes) {
+        setAxTree(navRes.axNodes);
+      }
+      if (navRes?.title) {
+        setTabs((prev) =>
+          prev.map((t) => (t.id === activeTabId ? { ...t, title: navRes.title } : t))
+        );
+      }
+    } catch (err: any) {
+      console.warn('Navigation error:', err);
     } finally {
       setTimeout(() => {
         setAgentCursor((prev) => ({ ...prev, visible: false }));
         updateAgentState('navigator', 'IDLE', `Page loaded.`);
-      }, 1200);
+      }, 800);
     }
   };
 
