@@ -1,4 +1,4 @@
-/* AutoForge v1.7 Design System */
+/* AutoForge v1.8 Design System */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,44 +11,44 @@
   --ivory-border: #E5DEC9;
   --ivory-border-subtle: rgba(13, 17, 23, 0.08);
 
-  /* Bark Black Structural Border Palette */
-  --bark-black: #0D1117;
-  --bark-border: #0D1117;
-  --bark-border-subtle: rgba(13, 17, 23, 0.4);
-  --bark-border-muted: rgba(13, 17, 23, 0.2);
+  /* Soft Stone Structural Border Palette */
+  --bark-black: #D5CEBF;
+  --bark-border: #D5CEBF;
+  --bark-border-subtle: rgba(100, 116, 139, 0.2);
+  --bark-border-muted: rgba(100, 116, 139, 0.12);
 
-  /* Ink Black Foundation */
-  --ink-950: #07090D;
-  --ink-900: #0D1117;
-  --ink-850: #121620;
-  --ink-800: #171C28;
-  --ink-text: #0D1117;
-  --ink-muted: #525B6F;
+  /* Soft Warm Foundation */
+  --ink-950: #ECE6DB;
+  --ink-900: #E4DDCF;
+  --ink-850: #EAE4D8;
+  --ink-800: #F3EFE7;
+  --ink-text: #1E293B;
+  --ink-muted: #64748B;
 
   /* Electric Teal Texture & Glow */
   --electric-teal: #00F2FE;
   --electric-teal-alt: #00E5FF;
   --electric-teal-dark: #0D9488;
-  --electric-teal-glow: rgba(0, 242, 254, 0.35);
-  --electric-teal-subtle: rgba(0, 242, 254, 0.12);
+  --electric-teal-glow: rgba(0, 242, 254, 0.25);
+  --electric-teal-subtle: rgba(0, 242, 254, 0.10);
 
-  /* Legacy Forge Variables mapped to new theme */
-  --forge-bg: #07090D;
+  /* Legacy Forge Variables mapped to new cohesive light theme */
+  --forge-bg: #FAF7F2;
   --forge-surface: #FAF7F2;
-  --forge-elevated: #F4EFE6;
-  --forge-hover: #EAE4D8;
-  --forge-border: #0D1117;
-  --forge-border-subtle: rgba(13, 17, 23, 0.3);
-  --forge-border-hover: #00F2FE;
-  --forge-accent: #00F2FE;
-  --forge-cyan: #00F2FE;
+  --forge-elevated: #FFFFFF;
+  --forge-hover: #F2ECE1;
+  --forge-border: #D5CEBF;
+  --forge-border-subtle: rgba(100, 116, 139, 0.2);
+  --forge-border-hover: #0D9488;
+  --forge-accent: #0D9488;
+  --forge-cyan: #0D9488;
   --forge-emerald: #10B981;
   --forge-amber: #F59E0B;
   --forge-rose: #F43F5E;
   --forge-purple: #8B5CF6;
-  --forge-muted: #525B6F;
-  --forge-text: #0D1117;
-  --forge-subtext: #525B6F;
+  --forge-muted: #64748B;
+  --forge-text: #1E293B;
+  --forge-subtext: #64748B;
 }
 
 html, body, #root {
@@ -65,14 +65,14 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* Ambient Radial Mesh: Ink Black + Warm Ivory with Electric Teal Texture */
+/* Ambient Radial Mesh: Warm Ivory with Electric Teal Micro-Glow */
 .forge-ambient-bg {
-  background-color: #07090D;
+  background-color: #FAF7F2;
   background-image: 
-    radial-gradient(circle at 12% 16%, rgba(0, 242, 254, 0.16) 0%, transparent 45%),
-    radial-gradient(circle at 88% 20%, rgba(0, 229, 255, 0.10) 0%, transparent 40%),
-    radial-gradient(circle at 50% 90%, rgba(13, 148, 136, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(250, 247, 242, 0.03) 0%, transparent 60%);
+    radial-gradient(circle at 12% 16%, rgba(0, 242, 254, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 88% 20%, rgba(13, 148, 136, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(0, 242, 254, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(245, 240, 230, 0.5) 0%, transparent 60%);
   background-attachment: fixed;
 }
 
@@ -80,7 +80,7 @@ html, body, #root {
 .teal-texture-grid {
   background-size: 24px 24px;
   background-image: 
-    radial-gradient(circle, rgba(0, 242, 254, 0.18) 1px, transparent 1px);
+    radial-gradient(circle, rgba(13, 148, 136, 0.12) 1px, transparent 1px);
 }
 
 /* Custom Electric Teal Slim Scrollbars */
@@ -92,56 +92,56 @@ html, body, #root {
   background: #FAF7F2;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(13, 17, 23, 0.4);
+  background: rgba(100, 116, 139, 0.35);
   border-radius: 9999px;
   border: 1px solid rgba(0, 242, 254, 0.3);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00F2FE;
+  background: #0D9488;
   box-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
 }
 
-/* Crisp Bark Black Structural Borders */
+/* Crisp Structural Stone Borders */
 .bark-border {
-  border: 1px solid #0D1117;
+  border: 1px solid #D5CEBF;
 }
 
 .bark-border-subtle {
-  border: 1px solid rgba(13, 17, 23, 0.35);
+  border: 1px solid rgba(100, 116, 139, 0.2);
 }
 
 .bark-border-strong {
-  border: 1.5px solid #0D1117;
+  border: 1px solid #C5BCAB;
 }
 
-/* Warm Ivory Light Cards with Crisp Bark Black Borders & Subtle Teal Glow */
+/* Warm Ivory Light Cards with Subtle Glow */
 .ivory-card {
-  background: #FAF7F2;
-  border: 1.5px solid #0D1117;
+  background: #FFFFFF;
+  border: 1px solid #D5CEBF;
   border-radius: 0.875rem;
-  box-shadow: 2px 2px 0px rgba(13, 17, 23, 0.1), 0 0 12px -2px rgba(0, 242, 254, 0.15);
-  color: #0D1117;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  color: #1E293B;
 }
 
 .ivory-card:hover {
-  border-color: #00F2FE;
-  box-shadow: 2px 2px 0px rgba(13, 17, 23, 0.15), 0 0 18px -2px rgba(0, 242, 254, 0.3);
+  border-color: #0D9488;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 12px -2px rgba(0, 242, 254, 0.2);
 }
 
 .ivory-card-elevated {
   background: #FFFFFF;
-  border: 1.5px solid #0D1117;
+  border: 1px solid #C5BCAB;
   border-radius: 0.875rem;
-  box-shadow: 3px 3px 0px rgba(13, 17, 23, 0.12), 0 0 16px -2px rgba(0, 242, 254, 0.2);
-  color: #0D1117;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  color: #1E293B;
 }
 
 .ink-card {
-  background: #0D1117;
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  background: #ECE5D8;
+  border: 1px solid #D5CEBF;
   border-radius: 0.875rem;
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 15px -3px rgba(0, 242, 254, 0.15);
-  color: #F8FAFC;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: #1E293B;
 }
 
 /* Electric Teal Glow Utilities */

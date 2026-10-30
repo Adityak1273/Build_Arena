@@ -1,4 +1,4 @@
-// AutoForge v1.7 TypeScript Configuration
+// AutoForge v1.8 TypeScript Configuration
 {
   "compilerOptions": {
     "target": "ES2020",

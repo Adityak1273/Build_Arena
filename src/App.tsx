@@ -1,4 +1,4 @@
-// AutoForge v1.7 Main Application
+// AutoForge v1.8 Main Application
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserChrome } from './components/BrowserChrome';
 import { InteractiveViewport } from './components/InteractiveViewport';
@@ -511,7 +511,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#07090D] text-[#0D1117] font-sans selection:bg-[#00F2FE]/30 selection:text-[#0D1117]">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#FAF7F2] text-[#1E293B] font-sans selection:bg-[#00F2FE]/30 selection:text-[#0F172A]">
       {/* 1. TOP BROWSER CHROME: Multi-Tab Strip & Omnibar */}
       <BrowserChrome
         tabs={tabs}
@@ -538,7 +538,7 @@ export const App: React.FC = () => {
       {/* 2. MAIN WORKSPACE: 68% Browser Viewport + 32% Multi-Agent Swarm Sidebar */}
       <div className="flex-1 flex overflow-hidden relative forge-ambient-bg">
         {/* Left / Center: Interactive Browser Viewport (68%) */}
-        <div className="flex-1 relative flex flex-col overflow-hidden bg-[#FAF7F2] border-r-2 border-[#0D1117]">
+        <div className="flex-1 relative flex flex-col overflow-hidden bg-[#FAF7F2] border-r border-[#D5CEBF]">
           <InteractiveViewport
             url={activeTab.url}
             onUrlChange={(newUrl) => handleNavigate(newUrl)}

@@ -1,4 +1,4 @@
-# AutoForge v1.7 CI Workflow
+# AutoForge v1.8 CI Workflow
 name: AutoForge CI
 
 on:

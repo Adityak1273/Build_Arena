@@ -1,4 +1,4 @@
-# AutoForge v1.7 Backend Server
+# AutoForge v1.8 Backend Server
 """
 AutoForge Backend Engine
 FastAPI Server, Full-Duplex WebSockets Telemetry, REST Endpoints,

@@ -1,5 +1,49 @@
 [
   {
+    "task_id": "test-task-1793353160482",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T09:39:20.482Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
+    "task_id": "plan-1793352323618",
+    "goal": "Research 10 AI startups, compare product and pricing, write to spreadsheet, create a launch image",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T09:25:23.623Z",
+    "duration_ms": 44811,
+    "steps_count": 6,
+    "verified_steps": 6,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
     "task_id": "test-task-1793351851524",
     "goal": "Test Plan Persistence",
     "status": "COMPLETED",

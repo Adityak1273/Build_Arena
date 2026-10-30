@@ -1,4 +1,4 @@
-// AutoForge v1.7 Unified Node.js Launcher
+// AutoForge v1.8 Unified Node.js Launcher
 import { spawn } from 'child_process';
 import http from 'http';
 import path from 'path';

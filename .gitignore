@@ -1,4 +1,4 @@
-# AutoForge v1.7 Exclusions
+# AutoForge v1.8 Exclusions
 # Dependencies
 node_modules/
 npm-debug.log*

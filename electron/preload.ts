@@ -1,4 +1,4 @@
-// AutoForge v1.7 Electron Preload Script
+// AutoForge v1.8 Electron Preload Script
 import { contextBridge, ipcRenderer } from 'electron';
 
 export interface ElectronAPI {

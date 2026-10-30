@@ -1,6 +1,6 @@
 {
   "name": "autoforge",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "type": "module",
   "description": "AutoForge — The AI-Native Developer Browser with Multimodal Companion",
   "main": "dist-electron/main.js",

@@ -27,8 +27,8 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
   if (!isOpen || !intent) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07090D]/85 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-lg p-6 bg-[#FAF7F2] border-2 border-[#00F2FE]/50 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.25),0_0_35px_rgba(0,242,254,0.25)] text-[#0D1117]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in select-none">
+      <div className="relative w-full max-w-lg p-6 bg-[#FAF7F2] border-2 border-[#00F2FE]/50 rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.25),0_0_35px_rgba(0,242,254,0.25)] text-[#0F172A]">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-rose-100 border border-rose-300 rounded-xl text-rose-600 shrink-0 shadow-xs">
             <ShieldAlert className="w-6 h-6" />
@@ -42,7 +42,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
                 Token: <span className="text-[#0D9488] font-bold">{intent.intent_token || `tok_${intent.intent_id.slice(0, 10)}`}</span>
               </span>
             </div>
-            <h3 className="mt-1.5 text-base font-display font-extrabold text-[#0D1117] tracking-tight">
+            <h3 className="mt-1.5 text-base font-display font-extrabold text-[#0F172A] tracking-tight">
               VIGIL Policy Clearance Required
             </h3>
             <p className="mt-1 text-xs text-slate-700 leading-relaxed font-sans font-medium">
@@ -54,7 +54,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         <div className="mt-4 p-3.5 rounded-xl bg-white border border-[#E5DEC9] space-y-2 text-xs font-mono shadow-xs">
           <div className="flex justify-between text-slate-600">
             <span className="font-semibold text-slate-600">Action:</span>
-            <span className="text-[#0D1117] font-bold">{intent.action}</span>
+            <span className="text-[#0F172A] font-bold">{intent.action}</span>
           </div>
           <div className="flex justify-between text-slate-600">
             <span className="font-semibold text-slate-600">Target Resource:</span>
@@ -86,9 +86,9 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
 
           <button
             onClick={() => onApprove(intent.intent_id)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-mono font-bold rounded-xl bg-[#07090D] hover:bg-[#121622] text-[#00F2FE] shadow-[0_0_18px_rgba(0,242,254,0.35)] transition-all cursor-pointer border border-[#00F2FE]/50"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-mono font-bold rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white shadow-[0_0_18px_rgba(0,242,254,0.35)] transition-all cursor-pointer border border-[#00F2FE]/50"
           >
-            <CheckCircle2 className="w-4 h-4 text-[#00F2FE]" />
+            <CheckCircle2 className="w-4 h-4 text-white" />
             Approve & Execute
           </button>
         </div>

@@ -18,8 +18,8 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 z-40 bg-[#FAF7F2] border-l-2 border-[#00F2FE]/40 shadow-[-8px_0_40px_rgba(0,0,0,0.25)] flex flex-col font-mono text-xs animate-slide-left text-[#0D1117] select-none">
-      <div className="flex items-center justify-between p-4 border-b border-[#00F2FE]/20 bg-[#07090D] text-[#FAF7F2]">
+    <div className="fixed inset-y-0 right-0 w-96 z-40 bg-[#FAF7F2] border-l-2 border-[#00F2FE]/40 shadow-[-8px_0_40px_rgba(0,0,0,0.25)] flex flex-col font-mono text-xs animate-slide-left text-[#0F172A] select-none">
+      <div className="flex items-center justify-between p-4 border-b border-[#D5CEBF] bg-[#ECE5D8] text-[#0F172A]">
         <div className="flex items-center gap-2 font-display font-bold">
           <Terminal className="w-4 h-4 text-[#00F2FE]" />
           <span>Real-Time Telemetry Feed</span>
@@ -63,7 +63,7 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
                     : isWarn
                     ? 'bg-amber-50 border-amber-300 text-amber-900'
-                    : 'bg-white border-[#E5DEC9] text-[#0D1117] hover:border-[#00F2FE]/60'
+                    : 'bg-white border-[#E5DEC9] text-[#0F172A] hover:border-[#00F2FE]/60'
                 }`}
               >
                 <div className="flex items-center justify-between text-[10px] mb-1 font-bold">
@@ -81,7 +81,7 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
         )}
       </div>
 
-      <div className="p-3.5 border-t border-[#00F2FE]/20 bg-[#07090D] text-[#FAF7F2] text-[10.5px] flex items-center justify-between font-sans">
+      <div className="p-3.5 border-t border-[#D5CEBF] bg-[#ECE5D8] text-[#0F172A] text-[10.5px] flex items-center justify-between font-sans">
         <span className="flex items-center gap-1.5 font-bold">
           <Shield className="w-3.5 h-3.5 text-[#00F2FE]" />
           VIGIL Policy Gate

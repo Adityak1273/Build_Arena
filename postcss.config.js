@@ -1,4 +1,4 @@
-// AutoForge v1.7 PostCSS Configuration
+// AutoForge v1.8 PostCSS Configuration
 export default {
   plugins: {
     tailwindcss: {},

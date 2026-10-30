@@ -1,4 +1,4 @@
-// AutoForge v1.7 Electron Main Process
+// AutoForge v1.8 Electron Main Process
 import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -125,7 +125,7 @@ function createWindow() {
     height: 920,
     minWidth: 1024,
     minHeight: 700,
-    backgroundColor: '#0a0d14',
+    backgroundColor: '#FAF7F2',
     title: 'AutoForge — The AI-Native Developer Browser',
     webPreferences: {
       preload: fs.existsSync(path.join(__dirname, 'preload.cjs'))
