@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-10-30T10:50:00.000Z",
+  "engine": "AdaL-Agentic-v2",
+  "host": "localhost:4000",
+  "client": "localhost:3000",
+  "events": [
+    {
+      "step": 1,
+      "type": "INITIALIZE_ADAL_COMPANION",
+      "model": "minimax-MiniMax-M3",
+      "mcp": ["filesystem", "chrome-devtools"],
+      "status": "READY"
+    },
+    {
+      "step": 2,
+      "type": "PLAN_DECOMPOSITION",
+      "goal": "Crawl 10 AI startups and verify physical disk outcome",
+      "subtasks": ["browser_navigate", "browser_extract", "benchmark_export", "verify_artifact"]
+    },
+    {
+      "step": 3,
+      "type": "OUTCOME_VERIFICATION",
+      "target": "artifacts/ai_startups_comparison.csv",
+      "status": "VERIFIED_SUCCESS",
+      "sha256": "f06f8fa12ee39244754a5cab4ddc8d4358a1d421722a56b7be3a5e43bd79bbb5"
+    },
+    {
+      "step": 4,
+      "type": "POLICY_GATE_EVALUATION",
+      "action": "publish_gtm_campaign",
+      "risk": "CONSEQUENTIAL",
+      "decision": "APPROVED",
+      "operator": "HUMAN_IN_THE_LOOP"
+    },
+    {
+      "step": 5,
+      "type": "MULTIMODAL_ASSETS_GENERATED",
+      "assets": [
+        "public/gtm-assets/hero_frame.png",
+        "public/gtm-assets/voiceover.mp3",
+        "public/gtm-assets/launch_video.mp4"
+      ],
+      "status": "PLAYABLE_DISK_VERIFIED"
+    }
+  ]
+}

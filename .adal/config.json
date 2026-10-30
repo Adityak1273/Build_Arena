@@ -1,0 +1,24 @@
+{
+  "project": "AutoForge",
+  "track": "Track 3 — AI-Native Browser with Autonomous Multimodal Companion Using AdaL",
+  "version": "2.0.0",
+  "framework": "AdaL by Sylph",
+  "model": "minimax-MiniMax-M3",
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "status": "connected",
+      "paths": ["E:\\Dream\\AutoForge\\artifacts", "E:\\Dream\\AutoForge\\public\\gtm-assets"]
+    },
+    {
+      "name": "chrome-devtools",
+      "status": "connected",
+      "port": 9222
+    }
+  ],
+  "verification": {
+    "outcome_verifier": "enabled",
+    "hash_algorithm": "SHA-256",
+    "policy_gate": "VIGIL_STRICT"
+  }
+}
