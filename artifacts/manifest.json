@@ -2,5 +2,6 @@
   "csv_sha256": "473205b05849366edfc48e224a2eb421515f3a6cd87e808b9f619e6a98483211",
   "canonical_filename": "ai_startups_matrix.csv",
   "generated_at": "2026-10-29T21:19:39.162398+00:00",
-  "row_count": 10
+  "row_count": 10,
+  "version": "1.4.0"
 }

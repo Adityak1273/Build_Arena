@@ -1,3 +1,4 @@
+// AutoForge v1.4 Vite Configuration
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron'

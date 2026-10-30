@@ -1,3 +1,4 @@
+// AutoForge v1.4 Main Application
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserChrome } from './components/BrowserChrome';
 import { InteractiveViewport } from './components/InteractiveViewport';

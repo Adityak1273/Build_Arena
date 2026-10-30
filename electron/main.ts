@@ -1,3 +1,4 @@
+// AutoForge v1.4 Electron Main Process
 import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
 import path from 'path';
 import fs from 'fs';

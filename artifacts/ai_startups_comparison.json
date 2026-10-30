@@ -3,25 +3,25 @@
     "company_name": "SylphAI (AdaL)",
     "domain": "sylphai.com",
     "target_url": "https://sylphai.com",
-    "retrieval_timestamp": "2026-10-30T04:59:46.655Z",
+    "retrieval_timestamp": "2026-10-30T08:25:05.799Z",
     "fetch_status": "FETCH_FAILED: fetch failed",
     "http_status_code": 0,
     "scraped_title": "SylphAI (AdaL) (Unreachable during live sweep)",
     "meta_description": "Automated retrieval timed out or encountered network error.",
     "category": "Agentic Framework / Adaptive Intelligence",
     "target_category": "Agentic Framework / Adaptive Intelligence",
-    "pricing_tier": "Open Source Core + Cloud Pro",
+    "pricing_tier": "UNKNOWN (Unreachable)",
     "enterprise_sales_gate": "NO",
     "api_availability": "Open-Source Python & Rust SDK",
     "data_provenance": "LIVE_CDP_PROBE",
-    "verification_status": "VERIFIED",
-    "row_hash": "220b56b74147c04e"
+    "verification_status": "UNVERIFIED",
+    "row_hash": "7d8732f65f357575"
   },
   {
     "company_name": "ElevenLabs",
     "domain": "elevenlabs.io",
     "target_url": "https://elevenlabs.io",
-    "retrieval_timestamp": "2026-10-30T04:59:47.457Z",
+    "retrieval_timestamp": "2026-10-30T08:25:07.053Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Free AI Voice Generator &amp; Voice Agents Platform | ElevenLabs",
@@ -33,13 +33,13 @@
     "api_availability": "REST & WebSocket TTS API",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "97889bf01ada60cb"
+    "row_hash": "301bbe944c829929"
   },
   {
     "company_name": "Serverpod",
     "domain": "serverpod.dev",
     "target_url": "https://serverpod.dev",
-    "retrieval_timestamp": "2026-10-30T04:59:49.785Z",
+    "retrieval_timestamp": "2026-10-30T08:25:11.431Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Serverpod - The ultimate backend for Flutter",
@@ -51,13 +51,13 @@
     "api_availability": "Streaming WebSockets & RPC",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "1efeec292f53b285"
+    "row_hash": "9bd57d527f6486c5"
   },
   {
     "company_name": "Cursor",
     "domain": "cursor.com",
     "target_url": "https://cursor.com",
-    "retrieval_timestamp": "2026-10-30T04:59:50.503Z",
+    "retrieval_timestamp": "2026-10-30T08:25:12.300Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "AI Coding Agent for Building Ambitious Software | Cursor",
@@ -69,13 +69,13 @@
     "api_availability": "IDE Extension & Background Agent",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "9ac1cdb15c516233"
+    "row_hash": "bf4671d4c1e2a16c"
   },
   {
     "company_name": "Perplexity AI",
     "domain": "perplexity.ai",
     "target_url": "https://perplexity.ai",
-    "retrieval_timestamp": "2026-10-30T04:59:51.076Z",
+    "retrieval_timestamp": "2026-10-30T08:25:13.806Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 403,
     "scraped_title": "Just a moment...",
@@ -86,14 +86,14 @@
     "enterprise_sales_gate": "NO",
     "api_availability": "sonar-pro REST API",
     "data_provenance": "LIVE_CDP_PROBE",
-    "verification_status": "VERIFIED",
-    "row_hash": "eba99d8f04a994ee"
+    "verification_status": "UNVERIFIED",
+    "row_hash": "2c3180434daffbcf"
   },
   {
     "company_name": "Runway",
     "domain": "runwayml.com",
     "target_url": "https://runwayml.com",
-    "retrieval_timestamp": "2026-10-30T04:59:52.302Z",
+    "retrieval_timestamp": "2026-10-30T08:25:14.620Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Runway | Intelligent tools for scaling content and teams.",
@@ -105,13 +105,13 @@
     "api_availability": "Gen-3 Alpha API",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "cf4a35785bc3f49b"
+    "row_hash": "a9948bc57f8aca4b"
   },
   {
     "company_name": "Linear",
     "domain": "linear.app",
     "target_url": "https://linear.app",
-    "retrieval_timestamp": "2026-10-30T04:59:53.171Z",
+    "retrieval_timestamp": "2026-10-30T08:25:15.705Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Linear – The system for product development",
@@ -123,13 +123,13 @@
     "api_availability": "GraphQL API & Webhooks",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "dfda270bd0c4695d"
+    "row_hash": "cc13394a850c6fba"
   },
   {
     "company_name": "Supabase",
     "domain": "supabase.com",
     "target_url": "https://supabase.com",
-    "retrieval_timestamp": "2026-10-30T04:59:53.667Z",
+    "retrieval_timestamp": "2026-10-30T08:25:31.845Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Supabase | The Postgres Development Platform",
@@ -141,13 +141,13 @@
     "api_availability": "REST, Realtime, & GraphQL",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "86bcee7ebc882b71"
+    "row_hash": "9b63e9e6518806c1"
   },
   {
     "company_name": "Suno",
     "domain": "suno.com",
     "target_url": "https://suno.com",
-    "retrieval_timestamp": "2026-10-30T04:59:54.029Z",
+    "retrieval_timestamp": "2026-10-30T08:25:32.018Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Suno | AI Music Generator",
@@ -159,13 +159,13 @@
     "api_availability": "Web Application Client",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "4da983c31a70692a"
+    "row_hash": "dd5d3650a3f9e7b1"
   },
   {
     "company_name": "Pika",
     "domain": "pika.art",
     "target_url": "https://pika.art",
-    "retrieval_timestamp": "2026-10-30T04:59:54.816Z",
+    "retrieval_timestamp": "2026-10-30T08:25:32.237Z",
     "fetch_status": "FETCH_SUCCESS",
     "http_status_code": 200,
     "scraped_title": "Pika: AI Creative Tools for Video, Image &amp; Audio",
@@ -177,6 +177,6 @@
     "api_availability": "Web Application API",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "1211af0150066c31"
+    "row_hash": "4df4b9779d2fe95e"
   }
 ]

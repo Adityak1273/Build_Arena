@@ -8,14 +8,22 @@
       "step": 1,
       "type": "INITIALIZE_ADAL_COMPANION",
       "model": "minimax-MiniMax-M3",
-      "mcp": ["filesystem", "chrome-devtools"],
+      "mcp": [
+        "filesystem",
+        "chrome-devtools"
+      ],
       "status": "READY"
     },
     {
       "step": 2,
       "type": "PLAN_DECOMPOSITION",
       "goal": "Crawl 10 AI startups and verify physical disk outcome",
-      "subtasks": ["browser_navigate", "browser_extract", "benchmark_export", "verify_artifact"]
+      "subtasks": [
+        "browser_navigate",
+        "browser_extract",
+        "benchmark_export",
+        "verify_artifact"
+      ]
     },
     {
       "step": 3,
@@ -42,5 +50,6 @@
       ],
       "status": "PLAYABLE_DISK_VERIFIED"
     }
-  ]
+  ],
+  "version": "1.4.0"
 }
