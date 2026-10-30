@@ -175,6 +175,10 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
             key={url}
             ref={webviewRef}
             src={url}
+            // @ts-ignore
+            allowpopups="true"
+            partition="persist:autoforge"
+            useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
             className="w-full h-full"
             style={{ display: 'inline-flex', width: '100%', height: '100%' }}
           />

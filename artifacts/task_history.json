@@ -1,5 +1,249 @@
 [
   {
+    "task_id": "plan-1793350267454",
+    "goal": "i want to collect the information how many hospitals in greater  noida and distance from the microsoft noida sector 16 A",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:51:07.472Z",
+    "duration_ms": 3087,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "test-task-1793350228308",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:50:28.308Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
+    "task_id": "plan-1793349722531",
+    "goal": "Research 10 AI startups, compare product and pricing, write to spreadsheet, create a launch image",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:42:02.687Z",
+    "duration_ms": 35536,
+    "steps_count": 6,
+    "verified_steps": 6,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349709369",
+    "goal": "Launch full GTM multimodal campaign: render high-res poster and mux 1080p video",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:41:49.501Z",
+    "duration_ms": 40277,
+    "steps_count": 6,
+    "verified_steps": 6,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349684028",
+    "goal": "Research 10 AI startups, compare product and pricing, write to spreadsheet, create a launch image",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:41:24.058Z",
+    "duration_ms": 36653,
+    "steps_count": 6,
+    "verified_steps": 6,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349654169",
+    "goal": "Launch full GTM multimodal campaign: render high-res poster and mux 1080p video",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:40:54.196Z",
+    "duration_ms": 33376,
+    "steps_count": 6,
+    "verified_steps": 6,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349663922",
+    "goal": "Execute parallel 7-critic AST code review on active codebase",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:41:04.034Z",
+    "duration_ms": 3059,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349557624",
+    "goal": "Execute parallel 7-critic AST code review on active codebase",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:39:17.638Z",
+    "duration_ms": 1740,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349551099",
+    "goal": "Execute parallel 7-critic AST code review on active codebase",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:39:11.116Z",
+    "duration_ms": 4163,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793349381764",
+    "goal": "Research 10 AI startups, compare product and pricing, write to spreadsheet, create a launch image",
+    "status": "CANCELLED",
+    "start_time": "2026-10-30T08:36:21.770Z",
+    "duration_ms": 38775,
+    "steps_count": 6,
+    "verified_steps": 5,
+    "artifacts": [],
+    "outcome_summary": "Plan execution immediately stopped by operator cancellation."
+  },
+  {
     "task_id": "plan-1793348702654",
     "goal": "Research 10 AI startups, compare product and pricing, write to spreadsheet, create a launch image",
     "status": "COMPLETED",

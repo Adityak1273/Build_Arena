@@ -1,4 +1,4 @@
-// AutoForge v1.4 Electron Main Process
+// AutoForge v1.5 Electron Main Process
 import { app, BrowserWindow, ipcMain, WebContents, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
@@ -16,6 +16,9 @@ let mainWindow: BrowserWindow | null = null;
 let activeWebview: WebContents | null = null;
 let cachedAXTree: SemanticAXNode[] = [];
 let lastNavigatedUrl = 'https://news.ycombinator.com';
+
+const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+app.userAgentFallback = CHROME_UA;
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 
@@ -92,8 +95,29 @@ function createWindow() {
     mainWindow.loadFile(path.join(distPath, 'index.html'));
   }
 
-  // Intercept webview creation
+  // Intercept webview creation and popup windows
   app.on('web-contents-created', (_event, contents) => {
+    contents.setUserAgent(CHROME_UA);
+
+    // Allow OAuth popups (Google, GitHub, ElevenLabs sign-in, etc.)
+    contents.setWindowOpenHandler((details) => {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 550,
+          height: 680,
+          autoHideMenuBar: true,
+          title: 'Sign In',
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            partition: 'persist:autoforge',
+          }
+        }
+      };
+    });
+
     if (contents.getType() === 'webview') {
       attachCDPToWebview(contents);
     }
@@ -289,18 +313,34 @@ ipcMain.handle('browser:getVersion', async () => {
   return app.getVersion();
 });
 
-// App Lifecycle - Allow guest browser webviews to render target developer sites
+// App Lifecycle - Allow guest browser webviews to render target developer sites and OAuth sign-in
 app.whenReady().then(() => {
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    if (details.responseHeaders) {
-      delete details.responseHeaders['x-frame-options'];
-      delete details.responseHeaders['X-Frame-Options'];
-      const csp = details.responseHeaders['content-security-policy'] || details.responseHeaders['Content-Security-Policy'];
-      if (csp) {
-        details.responseHeaders['content-security-policy'] = csp.map((c: string) => c.replace(/frame-ancestors[^;]+;?/gi, ''));
+  const sessions = [session.defaultSession, session.fromPartition('persist:autoforge')];
+
+  sessions.forEach((ses) => {
+    ses.setUserAgent(CHROME_UA);
+
+    // Override headers to bypass Google OAuth "disallowed_useragent" and embed checks
+    ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      details.requestHeaders['User-Agent'] = CHROME_UA;
+      if (details.requestHeaders['sec-ch-ua']) {
+        details.requestHeaders['sec-ch-ua'] = '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"';
       }
-    }
-    callback({ responseHeaders: details.responseHeaders });
+      callback({ cancel: false, requestHeaders: details.requestHeaders });
+    });
+
+    // Strip X-Frame-Options and Content-Security-Policy frame-ancestors
+    ses.webRequest.onHeadersReceived((details, callback) => {
+      if (details.responseHeaders) {
+        delete details.responseHeaders['x-frame-options'];
+        delete details.responseHeaders['X-Frame-Options'];
+        const csp = details.responseHeaders['content-security-policy'] || details.responseHeaders['Content-Security-Policy'];
+        if (csp) {
+          details.responseHeaders['content-security-policy'] = csp.map((c: string) => c.replace(/frame-ancestors[^;]+;?/gi, ''));
+        }
+      }
+      callback({ responseHeaders: details.responseHeaders });
+    });
   });
 
   createWindow();

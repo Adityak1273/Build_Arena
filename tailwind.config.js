@@ -1,4 +1,4 @@
-// AutoForge v1.4 Tailwind Configuration
+// AutoForge v1.5 Tailwind Configuration
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
