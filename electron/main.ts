@@ -104,15 +104,21 @@ async function attachCDPToWebview(contents: WebContents) {
       broadcastNavState();
     });
 
+    contents.on('page-title-updated', (_e, title) => {
+      broadcastNavState(title);
+    });
+
   } catch (error) {
     console.error('Failed to attach CDP debugger to webview:', error);
   }
 }
 
-function broadcastNavState() {
+function broadcastNavState(title?: string) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
+  const currentTitle = title || (activeWebview && !activeWebview.isDestroyed() ? activeWebview.getTitle() : '');
   mainWindow.webContents.send('browser:navStateChanged', {
     url: lastNavigatedUrl,
+    title: currentTitle,
     canGoBack: activeWebview?.canGoBack() ?? false,
     canGoForward: activeWebview?.canGoForward() ?? false,
     loading: activeWebview?.isLoading() ?? false

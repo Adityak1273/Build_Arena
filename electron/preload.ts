@@ -10,7 +10,7 @@ export interface ElectronAPI {
   reload: () => Promise<void>;
   getAppVersion: () => Promise<string>;
   getTelemetry: () => Promise<{ cdpConnected: boolean; latencyMs: number | null; url: string }>;
-  onNavStateChanged: (callback: (state: { url: string; canGoBack: boolean; canGoForward: boolean; loading: boolean }) => void) => () => void;
+  onNavStateChanged: (callback: (state: { url: string; title?: string; canGoBack: boolean; canGoForward: boolean; loading: boolean }) => void) => () => void;
   onAXTreeUpdated: (callback: (tree: any[]) => void) => () => void;
 }
 

@@ -90,19 +90,28 @@ export const BrowseMode: React.FC = () => {
       setIsLoading(false);
       handleCaptureAXTree(e.url);
     };
+    const onTitleUpdated = (e: any) => {
+      if (e.title && !e.title.toLowerCase().includes('just a moment')) {
+        setTargets((prev) =>
+          prev.map((t) => (t.id === activeTargetId ? { ...t, title: e.title } : t))
+        );
+      }
+    };
 
     webview.addEventListener('did-start-loading', onStartLoading);
     webview.addEventListener('did-stop-loading', onStopLoading);
     webview.addEventListener('did-navigate', onDidNavigate);
     webview.addEventListener('did-navigate-in-page', onDidNavigate);
+    webview.addEventListener('page-title-updated', onTitleUpdated);
 
     return () => {
       webview.removeEventListener('did-start-loading', onStartLoading);
       webview.removeEventListener('did-stop-loading', onStopLoading);
       webview.removeEventListener('did-navigate', onDidNavigate);
       webview.removeEventListener('did-navigate-in-page', onDidNavigate);
+      webview.removeEventListener('page-title-updated', onTitleUpdated);
     };
-  }, []);
+  }, [activeTargetId]);
 
   const checkTelemetry = async () => {
     if (isElectron()) {

@@ -348,6 +348,22 @@ export const App: React.FC = () => {
             agentName: 'Navigator Agent',
             actionText: 'Extracting DOM elements'
           });
+        } else if (step.tool === 'research_search') {
+          updateAgentState('navigator', 'ACTING ON TAB', `Searching: ${step.arguments.query}`);
+          addHandoff('orchestrator', 'navigator', `Delegated multi-perspective search: "${step.arguments.query}"`);
+          setTabs((prev) =>
+            prev.map((t) => (t.id === activeTabId ? { ...t, activeAgent: 'navigator' } : t))
+          );
+        } else if (step.tool === 'research_aggregate') {
+          updateAgentState('researcher', 'ACTING ON TAB', 'Deduplicating search results and building research.csv');
+          addHandoff('navigator', 'researcher', 'Aggregating search cards, saving CSV and verifying disk SHA-256.');
+          setTabs((prev) =>
+            prev.map((t) => (t.id === activeTabId ? { ...t, activeAgent: 'researcher' } : t))
+          );
+        } else if (step.tool === 'multimodal_infographic') {
+          updateAgentState('coder', 'ACTING ON TAB', 'Rendering visual card infographic to result.png');
+          addHandoff('researcher', 'coder', 'Dataset ready, generating visual card infographic.');
+          setActiveDrawerTab('gtm');
         } else if (step.tool === 'benchmark_export') {
           updateAgentState('researcher', 'ACTING ON TAB', 'Auditing 10 AI startups and checking pricing gates');
           addHandoff('researcher', 'researcher', 'Scraping 10 startups concurrently with honest unknown policy.');
@@ -357,7 +373,14 @@ export const App: React.FC = () => {
           );
         } else if (step.tool === 'verify_artifact') {
           updateAgentState('verifier', 'VERIFYING', 'Asserting physical CSV rows and computing SHA-256');
-          addHandoff('researcher', 'verifier', 'Spreadsheet written to disk, requesting SHA-256 verification.');
+          const isResearch = (step.arguments?.filePath || '').includes('research');
+          addHandoff(
+            'researcher',
+            'verifier',
+            isResearch
+              ? 'Research dataset written to disk, requesting SHA-256 verification.'
+              : 'Spreadsheet written to disk, requesting SHA-256 verification.'
+          );
         } else if (step.tool === 'multimodal_launch') {
           updateAgentState('coder', 'ACTING ON TAB', 'Rendering 1280x720 poster via Playwright & muxing MP4');
           addHandoff('orchestrator', 'coder', 'Delegated multimodal launch package generation.');
@@ -542,6 +565,11 @@ export const App: React.FC = () => {
           <InteractiveViewport
             url={activeTab.url}
             onUrlChange={(newUrl) => handleNavigate(newUrl)}
+            onTitleChange={(newTitle) => {
+              setTabs((prev) =>
+                prev.map((t) => (t.id === activeTabId ? { ...t, title: newTitle } : t))
+              );
+            }}
             agentCursor={agentCursor}
             liveScreenshotBase64={liveScreenshot}
           />

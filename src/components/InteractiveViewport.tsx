@@ -6,6 +6,7 @@ import { RefreshCw, ExternalLink, Globe } from 'lucide-react';
 interface InteractiveViewportProps {
   url: string;
   onUrlChange: (newUrl: string) => void;
+  onTitleChange?: (newTitle: string) => void;
   agentCursor: {
     visible: boolean;
     x: number;
@@ -19,6 +20,7 @@ interface InteractiveViewportProps {
 export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
   url,
   onUrlChange,
+  onTitleChange,
   agentCursor,
   liveScreenshotBase64,
 }) => {
@@ -38,7 +40,8 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
   useEffect(() => {
     if (inElectron && webviewRef.current && url) {
       try {
-        if (typeof webviewRef.current.loadURL === 'function') {
+        const currentSrc = webviewRef.current.getURL ? webviewRef.current.getURL() : '';
+        if (currentSrc !== url && typeof webviewRef.current.loadURL === 'function') {
           webviewRef.current.loadURL(url);
         }
       } catch {
@@ -46,6 +49,33 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
       }
     }
   }, [url, inElectron]);
+
+  useEffect(() => {
+    const webview = webviewRef.current;
+    if (!webview) return;
+
+    const handleDidNavigate = (e: any) => {
+      if (e.url && e.url !== url && !e.url.includes('about:blank')) {
+        onUrlChange(e.url);
+      }
+    };
+
+    const handleTitleUpdated = (e: any) => {
+      if (e.title && onTitleChange && !e.title.toLowerCase().includes('just a moment')) {
+        onTitleChange(e.title);
+      }
+    };
+
+    webview.addEventListener('did-navigate', handleDidNavigate);
+    webview.addEventListener('did-navigate-in-page', handleDidNavigate);
+    webview.addEventListener('page-title-updated', handleTitleUpdated);
+
+    return () => {
+      webview.removeEventListener('did-navigate', handleDidNavigate);
+      webview.removeEventListener('did-navigate-in-page', handleDidNavigate);
+      webview.removeEventListener('page-title-updated', handleTitleUpdated);
+    };
+  }, [url, onUrlChange, onTitleChange]);
 
   // Initial load
   useEffect(() => {
@@ -172,7 +202,6 @@ export const InteractiveViewport: React.FC<InteractiveViewportProps> = ({
       {inElectron ? (
         <div className="w-full h-full relative">
           <webview
-            key={url}
             ref={webviewRef}
             src={url}
             // @ts-ignore

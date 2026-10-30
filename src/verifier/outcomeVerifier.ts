@@ -184,6 +184,8 @@ export class OutcomeVerifier {
       }
     }
 
+    const isStartupBenchmark =
+      requiredColumns.includes('pricing_tier') || requiredColumns.includes('company_name');
     const flaggedUnknowns: string[] = [];
     let validRowCount = 0;
 
@@ -194,14 +196,19 @@ export class OutcomeVerifier {
       for (const [key, val] of Object.entries(row)) {
         const strVal = String(val).trim();
         if (!strVal || strVal.toLowerCase() === 'null' || strVal.toLowerCase() === 'undefined') {
-          flaggedUnknowns.push(`Row ${rIdx + 1}: Empty value for '${key}'`);
+          if (isStartupBenchmark) {
+            flaggedUnknowns.push(`Row ${rIdx + 1}: Empty value for '${key}'`);
+          }
           rowValid = false;
         } else if (
-          strVal.toUpperCase().includes('UNKNOWN') ||
-          strVal.toUpperCase().includes('CONTACT SALES') ||
-          strVal.toUpperCase().includes('ENTERPRISE')
+          isStartupBenchmark &&
+          (strVal.toUpperCase().includes('UNKNOWN') ||
+            strVal.toUpperCase().includes('CONTACT SALES') ||
+            strVal.toUpperCase().includes('ENTERPRISE'))
         ) {
-          flaggedUnknowns.push(`Row ${rIdx + 1} (${row.company_name || row.startupName || 'Startup'}): ${key} = ${strVal}`);
+          flaggedUnknowns.push(
+            `Row ${rIdx + 1} (${row.company_name || row.startupName || 'Startup'}): ${key} = ${strVal}`
+          );
         }
       }
 
