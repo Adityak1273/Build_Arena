@@ -198,6 +198,14 @@ ipcMain.handle('browser:navigate', async (_event, url: string) => {
   const targetUrl = resolveSmartUrl(url);
   lastNavigatedUrl = targetUrl;
 
+  // If activeWebview is attaching during startup, wait briefly
+  if (!activeWebview || activeWebview.isDestroyed()) {
+    const startWait = Date.now();
+    while ((!activeWebview || activeWebview.isDestroyed()) && Date.now() - startWait < 2500) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+
   if (activeWebview && !activeWebview.isDestroyed()) {
     return new Promise((resolve) => {
       let resolved = false;
@@ -212,6 +220,12 @@ ipcMain.handle('browser:navigate', async (_event, url: string) => {
       };
 
       const failHandler = (_e: any, errorCode: number, errorDesc: string) => {
+        // Chromium error code -3 is net::ERR_ABORTED.
+        // It happens during normal HTTP->HTTPS redirects, 301/302 rewrites, or superseded subframes.
+        // It is NOT a fatal load failure.
+        if (errorCode === -3) {
+          return;
+        }
         if (!resolved) {
           resolved = true;
           activeWebview?.removeListener('did-finish-load', finishHandler);
@@ -221,24 +235,34 @@ ipcMain.handle('browser:navigate', async (_event, url: string) => {
       };
 
       activeWebview!.once('did-finish-load', finishHandler);
-      activeWebview!.once('did-fail-load', failHandler);
+      activeWebview!.on('did-fail-load', failHandler);
 
-      // 8s navigation timeout guard
+      // 20s navigation timeout guard (ensures modern dynamic web apps have adequate load time)
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
           activeWebview?.removeListener('did-finish-load', finishHandler);
           activeWebview?.removeListener('did-fail-load', failHandler);
+          const currentUrl = activeWebview?.getURL() || targetUrl;
+          const isNotBlank = !currentUrl.includes('about:blank');
           resolve({
-            success: false,
-            url: activeWebview?.getURL() || targetUrl,
-            timedOut: true,
-            error: 'Navigation timed out after 8000ms'
+            success: isNotBlank,
+            url: currentUrl,
+            timedOut: !isNotBlank
           });
         }
-      }, 8000);
+      }, 20000);
 
-      activeWebview!.loadURL(targetUrl);
+      try {
+        activeWebview!.loadURL(targetUrl);
+      } catch (err: any) {
+        if (!resolved) {
+          resolved = true;
+          activeWebview?.removeListener('did-finish-load', finishHandler);
+          activeWebview?.removeListener('did-fail-load', failHandler);
+          resolve({ success: false, url: targetUrl, error: err.message });
+        }
+      }
     });
   }
 

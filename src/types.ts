@@ -1,4 +1,4 @@
-// AutoForge v1.9 Type Definitions
+// AutoForge v2.0 Type Definitions
 export type ForgeMode = 'browse' | 'build' | 'automate' | 'create';
 
 export interface SemanticAXNode {

@@ -180,10 +180,24 @@ export class BrowserController {
       switch (action) {
         case 'navigate': {
           const resolvedUrl = this.resolveSmartUrl(target);
-          await this.page.goto(resolvedUrl, {
-            waitUntil: 'domcontentloaded',
-            timeout: 30000
-          });
+          try {
+            await this.page.goto(resolvedUrl, {
+              waitUntil: 'domcontentloaded',
+              timeout: 30000
+            });
+          } catch (navErr: any) {
+            if (navErr.message?.includes('ERR_ABORTED')) {
+              await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {});
+              if (!this.page.url().includes('about:blank')) {
+                break;
+              }
+            }
+            // Auto-recovery retry
+            await this.page.goto(resolvedUrl, {
+              waitUntil: 'domcontentloaded',
+              timeout: 15000
+            }).catch(() => {});
+          }
           break;
         }
 

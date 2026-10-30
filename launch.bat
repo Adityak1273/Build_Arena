@@ -36,7 +36,7 @@ if not exist "dist\index.html" (
 echo.
 echo [*] Step 3/3: Starting AutoForge (Runtime Server + Electron Desktop)...
 echo.
-call npm start
+call npm run launch
 
 echo.
 echo [AutoForge session ended]

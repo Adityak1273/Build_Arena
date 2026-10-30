@@ -1,4 +1,4 @@
-# AutoForge v1.9 — The AI-Native Developer Browser with AdaL Multimodal Companion & 5-Agent Search Swarm
+# AutoForge v2.0 — The AI-Native Developer Browser with AdaL Multimodal Companion & 5-Agent Search Swarm
 
 AutoForge is an AI-native desktop browser and autonomous companion workspace built for HackBriven Build Arena (Track 3). It combines native Chromium accessibility tree automation via Chrome DevTools Protocol (CDP), an autonomous 5-Agent Search Swarm (Orchestrator, Navigator, Researcher, Multimodal, VIGIL), an independent closed-loop outcome verification engine with cryptographic SHA-256 integrity, a zero-trust intent policy approval gate, and an autonomous multimodal companion powered by AdaL.
 

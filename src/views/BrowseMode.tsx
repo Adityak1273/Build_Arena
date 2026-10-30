@@ -76,6 +76,34 @@ export const BrowseMode: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const webview = webviewRef.current;
+    if (!webview) return;
+
+    const onStartLoading = () => setIsLoading(true);
+    const onStopLoading = () => setIsLoading(false);
+    const onDidNavigate = (e: any) => {
+      if (e.url && !e.url.includes('about:blank')) {
+        setUrl(e.url);
+        setInputUrl(e.url);
+      }
+      setIsLoading(false);
+      handleCaptureAXTree(e.url);
+    };
+
+    webview.addEventListener('did-start-loading', onStartLoading);
+    webview.addEventListener('did-stop-loading', onStopLoading);
+    webview.addEventListener('did-navigate', onDidNavigate);
+    webview.addEventListener('did-navigate-in-page', onDidNavigate);
+
+    return () => {
+      webview.removeEventListener('did-start-loading', onStartLoading);
+      webview.removeEventListener('did-stop-loading', onStopLoading);
+      webview.removeEventListener('did-navigate', onDidNavigate);
+      webview.removeEventListener('did-navigate-in-page', onDidNavigate);
+    };
+  }, []);
+
   const checkTelemetry = async () => {
     if (isElectron()) {
       const data = await electronBrowser.getTelemetry();
@@ -428,6 +456,7 @@ export const BrowseMode: React.FC = () => {
               className="w-full h-full border-none"
               // @ts-ignore
               allowpopups="true"
+              partition="persist:autoforge"
             />
           ) : (
             <iframe
