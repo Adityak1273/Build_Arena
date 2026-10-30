@@ -9,14 +9,25 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "electron .",
+    "server": "tsx src/runtime/server.ts",
+    "start:runtime": "tsx src/runtime/server.ts",
+    "test:runtime": "tsx src/verifier/test_suite.ts",
     "test:backend": "python -m pytest backend/tests"
   },
   "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/ws": "^8.18.2",
     "clsx": "^2.1.1",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
     "lucide-react": "^0.475.0",
+    "playwright": "^1.64.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^2.6.0",
+    "tsx": "^4.23.15",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

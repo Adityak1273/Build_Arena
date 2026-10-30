@@ -336,7 +336,7 @@ export const CreateMode: React.FC = () => {
                     key={mediaKey}
                     controls
                     className="w-full h-full object-cover"
-                    src={`http://127.0.0.1:8000/artifacts/autoforge_gtm_1080p.mp4?v=${mediaKey}`}
+                    src={`http://127.0.0.1:4000/artifacts/autoforge_gtm_1080p.mp4?v=${mediaKey}`}
                   >
                     Your browser does not support video playback.
                   </video>
@@ -347,7 +347,7 @@ export const CreateMode: React.FC = () => {
                     Path: artifacts/autoforge_gtm_1080p.mp4
                   </span>
                   <a
-                    href="http://127.0.0.1:8000/artifacts/autoforge_gtm_1080p.mp4"
+                    href="http://127.0.0.1:4000/artifacts/autoforge_gtm_1080p.mp4"
                     download="autoforge_gtm_1080p.mp4"
                     className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-semibold transition-colors"
                   >
@@ -613,7 +613,7 @@ export const CreateMode: React.FC = () => {
                     key={`audio-track-${mediaKey}`}
                     controls
                     className="w-full h-10 rounded-lg outline-none"
-                    src={`http://127.0.0.1:8000/artifacts/latest_gtm_audio.wav?v=${mediaKey}`}
+                    src={`http://127.0.0.1:4000/artifacts/latest_gtm_audio.wav?v=${mediaKey}`}
                   >
                     Your browser does not support audio playback.
                   </audio>

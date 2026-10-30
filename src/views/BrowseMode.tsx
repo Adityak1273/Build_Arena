@@ -437,7 +437,7 @@ export const BrowseMode: React.FC = () => {
             />
           ) : (
             <iframe
-              src={`http://127.0.0.1:8000/api/browser/preview?url=${encodeURIComponent(url)}`}
+              src={`http://127.0.0.1:4000/api/browser/preview?url=${encodeURIComponent(url)}`}
               title="AutoForge Browser Frame"
               className="w-full h-full border-none bg-white"
             />

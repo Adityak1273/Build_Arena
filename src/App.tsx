@@ -25,7 +25,7 @@ export const App: React.FC = () => {
 
     const connectWebSocket = () => {
       try {
-        const ws = new WebSocket('ws://127.0.0.1:8000/ws');
+        const ws = new WebSocket('ws://127.0.0.1:4000/ws');
         wsRef.current = ws;
 
         ws.onopen = () => {
