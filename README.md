@@ -1,6 +1,6 @@
-# AutoForge v1.8 — The AI-Native Developer Browser with AdaL Multimodal Companion
+# AutoForge v1.9 — The AI-Native Developer Browser with AdaL Multimodal Companion & 5-Agent Search Swarm
 
-AutoForge is an AI-native desktop browser and autonomous companion workspace built for HackBriven Build Arena (Track 3). It combines native Chromium accessibility tree automation via Chrome DevTools Protocol (CDP), an independent closed-loop outcome verification engine with cryptographic SHA-256 integrity, a zero-trust intent policy approval gate, and an autonomous multimodal companion powered by AdaL.
+AutoForge is an AI-native desktop browser and autonomous companion workspace built for HackBriven Build Arena (Track 3). It combines native Chromium accessibility tree automation via Chrome DevTools Protocol (CDP), an autonomous 5-Agent Search Swarm (Orchestrator, Navigator, Researcher, Multimodal, VIGIL), an independent closed-loop outcome verification engine with cryptographic SHA-256 integrity, a zero-trust intent policy approval gate, and an autonomous multimodal companion powered by AdaL.
 
 ---
 
@@ -9,7 +9,7 @@ AutoForge is an AI-native desktop browser and autonomous companion workspace bui
 ```mermaid
 flowchart TD
     subgraph DesktopShell["Desktop Shell (Electron 29 + React 18)"]
-        UI["Obsidian Glassmorphic UI (4 Modes)"]
+        UI["Warm Ivory & Soft Stone Workspace (4 Modes)"]
         BrowseMode["1. Browse Mode (CDP + Webview)"]
         BuildMode["2. Build Mode (7-Reviewer Council)"]
         AutomateMode["3. Automate Mode (Live Matrix + Verifier)"]
@@ -21,9 +21,10 @@ flowchart TD
     end
 
     subgraph RuntimeEngine["AutoForge Runtime Engine (Node.js + TS on Port 4000)"]
-        WSServer["WebSocket Telemetry & REST API"]
-        PolicyGate["VIGIL Intent Policy Gate (HMAC-SHA256 Nonce)"]
-        Planner["AdaL Adaptive Planner (SylphAI)"]
+        WSServer["WebSocket Stream Telemetry & REST API"]
+        PolicyGate["VIGIL Intent Policy Gate (HMAC-SHA256 Nonce & IT-Tokens)"]
+        Planner["AdaL Adaptive Swarm Planner (SylphAI)"]
+        SwarmWorkflow["5-Agent Research Swarm (Google ➔ DDG Fallback)"]
         BrowserCtrl["Playwright Chromium CDP Controller (:9222)"]
         OutcomeVerifier["OutcomeVerifier Engine (Physical Disk + AX Assertion)"]
         HistoryStore["Task History & User-Controlled Memory Store"]
@@ -31,16 +32,18 @@ flowchart TD
 
         WSServer --> PolicyGate
         PolicyGate --> Planner
-        Planner --> BrowserCtrl
+        Planner --> SwarmWorkflow
+        SwarmWorkflow --> BrowserCtrl
         Planner --> GTMPipeline
         BrowserCtrl --> OutcomeVerifier
+        SwarmWorkflow --> OutcomeVerifier
         GTMPipeline --> OutcomeVerifier
         OutcomeVerifier --> HistoryStore
     end
 
     subgraph PhysicalArtifacts["Physical Verified Artifacts (Disk Storage)"]
-        CSV["artifacts/ai_startups_comparison.csv (SHA-256 Verified)"]
-        PNG["artifacts/hero_frame.png (1280x720 >400KB PNG)"]
+        CSV["artifacts/research.csv & ai_startups_comparison.csv (SHA-256)"]
+        PNG["artifacts/hero_frame.png & public/gtm-assets/result.png (>20KB PNG)"]
         MP4["artifacts/launch_video.mp4 (1080p H.264/AAC MP4)"]
         History["artifacts/task_history.json (Audit Trail)"]
     end

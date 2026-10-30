@@ -8,13 +8,9 @@ export async function createPlanForGoal(goal: string): Promise<AutonomousPlanRes
 
   if (
     lowerGoal.includes('startup') ||
-    lowerGoal.includes('crawl') ||
-    lowerGoal.includes('spreadsheet') ||
-    lowerGoal.includes('pricing') ||
-    lowerGoal.includes('research') ||
-    lowerGoal.includes('compare') ||
-    lowerGoal.includes('launch') ||
-    lowerGoal.includes('image')
+    lowerGoal.includes('benchmark') ||
+    (lowerGoal.includes('spreadsheet') && (lowerGoal.includes('pricing') || lowerGoal.includes('matrix'))) ||
+    lowerGoal.includes('elevenlabs')
   ) {
     // Flagship End-to-End Multimodal Orchestration Workflow
     steps.push({
@@ -90,17 +86,12 @@ export async function createPlanForGoal(goal: string): Promise<AutonomousPlanRes
       reasoning: 'Capture authentic Chromium CDP Accessibility Tree via Accessibility.getFullAXTree.',
       status: 'PENDING'
     });
-  } else {
-    // Dynamic adaptable workflow
-    const targetUrl = lowerGoal.startsWith('http')
-      ? goal
-      : `https://duckduckgo.com/?q=${encodeURIComponent(goal)}`;
-
+  } else if (lowerGoal.startsWith('http://') || lowerGoal.startsWith('https://')) {
     steps.push({
       step_id: 'step-1',
       tool: 'browser_navigate',
-      arguments: { url: targetUrl },
-      reasoning: `Establish browser navigation to target destination: ${targetUrl}`,
+      arguments: { url: goal },
+      reasoning: `Establish direct browser navigation to target destination: ${goal}`,
       status: 'PENDING'
     });
     steps.push({
@@ -115,6 +106,54 @@ export async function createPlanForGoal(goal: string): Promise<AutonomousPlanRes
       tool: 'browser_capture_ax',
       arguments: {},
       reasoning: 'Verify interactive accessibility hierarchy and controls.',
+      status: 'PENDING'
+    });
+  } else {
+    // 5-Agent Swarm Autonomous Multi-Perspective Research Workflow
+    steps.push({
+      step_id: 'step-1',
+      tool: 'research_search',
+      arguments: { query: goal, aspect: 'Main results' },
+      reasoning: 'Execute primary search query across verified search engines (Google with DuckDuckGo fallback).',
+      status: 'PENDING'
+    });
+    steps.push({
+      step_id: 'step-2',
+      tool: 'research_search',
+      arguments: { query: `${goal} reviews ratings`, aspect: 'Quality and opinions' },
+      reasoning: 'Capture qualitative feedback, ratings, and expert reviews across web sources.',
+      status: 'PENDING'
+    });
+    steps.push({
+      step_id: 'step-3',
+      tool: 'research_search',
+      arguments: { query: `${goal} latest`, aspect: 'Recent information' },
+      reasoning: 'Scrape latest recency updates and current data.',
+      status: 'PENDING'
+    });
+    steps.push({
+      step_id: 'step-4',
+      tool: 'research_aggregate',
+      arguments: { filePath: 'artifacts/research.csv' },
+      reasoning: 'Aggregate captured search results, deduplicate by host+title, write CSV/JSON, and compute disk SHA-256.',
+      status: 'PENDING'
+    });
+    steps.push({
+      step_id: 'step-5',
+      tool: 'multimodal_infographic',
+      arguments: { imagePath: 'public/gtm-assets/result.png' },
+      reasoning: 'Render high-resolution visual infographic card summary with top 10 search results and cryptographic SHA-256.',
+      status: 'PENDING'
+    });
+    steps.push({
+      step_id: 'step-6',
+      tool: 'verify_artifact',
+      arguments: {
+        filePath: 'artifacts/research.csv',
+        minRows: 1,
+        requiredColumns: ['rank', 'title', 'source', 'snippet', 'link', 'query']
+      },
+      reasoning: 'Assert closed-loop OutcomeVerifier check on artifacts/research.csv and verify cryptographic disk hash.',
       status: 'PENDING'
     });
   }

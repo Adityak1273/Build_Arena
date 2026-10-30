@@ -82,6 +82,85 @@ export class BrowserController {
     return `https://duckduckgo.com/?q=${encodeURIComponent(trimmed)}`;
   }
 
+  public cleanDuckDuckGoUrl(l: string): string {
+    try {
+      const u = new URL(l, 'https://duckduckgo.com');
+      const x = u.searchParams.get('uddg');
+      return x ? decodeURIComponent(x) : l;
+    } catch {
+      return l;
+    }
+  }
+
+  /**
+   * Resilient dual-engine search navigation:
+   * Tries Google first; if blocked, captcha'd, or timed out, seamlessly switches to DuckDuckGo.
+   */
+  public async searchEngine(
+    query: string,
+    logCallback?: (msg: string) => void
+  ): Promise<{
+    engine: string;
+    url: string;
+    results: Array<{ title: string; link: string; snippet: string }>;
+  }> {
+    await this.initialize();
+    if (!this.page) {
+      return { engine: 'none', url: '', results: [] };
+    }
+
+    const g = 'https://www.google.com/search?hl=en&num=10&q=' + encodeURIComponent(query);
+    try {
+      await this.page.goto(g, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      const r = await this.page.$$eval('div.g', (els) =>
+        els
+          .map((e) => ({
+            title: (e.querySelector('h3') as HTMLElement)?.innerText || '',
+            link: (e.querySelector('a') as HTMLAnchorElement)?.href || '',
+            snippet:
+              (e.querySelector('div[data-sncf], .VwiC3b, .s3v9rd') as HTMLElement)?.innerText || ''
+          }))
+          .filter((x) => x.title && x.link)
+      );
+
+      if (r.length > 0) {
+        return { engine: 'Google', url: g, results: r.slice(0, 6) };
+      }
+    } catch {
+      // Fall through to DuckDuckGo fallback
+    }
+
+    const msg = 'Google blocked or showed a consent/captcha page. Switching to DuckDuckGo.';
+    if (logCallback) {
+      logCallback(msg);
+    } else {
+      console.log(`[BrowserController] ${msg}`);
+    }
+
+    const d = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+    try {
+      await this.page.goto(d, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      const r = await this.page.$$eval('.result', (els) =>
+        els
+          .map((e) => ({
+            title: (e.querySelector('.result__a') as HTMLElement)?.innerText || '',
+            link:
+              (e.querySelector('.result__a') as HTMLAnchorElement)?.getAttribute('href') || '',
+            snippet: (e.querySelector('.result__snippet') as HTMLElement)?.innerText || ''
+          }))
+          .filter((x) => x.title)
+      );
+
+      return {
+        engine: 'DuckDuckGo',
+        url: d,
+        results: r.slice(0, 6).map((x) => ({ ...x, link: this.cleanDuckDuckGoUrl(x.link) }))
+      };
+    } catch {
+      return { engine: 'none', url: d, results: [] };
+    }
+  }
+
   public async executeAction(
     action: 'navigate' | 'click' | 'type' | 'extract',
     target: string,

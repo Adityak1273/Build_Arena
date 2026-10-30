@@ -2,6 +2,7 @@ process.env.AUTOFORGE_TEST_RUNNER = 'true';
 import { OutcomeVerifier } from './outcomeVerifier';
 import { policyApprovalGate } from '../runtime/policyGate';
 import { GTMMultimodalPipeline } from '../tools/gtmMultimodalPipeline';
+import { ResearchSwarmWorkflow } from '../tools/researchSwarmWorkflow';
 import { CodeReviewCouncil } from '../runtime/council';
 import { createPlanForGoal } from '../runtime/planner';
 import { loadTaskHistory, saveTaskHistoryEntry } from '../runtime/taskHistory';
@@ -147,9 +148,87 @@ async function runTestSuite() {
     failures++;
   }
 
+  // 9. Verify 5-Agent Swarm Deep Research & Disk SHA-256 Verification
+  console.log('\n[Test 9] 5-Agent Swarm: Multi-Perspective Planning, Gating & Artifact SHA-256');
+  const swarmPlan = await createPlanForGoal('Top schools in Noida');
+  const searchSteps = swarmPlan.steps.filter((s) => s.tool === 'research_search');
+  const hasAggregate = swarmPlan.steps.some((s) => s.tool === 'research_aggregate');
+  const hasInfographic = swarmPlan.steps.some((s) => s.tool === 'multimodal_infographic');
+
+  const safeSecurity = policyApprovalGate.evaluateGoalSecurity('Top schools in Noida');
+  const blockedSecurity = policyApprovalGate.evaluateGoalSecurity('delete password hack banking login');
+
+  const sampleFound = [
+    {
+      task: 'Top schools in Noida',
+      engine: 'Google',
+      url: 'https://www.google.com/search?q=Top+schools+in+Noida',
+      results: [
+        {
+          title: 'Delhi Public School Noida',
+          link: 'https://dpsnoida.co.in',
+          snippet: 'Premier CBSE school in Sector 30 Noida providing comprehensive education.'
+        },
+        {
+          title: 'Step by Step School',
+          link: 'https://stepbystep.school',
+          snippet: 'Leading experiential learning school located in Sector 132 expressway Noida.'
+        }
+      ]
+    },
+    {
+      task: 'Top schools in Noida reviews ratings',
+      engine: 'DuckDuckGo',
+      url: 'https://html.duckduckgo.com/html/?q=Top+schools+in+Noida+reviews+ratings',
+      results: [
+        {
+          title: 'Delhi Public School Noida',
+          link: 'https://dpsnoida.co.in/reviews',
+          snippet: 'Parent reviews and rating overview for DPS Noida.'
+        },
+        {
+          title: 'Amity International School',
+          link: 'https://amity.edu/ais/noida',
+          snippet: 'Rated among top CBSE schools in Noida with modern infrastructure.'
+        }
+      ]
+    }
+  ];
+
+  const datasetResult = ResearchSwarmWorkflow.saveResearchDataset(sampleFound);
+  const verifyCsv = OutcomeVerifier.verifySpreadsheetArtifact(
+    'artifacts/research.csv',
+    1,
+    ['rank', 'title', 'source', 'snippet', 'link', 'query']
+  );
+
+  if (
+    searchSteps.length === 3 &&
+    hasAggregate &&
+    hasInfographic &&
+    safeSecurity.cleared &&
+    !blockedSecurity.cleared &&
+    datasetResult.count === 3 &&
+    verifyCsv.verified &&
+    verifyCsv.diskIntegrityVerified
+  ) {
+    console.log(`✓ PASS: 5-Agent Swarm verified. 3 sub-queries, VIGIL gating, ${datasetResult.count} deduped rows, SHA256: ${datasetResult.diskHash.slice(0, 16)}...`);
+  } else {
+    console.error('✗ FAIL: 5-Agent Swarm validation failed:', {
+      searchSteps: searchSteps.length,
+      hasAggregate,
+      hasInfographic,
+      safeCleared: safeSecurity.cleared,
+      blockedBlocked: !blockedSecurity.cleared,
+      datasetCount: datasetResult.count,
+      csvVerified: verifyCsv.verified
+    });
+    failures++;
+  }
+
   console.log('\n-----------------------------------------------------------');
   if (failures === 0) {
-    console.log('🎉 ALL RUNTIME VERIFICATION TESTS PASSED (8/8)');
+    console.log('🎉 ALL RUNTIME VERIFICATION TESTS PASSED (9/9)');
     process.exit(0);
   } else {
     console.error(`❌ ${failures} TEST(S) FAILED`);

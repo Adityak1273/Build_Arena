@@ -78,6 +78,30 @@ export class PolicyApprovalGate extends EventEmitter {
     };
   }
 
+  public evaluateGoalSecurity(goal: string): {
+    cleared: boolean;
+    token: string;
+    reason: string;
+  } {
+    const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
+    const token = 'IT-' + sha(goal + Date.now()).slice(0, 32);
+    const riskyPattern = /delete|password|credit card|otp|hack|malware|bank login/i;
+
+    if (riskyPattern.test(goal)) {
+      return {
+        cleared: false,
+        token,
+        reason: 'BLOCKED: risky request needs approval'
+      };
+    }
+
+    return {
+      cleared: true,
+      token,
+      reason: 'CLEARED ' + token
+    };
+  }
+
   public generateIntentToken(
     action: ActionRequest,
     riskLevel: PolicyRiskLevel,

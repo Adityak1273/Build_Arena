@@ -1,4 +1,4 @@
-// AutoForge v1.8 Type Definitions
+// AutoForge v1.9 Type Definitions
 export type ForgeMode = 'browse' | 'build' | 'automate' | 'create';
 
 export interface SemanticAXNode {
@@ -179,3 +179,26 @@ export interface BrowserTab {
   activeAgent?: SwarmAgentId;
   loading?: boolean;
 }
+
+export interface ResearchRow {
+  rank: number;
+  title: string;
+  source: string;
+  snippet: string;
+  link: string;
+  query: string;
+}
+
+export interface ResearchSwarmResult {
+  status: 'COMPLETED' | 'GATED' | 'FAILED';
+  goal: string;
+  intentToken?: string;
+  sha256?: string;
+  count: number;
+  tasks: Array<{ query: string; goal: string }>;
+  rows: ResearchRow[];
+  image: string;
+  csv: string;
+  error?: string;
+}
+

@@ -1,5 +1,137 @@
 [
   {
+    "task_id": "test-task-1793357195253",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T10:46:35.253Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
+    "task_id": "test-task-1793357073716",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T10:44:33.717Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
+    "task_id": "test-task-1793356578562",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T10:36:18.563Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
+    "task_id": "plan-1793354975295",
+    "goal": "Launch full GTM multimodal campaign: render high-res poster and mux 1080p video",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T10:09:35.302Z",
+    "duration_ms": 40249,
+    "steps_count": 6,
+    "verified_steps": 6,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793354952599",
+    "goal": "find the total no of hospitals avaliable in my area",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T10:09:12.608Z",
+    "duration_ms": 3702,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
+    "task_id": "plan-1793354865442",
+    "goal": "Execute parallel 7-critic AST code review on active codebase",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T10:07:45.451Z",
+    "duration_ms": 1975,
+    "steps_count": 3,
+    "verified_steps": 3,
+    "artifacts": [
+      {
+        "name": "Startups Matrix CSV",
+        "path": "artifacts/ai_startups_comparison.csv",
+        "type": "text/csv"
+      },
+      {
+        "name": "Launch Poster PNG",
+        "path": "artifacts/hero_frame.png",
+        "type": "image/png"
+      },
+      {
+        "name": "Launch Video MP4",
+        "path": "artifacts/launch_video.mp4",
+        "type": "video/mp4"
+      }
+    ],
+    "outcome_summary": "All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity."
+  },
+  {
     "task_id": "test-task-1793353160482",
     "goal": "Test Plan Persistence",
     "status": "COMPLETED",

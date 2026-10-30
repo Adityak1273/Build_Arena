@@ -3,11 +3,13 @@ import cors from 'cors';
 import http from 'http';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { WebSocketServer, WebSocket } from 'ws';
 import { browserController } from './browserController';
 import { policyApprovalGate } from './policyGate';
 import { OutcomeVerifier } from '../verifier/outcomeVerifier';
 import { StartupSpreadsheetWorkflow } from '../tools/startupSpreadsheetWorkflow';
+import { ResearchSwarmWorkflow } from '../tools/researchSwarmWorkflow';
 import { GTMMultimodalPipeline } from '../tools/gtmMultimodalPipeline';
 import { CodeReviewCouncil } from './council';
 import { AutonomousPlanResult, TaskStep, TaskHistoryEntry } from '../types';
@@ -54,11 +56,30 @@ wss.on('connection', (ws) => {
     })
   );
 
-  ws.on('message', (message) => {
+  ws.on('message', async (message) => {
     try {
       const parsed = JSON.parse(message.toString());
       if (parsed.type === 'PING') {
         ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }));
+        return;
+      }
+
+      // Check if client triggered a 5-agent swarm research goal directly via WebSocket
+      let goal = '';
+      if (typeof parsed.goal === 'string' && parsed.goal.trim()) {
+        goal = parsed.goal.trim().slice(0, 300);
+      } else if (parsed.type === 'GOAL' || parsed.type === 'EXECUTE_SWARM') {
+        goal = String(parsed.prompt || parsed.payload?.goal || '').trim().slice(0, 300);
+      }
+
+      if (goal) {
+        console.log(`[WebSocket] Triggering 5-Agent Swarm for goal: "${goal}"`);
+        await ResearchSwarmWorkflow.executeSwarm(goal, (evt) => {
+          broadcast(evt.type, evt);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(evt));
+          }
+        });
       }
     } catch {
       // ignore
@@ -72,7 +93,11 @@ wss.on('connection', (ws) => {
 });
 
 export const broadcast = (type: string, data: any) => {
-  const payload = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+  const payloadObj =
+    typeof data === 'object' && data !== null
+      ? { type, timestamp: new Date().toISOString(), ...data }
+      : { type, data, timestamp: new Date().toISOString() };
+  const payload = JSON.stringify(payloadObj);
   for (const client of connectedClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(payload);
@@ -145,6 +170,13 @@ app.post('/api/task/execute', async (req, res) => {
         options?.headline || 'AI-Native Browser with AdaL Multimodal Companion',
         prompt
       );
+      return res.json(result);
+    }
+
+    if (task_type === 'RESEARCH_SWARM' || task_type === 'swarm' || task_type === 'RESEARCH') {
+      const result = await ResearchSwarmWorkflow.executeSwarm(prompt || 'General Research', (evt) => {
+        broadcast(evt.type, evt);
+      });
       return res.json(result);
     }
 
@@ -290,6 +322,50 @@ app.post('/api/gtm/generate', async (req, res) => {
   }
 });
 
+// 6b. 5-Agent Research Swarm Endpoints (Google + DDG Fallback, Deduped CSV, Disk SHA-256 & Infographic)
+app.post('/api/research/swarm', async (req, res) => {
+  try {
+    const { goal } = req.body;
+    const result = await ResearchSwarmWorkflow.executeSwarm(goal || 'General Research', (evt) => {
+      broadcast(evt.type, evt);
+    });
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/research/latest', (_req, res) => {
+  try {
+    const jsonPath = path.resolve(process.cwd(), 'artifacts', 'research.json');
+    const csvPath = path.resolve(process.cwd(), 'artifacts', 'research.csv');
+    if (fs.existsSync(jsonPath) && fs.existsSync(csvPath)) {
+      const rows = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      const diskHash = crypto.createHash('sha256').update(fs.readFileSync(csvPath, 'utf8')).digest('hex');
+      res.json({
+        count: rows.length,
+        sha256: diskHash,
+        csv: '/artifacts/research.csv',
+        image: '/gtm-assets/result.png',
+        rows
+      });
+    } else {
+      res.status(404).json({ error: 'No research dataset artifact found yet on disk.' });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/research/download', (_req, res) => {
+  const csvPath = path.resolve(process.cwd(), 'artifacts', 'research.csv');
+  if (fs.existsSync(csvPath)) {
+    res.download(csvPath, 'research.csv');
+  } else {
+    res.status(404).json({ error: 'Research dataset CSV has not been generated yet.' });
+  }
+});
+
 // 7. Autonomous Planning & Execution with AdaL
 app.post('/api/autonomous/plan', async (req, res) => {
   try {
@@ -308,6 +384,20 @@ app.post('/api/autonomous/execute', async (req, res) => {
 
   activeLoopCancelled = false;
   activeLoopPaused = false;
+
+  const accumulatedSearchResults: Array<{
+    task: string;
+    engine: string;
+    url: string;
+    results: Array<{ title: string; link: string; snippet: string }>;
+  }> = [];
+  let lastResearchDataset: {
+    rows: any[];
+    csvPath: string;
+    jsonPath: string;
+    diskHash: string;
+    count: number;
+  } | null = null;
 
   broadcast('PLAN_STARTED', { plan_id: plan.plan_id, goal: plan.goal });
 
@@ -404,11 +494,80 @@ app.post('/api/autonomous/execute', async (req, res) => {
         step.verified = outcome.disk_integrity_verified && outcome.total_evaluated >= 10;
         step.verification_state = step.verified ? 'VERIFIED' : 'FAILED';
         step.status = step.verified ? 'COMPLETED' : 'FAILED';
+      } else if (step.tool === 'research_search') {
+        const query = step.arguments.query;
+        broadcast('agent', { agent: 'Navigator', state: 'ACTING' });
+        broadcast('log', { agent: 'NAVIGATOR', text: `Searching: ${query}` });
+        const searchRes = await ResearchSwarmWorkflow.search(query, (msg) => {
+          broadcast('log', { agent: 'NAVIGATOR', text: msg });
+        });
+        broadcast('url', { url: searchRes.url });
+        broadcast('log', {
+          agent: 'NAVIGATOR',
+          text: `${searchRes.results.length} results from ${searchRes.engine}`
+        });
+        accumulatedSearchResults.push({ task: query, ...searchRes });
+        step.result = {
+          engine: searchRes.engine,
+          count: searchRes.results.length,
+          url: searchRes.url,
+          results: searchRes.results
+        };
+        step.verified = true;
+        step.verification_state = 'VERIFIED';
+        step.status = 'COMPLETED';
+      } else if (step.tool === 'research_aggregate') {
+        broadcast('agent', { agent: 'Researcher', state: 'ACTING' });
+        const dataset = ResearchSwarmWorkflow.saveResearchDataset(accumulatedSearchResults);
+        broadcast('log', {
+          agent: 'RESEARCHER',
+          text: `${dataset.count} unique results saved to artifacts/research.csv. SHA-256 verified from disk: ${dataset.diskHash.slice(0, 16)}...`
+        });
+        broadcast('handoff', { from: 'Researcher', to: 'Multimodal', msg: 'DATASET_READY' });
+        broadcast('agent', { agent: 'Researcher', state: 'COMPLETED' });
+        lastResearchDataset = dataset;
+        step.result = {
+          count: dataset.count,
+          csvPath: dataset.csvPath,
+          diskHash: dataset.diskHash
+        };
+        step.verified = dataset.count > 0 && !!dataset.diskHash;
+        step.verification_state = step.verified ? 'VERIFIED' : 'FAILED';
+        step.status = step.verified ? 'COMPLETED' : 'FAILED';
+      } else if (step.tool === 'multimodal_infographic') {
+        broadcast('agent', { agent: 'Multimodal', state: 'ACTING' });
+        const primaryEngine =
+          accumulatedSearchResults.map((s) => s.engine).find((e) => e && e !== 'none') ||
+          'Google/DDG';
+        const infoRes = await ResearchSwarmWorkflow.renderInfographic(
+          plan.goal,
+          lastResearchDataset?.rows || [],
+          primaryEngine,
+          lastResearchDataset?.diskHash || ''
+        );
+        broadcast('log', {
+          agent: 'MULTIMODAL',
+          text: `Infographic (${infoRes.sizeBytes} bytes) saved to public/gtm-assets/result.png`
+        });
+        broadcast('handoff', { from: 'Multimodal', to: 'Orchestrator', msg: 'IMAGE_READY' });
+        broadcast('agent', { agent: 'Multimodal', state: 'COMPLETED' });
+        step.result = {
+          imagePath: infoRes.imagePath,
+          sizeBytes: infoRes.sizeBytes
+        };
+        step.verified = infoRes.sizeBytes > 5000;
+        step.verification_state = step.verified ? 'VERIFIED' : 'FAILED';
+        step.status = step.verified ? 'COMPLETED' : 'FAILED';
       } else if (step.tool === 'verify_artifact') {
+        const filePath = step.arguments.filePath || 'artifacts/ai_startups_comparison.csv';
+        const isResearch = filePath.includes('research');
         const verReport = OutcomeVerifier.verifySpreadsheetArtifact(
-          step.arguments.filePath,
-          step.arguments.minRows || 10,
-          step.arguments.requiredColumns || ['company_name', 'domain', 'pricing_tier', 'scraped_title', 'row_hash']
+          filePath,
+          step.arguments.minRows || (isResearch ? 1 : 10),
+          step.arguments.requiredColumns ||
+            (isResearch
+              ? ['rank', 'title', 'source', 'snippet', 'link', 'query']
+              : ['company_name', 'domain', 'pricing_tier', 'scraped_title', 'row_hash'])
         );
         step.result = verReport;
         step.verified = verReport.verified && verReport.diskIntegrityVerified;
@@ -473,7 +632,49 @@ app.post('/api/autonomous/execute', async (req, res) => {
       ? 'All plan steps executed and verified closed-loop against live browser state, physical disk assertions, and cryptographic SHA-256 integrity.'
       : 'Plan executed with one or more steps requiring operator inspection.';
 
+    if (lastResearchDataset) {
+      broadcast('result', {
+        payload: {
+          status: plan.status,
+          goal: plan.goal,
+          intentToken: `IT-${crypto.createHash('sha256').update(plan.goal + startTime).digest('hex').slice(0, 32)}`,
+          sha256: lastResearchDataset.diskHash,
+          count: lastResearchDataset.count,
+          tasks: ResearchSwarmWorkflow.plan(plan.goal),
+          rows: lastResearchDataset.rows,
+          image: '/gtm-assets/result.png',
+          csv: '/artifacts/research.csv'
+        }
+      });
+      broadcast('agent', { agent: 'Orchestrator', state: 'COMPLETED' });
+      broadcast('log', {
+        agent: 'ORCHESTRATOR',
+        text: 'Collected Navigator + Researcher + Multimodal results. Done.'
+      });
+    }
+
     // Save to user task history memory
+    const historyArtifacts: Array<{ name: string; path: string; type: string }> = [
+      { name: 'Startups Matrix CSV', path: 'artifacts/ai_startups_comparison.csv', type: 'text/csv' },
+      { name: 'Launch Poster PNG', path: 'artifacts/hero_frame.png', type: 'image/png' },
+      { name: 'Launch Video MP4', path: 'artifacts/launch_video.mp4', type: 'video/mp4' }
+    ];
+
+    if (fs.existsSync(path.resolve(process.cwd(), 'artifacts', 'research.csv'))) {
+      historyArtifacts.push({
+        name: 'Research Dataset CSV',
+        path: 'artifacts/research.csv',
+        type: 'text/csv'
+      });
+    }
+    if (fs.existsSync(path.resolve(process.cwd(), 'public', 'gtm-assets', 'result.png'))) {
+      historyArtifacts.push({
+        name: 'Swarm Infographic PNG',
+        path: 'public/gtm-assets/result.png',
+        type: 'image/png'
+      });
+    }
+
     saveTaskHistoryEntry({
       task_id: plan.plan_id,
       goal: plan.goal,
@@ -482,11 +683,7 @@ app.post('/api/autonomous/execute', async (req, res) => {
       duration_ms: plan.total_time_ms,
       steps_count: plan.steps.length,
       verified_steps: plan.steps.filter((s) => s.verification_state === 'VERIFIED').length,
-      artifacts: [
-        { name: 'Startups Matrix CSV', path: 'artifacts/ai_startups_comparison.csv', type: 'text/csv' },
-        { name: 'Launch Poster PNG', path: 'artifacts/hero_frame.png', type: 'image/png' },
-        { name: 'Launch Video MP4', path: 'artifacts/launch_video.mp4', type: 'video/mp4' }
-      ],
+      artifacts: historyArtifacts,
       outcome_summary: plan.overall_outcome
     });
 
