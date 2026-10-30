@@ -31,6 +31,7 @@ if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 if (!fs.existsSync(artifactsDir)) fs.mkdirSync(artifactsDir, { recursive: true });
 
 app.use(express.static(publicDir));
+app.use('/public', express.static(publicDir));
 app.use('/artifacts', express.static(artifactsDir));
 
 // HTTP server wrapper for WebSocket attachment
@@ -366,6 +367,36 @@ app.get('/api/research/download', (_req, res) => {
   }
 });
 
+app.get('/api/artifacts/status', (_req, res) => {
+  const artifactsDir = path.resolve(process.cwd(), 'artifacts');
+  const publicGtmDir = path.resolve(process.cwd(), 'public', 'gtm-assets');
+
+  const checkFile = (dir: string, file: string) => {
+    const full = path.join(dir, file);
+    if (!fs.existsSync(full)) return { exists: false, size: 0, mtime: 0 };
+    const stat = fs.statSync(full);
+    return { exists: true, size: stat.size, mtime: stat.mtimeMs };
+  };
+
+  res.json({
+    resultPng: checkFile(artifactsDir, 'result.png').exists
+      ? checkFile(artifactsDir, 'result.png')
+      : checkFile(publicGtmDir, 'result.png'),
+    heroPng: checkFile(artifactsDir, 'hero_frame.png').exists
+      ? checkFile(artifactsDir, 'hero_frame.png')
+      : checkFile(publicGtmDir, 'hero_frame.png'),
+    videoMp4: checkFile(artifactsDir, 'launch_video.mp4').exists
+      ? checkFile(artifactsDir, 'launch_video.mp4')
+      : checkFile(publicGtmDir, 'launch_video.mp4'),
+    audioMp3: checkFile(artifactsDir, 'voiceover.mp3').exists
+      ? checkFile(artifactsDir, 'voiceover.mp3')
+      : checkFile(publicGtmDir, 'voiceover.mp3'),
+    researchCsv: checkFile(artifactsDir, 'research.csv'),
+    researchJson: checkFile(artifactsDir, 'research.json'),
+    startupsCsv: checkFile(artifactsDir, 'ai_startups_comparison.csv')
+  });
+});
+
 // 7. Autonomous Planning & Execution with AdaL
 app.post('/api/autonomous/plan', async (req, res) => {
   try {
@@ -687,6 +718,7 @@ app.post('/api/autonomous/execute', async (req, res) => {
       outcome_summary: plan.overall_outcome
     });
 
+    (plan as any).artifacts = historyArtifacts;
     broadcast('PLAN_FINISHED', plan);
     res.json(plan);
   } catch (err: any) {

@@ -139,6 +139,7 @@ export interface AutonomousPlanResult {
   overall_outcome: string;
   total_time_ms: number;
   security_tokens?: IntentToken[];
+  artifacts?: Array<{ name: string; path: string; type: string }>;
 }
 
 export interface TelemetryEvent {

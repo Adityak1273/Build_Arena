@@ -614,6 +614,7 @@ export const App: React.FC = () => {
             onResumeExecution={handleResumeExecution}
             onCancelExecution={handleCancelExecution}
             onDispatchPrompt={handleDispatchSwarmPrompt}
+            onOpenDrawerTab={(tab) => setActiveDrawerTab(tab)}
           />
         </div>
       </div>

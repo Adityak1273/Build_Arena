@@ -6,7 +6,7 @@ import {
   AutonomousPlanResult
 } from '../types';
 
-const API_BASE = 'http://127.0.0.1:4000';
+export const API_BASE = 'http://127.0.0.1:4000';
 
 // Global declaration for Electron context bridge
 declare global {
@@ -143,6 +143,23 @@ export const api = {
   },
 
   getDownloadUrl: () => `${API_BASE}/api/spreadsheet/download`,
+  getResearchDownloadUrl: () => `${API_BASE}/api/research/download`,
+
+  getLatestResearch: async (): Promise<any> => {
+    const res = await fetch(`${API_BASE}/api/research/latest`);
+    if (!res.ok) throw new Error('Failed to fetch research dataset');
+    return await res.json();
+  },
+
+  getArtifactsStatus: async (): Promise<any> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/artifacts/status`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
 
   interactWithBrowser: async (interaction: {
     type: 'click' | 'wheel' | 'type' | 'key' | 'hover';

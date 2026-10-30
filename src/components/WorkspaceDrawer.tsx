@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileSpreadsheet,
   ShieldCheck,
@@ -12,9 +12,13 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Image as ImageIcon,
+  Sparkles,
+  Eye,
+  CheckCircle2,
 } from 'lucide-react';
 import { StartupRow, VerificationOutcome, CouncilVerdict, SemanticAXNode } from '../types';
-import { api } from '../services/api';
+import { api, API_BASE } from '../services/api';
 
 interface WorkspaceDrawerProps {
   activeDrawerTab: 'spreadsheet' | 'council' | 'gtm' | 'ax' | null;
@@ -58,6 +62,35 @@ export const WorkspaceDrawer: React.FC<WorkspaceDrawerProps> = ({
 }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [copiedHash, setCopiedHash] = useState(false);
+  const [researchDataset, setResearchDataset] = useState<{
+    count: number;
+    sha256: string;
+    rows: any[];
+  } | null>(null);
+  const [spreadsheetView, setSpreadsheetView] = useState<'startups' | 'research'>('research');
+  const [artifactKey, setArtifactKey] = useState<number>(Date.now());
+  const [previewModalImg, setPreviewModalImg] = useState<{ url: string; title: string } | null>(null);
+
+  useEffect(() => {
+    loadResearchDataset();
+  }, [activeDrawerTab]);
+
+  const loadResearchDataset = async () => {
+    try {
+      const res = await api.getLatestResearch();
+      if (res && res.rows && res.rows.length > 0) {
+        setResearchDataset(res);
+        setSpreadsheetView('research');
+      }
+    } catch {
+      // not yet generated
+    }
+  };
+
+  const handleRefreshArtifacts = () => {
+    setArtifactKey(Date.now());
+    loadResearchDataset();
+  };
 
   if (!activeDrawerTab) return null;
 
@@ -156,6 +189,44 @@ export const WorkspaceDrawer: React.FC<WorkspaceDrawerProps> = ({
         {/* 1. SPREADSHEET DRAWER TAB */}
         {activeDrawerTab === 'spreadsheet' && (
           <div className="space-y-3">
+            {/* View Switcher: Startups Benchmark vs Multi-Agent Research Dataset */}
+            <div className="flex items-center justify-between pb-1 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSpreadsheetView('startups')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border cursor-pointer ${
+                    spreadsheetView === 'startups'
+                      ? 'bg-[#0D9488] text-white border-[#0D9488] shadow-xs'
+                      : 'bg-white text-slate-700 border-[#D5CEBF] hover:bg-[#FAF7F2]'
+                  }`}
+                >
+                  🏢 AI Startups Matrix ({editableRows.length} rows)
+                </button>
+                {researchDataset && researchDataset.rows && (
+                  <button
+                    onClick={() => setSpreadsheetView('research')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${
+                      spreadsheetView === 'research'
+                        ? 'bg-[#0D9488] text-white border-[#0D9488] shadow-xs'
+                        : 'bg-white text-slate-700 border-[#D5CEBF] hover:bg-[#FAF7F2]'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#00F2FE]" />
+                    <span>🔬 Multi-Agent Research Dataset ({researchDataset.rows.length} rows)</span>
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={handleRefreshArtifacts}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#ECE5D8] hover:bg-[#DAD2C2] text-xs font-mono font-bold text-slate-700 border border-[#D5CEBF] cursor-pointer"
+                title="Reload from disk"
+              >
+                <RefreshCw className="w-3 h-3 text-[#0D9488]" />
+                <span>Reload Files</span>
+              </button>
+            </div>
+
             {/* Action Bar with Bark Black Border */}
             <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs">
               <div className="flex items-center gap-2">
@@ -164,10 +235,15 @@ export const WorkspaceDrawer: React.FC<WorkspaceDrawerProps> = ({
                   Disk Checksum:
                 </span>
                 <span className="text-xs font-mono text-[#0F766E] font-bold bg-[#00F2FE]/10 border border-[#D5CEBF] px-2.5 py-0.5 rounded truncate max-w-xs shadow-xs">
-                  {spreadsheetOutcome?.disk_hash || '1398bd2e9ed9fd57...'}
+                  {spreadsheetView === 'research'
+                    ? (researchDataset?.sha256 || 'Verified SHA-256')
+                    : (spreadsheetOutcome?.disk_hash || '1398bd2e9ed9fd57...')}
                 </span>
                 <button
-                  onClick={() => spreadsheetOutcome?.disk_hash && handleCopyHash(spreadsheetOutcome.disk_hash)}
+                  onClick={() => {
+                    const h = spreadsheetView === 'research' ? researchDataset?.sha256 : spreadsheetOutcome?.disk_hash;
+                    if (h) handleCopyHash(h);
+                  }}
                   className="text-slate-600 hover:text-[#0D9488] p-1 border border-[#D5CEBF]/40 rounded hover:border-[#D5CEBF] cursor-pointer"
                   title="Copy SHA-256"
                 >
@@ -176,146 +252,212 @@ export const WorkspaceDrawer: React.FC<WorkspaceDrawerProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                {hasUnsavedEdits && (
-                  <span className="text-[10px] font-mono text-amber-950 bg-amber-100 border border-[#D5CEBF] px-2 py-0.5 rounded-md font-bold animate-pulse shadow-xs">
-                    Unsaved Edits Detected
-                  </span>
+                {spreadsheetView === 'startups' ? (
+                  <>
+                    {hasUnsavedEdits && (
+                      <span className="text-[10px] font-mono text-amber-950 bg-amber-100 border border-[#D5CEBF] px-2 py-0.5 rounded-md font-bold animate-pulse shadow-xs">
+                        Unsaved Edits Detected
+                      </span>
+                    )}
+                    <button
+                      onClick={onSaveSpreadsheet}
+                      disabled={isSavingSpreadsheet || !hasUnsavedEdits}
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border-[1.5px] ${
+                        hasUnsavedEdits
+                          ? 'bg-[#00F2FE] hover:bg-[#00D2E0] text-[#07090D] shadow-xs border-[#D5CEBF] animate-pulse'
+                          : 'bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed'
+                      }`}
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{isSavingSpreadsheet ? 'Re-Verifying...' : 'Save & Re-Verify (SHA-256)'}</span>
+                    </button>
+
+                    <button
+                      onClick={onTriggerScrape}
+                      disabled={isScraping}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#ECE5D8] hover:bg-[#DAD2C2] text-[#00F2FE] border-[1.5px] border-[#D5CEBF] font-mono font-bold text-xs shadow-xs transition-all cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
+                      <span>{isScraping ? 'Crawling...' : 'Trigger Scrape'}</span>
+                    </button>
+
+                    <a
+                      href={api.getDownloadUrl()}
+                      download="ai_startups_matrix.csv"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-[#FAF7F2] text-[#0F172A] font-mono font-bold text-xs border-[1.5px] border-[#D5CEBF] shadow-xs cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#0D9488]" />
+                      <span>CSV</span>
+                    </a>
+                  </>
+                ) : (
+                  <a
+                    href={api.getResearchDownloadUrl()}
+                    download="research.csv"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-white font-mono font-bold text-xs shadow-xs cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download research.csv</span>
+                  </a>
                 )}
-                <button
-                  onClick={onSaveSpreadsheet}
-                  disabled={isSavingSpreadsheet || !hasUnsavedEdits}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border-[1.5px] ${
-                    hasUnsavedEdits
-                      ? 'bg-[#00F2FE] hover:bg-[#00D2E0] text-[#07090D] shadow-xs border-[#D5CEBF] animate-pulse'
-                      : 'bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed'
-                  }`}
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>{isSavingSpreadsheet ? 'Re-Verifying...' : 'Save & Re-Verify (SHA-256)'}</span>
-                </button>
-
-                <button
-                  onClick={onTriggerScrape}
-                  disabled={isScraping}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#ECE5D8] hover:bg-[#DAD2C2] text-[#00F2FE] border-[1.5px] border-[#D5CEBF] font-mono font-bold text-xs shadow-xs transition-all cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isScraping ? 'animate-spin' : ''}`} />
-                  <span>{isScraping ? 'Crawling...' : 'Trigger Scrape'}</span>
-                </button>
-
-                <a
-                  href={api.getDownloadUrl()}
-                  download="ai_startups_matrix.csv"
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-[#FAF7F2] text-[#0F172A] font-mono font-bold text-xs border-[1.5px] border-[#D5CEBF] shadow-xs cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5 text-[#0D9488]" />
-                  <span>CSV</span>
-                </a>
               </div>
             </div>
 
-            {/* Editable Spreadsheet Table with Bark Black Borders */}
-            <div className="rounded-xl border-[1.5px] border-[#D5CEBF] overflow-hidden bg-white shadow-xs">
-              <div className="overflow-x-auto max-h-72">
-                <table className="w-full text-left text-xs divide-y divide-[#0D1117]/25">
-                  <thead className="bg-[#F4EFE6] text-[10px] font-mono text-[#0F172A] uppercase tracking-wider sticky top-0 z-10 border-b-2 border-[#D5CEBF]">
-                    <tr>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Company</th>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Domain & Source URL</th>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Status</th>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Scraped Title</th>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Pricing Tier</th>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Sales Gate</th>
-                      <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">API Available</th>
-                      <th className="py-2.5 px-3 font-extrabold">Row Hash</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#0D1117]/15 text-[#0F172A]">
-                    {editableRows.map((row, idx) => {
-                      const isGate = (row.enterprise_sales_gate || '').toUpperCase().includes('YES');
-                      const isUnknownPricing = (row.pricing_tier || '').includes('UNKNOWN');
-                      const isSuccess = (row.verification_status || '') === 'VERIFIED';
-                      const targetLink = row.target_url || `https://${row.domain}`;
-
-                      return (
+            {/* Table Rendering */}
+            {spreadsheetView === 'research' && researchDataset ? (
+              <div className="rounded-xl border-[1.5px] border-[#D5CEBF] overflow-hidden bg-white shadow-xs">
+                <div className="overflow-x-auto max-h-72">
+                  <table className="w-full text-left text-xs divide-y divide-[#0D1117]/25">
+                    <thead className="bg-[#F4EFE6] text-[10px] font-mono text-[#0F172A] uppercase tracking-wider sticky top-0 z-10 border-b-2 border-[#D5CEBF]">
+                      <tr>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20 w-14">#</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Result Title</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Source</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Intelligence Snippet</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Search Query</th>
+                        <th className="py-2.5 px-3 font-extrabold">Link</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#0D1117]/15 text-[#0F172A]">
+                      {researchDataset.rows.map((row: any, idx: number) => (
                         <tr key={idx} className={`hover:bg-[#00F2FE]/5 transition-colors ${idx % 2 === 1 ? 'bg-[#FAF7F2]/70' : 'bg-white'}`}>
-                          <td className="py-2 px-2.5 font-bold text-[#0F172A] whitespace-nowrap border-r border-[#D5CEBF]/15">
-                            <input
-                              type="text"
-                              value={row.company_name}
-                              onChange={(e) => onCellChange(idx, 'company_name', e.target.value)}
-                              className="bg-transparent border border-transparent hover:border-[#D5CEBF]/40 focus:border-[#00F2FE] rounded px-1.5 py-0.5 text-[#0F172A] text-xs font-bold w-32 outline-hidden"
-                            />
+                          <td className="py-2 px-3 font-mono text-[11px] font-bold text-[#0D9488] border-r border-[#D5CEBF]/15">
+                            {row.rank || idx + 1}
                           </td>
-                          <td className="py-2 px-2.5 whitespace-nowrap font-mono text-[11px] border-r border-[#D5CEBF]/15">
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="text"
-                                value={row.domain}
-                                onChange={(e) => onCellChange(idx, 'domain', e.target.value)}
-                                className="bg-transparent border border-transparent hover:border-[#D5CEBF]/40 focus:border-[#00F2FE] rounded px-1 py-0.5 text-[#0D9488] font-mono text-[11px] font-bold w-28 outline-hidden"
-                              />
+                          <td className="py-2 px-3 font-bold text-[#0F172A] border-r border-[#D5CEBF]/15">
+                            {row.title}
+                          </td>
+                          <td className="py-2 px-3 font-mono text-[11px] text-slate-600 border-r border-[#D5CEBF]/15">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">{row.source || 'web'}</span>
+                          </td>
+                          <td className="py-2 px-3 text-[11px] text-slate-700 leading-snug border-r border-[#D5CEBF]/15 max-w-md">
+                            {row.snippet}
+                          </td>
+                          <td className="py-2 px-3 font-mono text-[10px] text-slate-500 border-r border-[#D5CEBF]/15">
+                            {row.query || '-'}
+                          </td>
+                          <td className="py-2 px-3">
+                            {row.link ? (
                               <a
-                                href={targetLink}
+                                href={row.link}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[#0D9488] hover:text-[#00F2FE] p-0.5"
-                                title={`Open ${targetLink}`}
+                                className="text-[#0D9488] hover:text-[#00F2FE] flex items-center gap-1 font-mono text-[11px] font-bold"
                               >
+                                <span>Visit</span>
                                 <ExternalLink className="w-3 h-3" />
                               </a>
-                            </div>
-                          </td>
-                          <td className="py-2 px-2.5 whitespace-nowrap border-r border-[#D5CEBF]/15">
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${
-                              isSuccess ? 'bg-emerald-100 text-emerald-800 border-[#D5CEBF]/40' : 'bg-rose-100 text-rose-800 border-[#D5CEBF]/40'
-                            }`}>
-                              {row.fetch_status || 'VERIFIED'}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2.5 max-w-xs truncate border-r border-[#D5CEBF]/15">
-                            <input
-                              type="text"
-                              value={row.scraped_title}
-                              onChange={(e) => onCellChange(idx, 'scraped_title', e.target.value)}
-                              className="bg-transparent border border-transparent hover:border-[#D5CEBF]/40 focus:border-[#00F2FE] rounded px-1.5 py-0.5 text-slate-800 text-xs w-full outline-hidden truncate"
-                            />
-                          </td>
-                          <td className="py-2 px-2.5 whitespace-nowrap border-r border-[#D5CEBF]/15">
-                            <input
-                              type="text"
-                              value={row.pricing_tier}
-                              onChange={(e) => onCellChange(idx, 'pricing_tier', e.target.value)}
-                              className={`rounded px-2 py-0.5 font-mono text-[11px] w-44 outline-hidden border ${
-                                isUnknownPricing
-                                  ? 'bg-amber-100 text-amber-950 border-[#D5CEBF] font-bold'
-                                  : 'bg-transparent text-slate-800 border-transparent hover:border-[#D5CEBF]/40'
-                              }`}
-                            />
-                          </td>
-                          <td className="py-2 px-2.5 whitespace-nowrap border-r border-[#D5CEBF]/15">
-                            <input
-                              type="text"
-                              value={row.enterprise_sales_gate}
-                              onChange={(e) => onCellChange(idx, 'enterprise_sales_gate', e.target.value)}
-                              className={`rounded px-1.5 py-0.5 font-mono text-[10px] w-28 outline-hidden border ${
-                                isGate ? 'bg-amber-100 text-amber-900 border-[#D5CEBF]/50 font-bold' : 'bg-transparent text-slate-600 border-transparent'
-                              }`}
-                            />
-                          </td>
-                          <td className="py-2 px-2.5 whitespace-nowrap font-mono text-[10px] text-slate-700 font-bold border-r border-[#D5CEBF]/15">
-                            {row.api_availability}
-                          </td>
-                          <td className="py-2 px-2.5 whitespace-nowrap font-mono text-[10px] text-slate-500">
-                            {row.row_hash}
+                            ) : '-'}
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl border-[1.5px] border-[#D5CEBF] overflow-hidden bg-white shadow-xs">
+                <div className="overflow-x-auto max-h-72">
+                  <table className="w-full text-left text-xs divide-y divide-[#0D1117]/25">
+                    <thead className="bg-[#F4EFE6] text-[10px] font-mono text-[#0F172A] uppercase tracking-wider sticky top-0 z-10 border-b-2 border-[#D5CEBF]">
+                      <tr>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Company</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Domain & Source URL</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Status</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Scraped Title</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Pricing Tier</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">Sales Gate</th>
+                        <th className="py-2.5 px-3 font-extrabold border-r border-[#D5CEBF]/20">API Available</th>
+                        <th className="py-2.5 px-3 font-extrabold">Row Hash</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#0D1117]/15 text-[#0F172A]">
+                      {editableRows.map((row, idx) => {
+                        const isGate = (row.enterprise_sales_gate || '').toUpperCase().includes('YES');
+                        const isUnknownPricing = (row.pricing_tier || '').includes('UNKNOWN');
+                        const isSuccess = (row.verification_status || '') === 'VERIFIED';
+                        const targetLink = row.target_url || `https://${row.domain}`;
+
+                        return (
+                          <tr key={idx} className={`hover:bg-[#00F2FE]/5 transition-colors ${idx % 2 === 1 ? 'bg-[#FAF7F2]/70' : 'bg-white'}`}>
+                            <td className="py-2 px-2.5 font-bold text-[#0F172A] whitespace-nowrap border-r border-[#D5CEBF]/15">
+                              <input
+                                type="text"
+                                value={row.company_name}
+                                onChange={(e) => onCellChange(idx, 'company_name', e.target.value)}
+                                className="bg-transparent border border-transparent hover:border-[#D5CEBF]/40 focus:border-[#00F2FE] rounded px-1.5 py-0.5 text-[#0F172A] text-xs font-bold w-32 outline-hidden"
+                              />
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap font-mono text-[11px] border-r border-[#D5CEBF]/15">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="text"
+                                  value={row.domain}
+                                  onChange={(e) => onCellChange(idx, 'domain', e.target.value)}
+                                  className="bg-transparent border border-transparent hover:border-[#D5CEBF]/40 focus:border-[#00F2FE] rounded px-1 py-0.5 text-[#0D9488] font-mono text-[11px] font-bold w-28 outline-hidden"
+                                />
+                                <a
+                                  href={targetLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[#0D9488] hover:text-[#00F2FE] p-0.5"
+                                  title={`Open ${targetLink}`}
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </div>
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap border-r border-[#D5CEBF]/15">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${
+                                isSuccess ? 'bg-emerald-100 text-emerald-800 border-[#D5CEBF]/40' : 'bg-rose-100 text-rose-800 border-[#D5CEBF]/40'
+                              }`}>
+                                {row.fetch_status || 'VERIFIED'}
+                              </span>
+                            </td>
+                            <td className="py-2 px-2.5 max-w-xs truncate border-r border-[#D5CEBF]/15">
+                              <input
+                                type="text"
+                                value={row.scraped_title}
+                                onChange={(e) => onCellChange(idx, 'scraped_title', e.target.value)}
+                                className="bg-transparent border border-transparent hover:border-[#D5CEBF]/40 focus:border-[#00F2FE] rounded px-1.5 py-0.5 text-slate-800 text-xs w-full outline-hidden truncate"
+                              />
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap border-r border-[#D5CEBF]/15">
+                              <input
+                                type="text"
+                                value={row.pricing_tier}
+                                onChange={(e) => onCellChange(idx, 'pricing_tier', e.target.value)}
+                                className={`rounded px-2 py-0.5 font-mono text-[11px] w-44 outline-hidden border ${
+                                  isUnknownPricing
+                                    ? 'bg-amber-100 text-amber-950 border-[#D5CEBF] font-bold'
+                                    : 'bg-transparent text-slate-800 border-transparent hover:border-[#D5CEBF]/40'
+                                }`}
+                              />
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap border-r border-[#D5CEBF]/15">
+                              <input
+                                type="text"
+                                value={row.enterprise_sales_gate}
+                                onChange={(e) => onCellChange(idx, 'enterprise_sales_gate', e.target.value)}
+                                className={`rounded px-1.5 py-0.5 font-mono text-[10px] w-28 outline-hidden border ${
+                                  isGate ? 'bg-amber-100 text-amber-900 border-[#D5CEBF]/50 font-bold' : 'bg-transparent text-slate-600 border-transparent'
+                                }`}
+                              />
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap font-mono text-[10px] text-slate-700 font-bold border-r border-[#D5CEBF]/15">
+                              {row.api_availability}
+                            </td>
+                            <td className="py-2 px-2.5 whitespace-nowrap font-mono text-[10px] text-slate-500">
+                              {row.row_hash}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -377,65 +519,196 @@ export const WorkspaceDrawer: React.FC<WorkspaceDrawerProps> = ({
 
         {/* 3. GTM MULTIMODAL STUDIO DRAWER TAB */}
         {activeDrawerTab === 'gtm' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Poster */}
-            <div className="p-3.5 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="font-bold text-[#0F172A]">Launch Poster (1280x720)</span>
-                <span className="text-[#0D9488] font-bold text-[10px] px-1.5 py-0.2 rounded bg-[#00F2FE]/10 border border-[#D5CEBF]/30">Playwright Rendered</span>
+          <div className="space-y-3">
+            {/* Multimodal Header Bar */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-[#00F2FE]/15 border border-[#D5CEBF] text-[#0F766E]">
+                  <Video className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-display font-extrabold text-[#0F172A] flex items-center gap-2">
+                    <span>Multimodal GTM Studio & Swarm Visual Assets</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-mono font-bold flex items-center gap-1 shadow-xs">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Live Disk Verified
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-600 font-sans">
+                    View real-time visual card infographics, launch posters, 1080p muxed video, and narration audio synthesized by the Swarm.
+                  </p>
+                </div>
               </div>
-              <div className="w-full aspect-video rounded-lg bg-[#ECE5D8] border border-[#D5CEBF] overflow-hidden">
-                <img
-                  src="/artifacts/hero_frame.png"
-                  alt="Launch Poster"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                />
-              </div>
-              <a
-                href="/artifacts/hero_frame.png"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] text-[#0D9488] hover:text-[#00F2FE] hover:underline flex items-center gap-1 font-mono font-bold"
+
+              <button
+                onClick={handleRefreshArtifacts}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ECE5D8] hover:bg-[#DAD2C2] text-[#0F766E] border-[1.5px] border-[#D5CEBF] font-mono font-bold text-xs shadow-xs transition-all cursor-pointer"
               >
-                <span>Download High-Res PNG (&gt;400KB)</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
+                <RefreshCw className="w-3.5 h-3.5 text-[#0D9488]" />
+                <span>Refresh Media</span>
+              </button>
             </div>
 
-            {/* Video */}
-            <div className="p-3.5 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="font-bold text-[#0F172A]">Launch Video (1080p MP4)</span>
-                <span className="text-purple-700 font-bold text-[10px] px-1.5 py-0.2 rounded bg-purple-100 border border-[#D5CEBF]/30">AdaL FFmpeg Muxed</span>
-              </div>
-              <div className="w-full aspect-video rounded-lg bg-[#ECE5D8] border border-[#D5CEBF] overflow-hidden">
-                <video
-                  src="/artifacts/launch_video.mp4"
-                  controls
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <a
-                href="/artifacts/launch_video.mp4"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] text-purple-700 hover:underline flex items-center gap-1 font-mono font-bold"
-              >
-                <span>Download 1080p MP4</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Card 1: Multi-Agent Swarm Infographic (result.png) */}
+              <div className="p-3 rounded-xl bg-white border-2 border-[#0D9488] shadow-md space-y-2 flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-[#0D9488] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-bl-lg shadow-xs">
+                  SWARM INTELLIGENCE
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-xs font-mono mb-1">
+                    <span className="font-extrabold text-[#0F172A] flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-[#0D9488]" />
+                      Swarm Infographic
+                    </span>
+                  </div>
+                  <div className="w-full aspect-video rounded-lg bg-[#ECE5D8] border border-[#D5CEBF] overflow-hidden relative group flex items-center justify-center">
+                    <img
+                      key={`result-${artifactKey}`}
+                      src={`${API_BASE}/gtm-assets/result.png?t=${artifactKey}`}
+                      alt="Multi-Agent Swarm Infographic"
+                      className="w-full h-full object-contain bg-[#0F121C] transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (!target.src.includes('/artifacts/')) {
+                          target.src = `${API_BASE}/artifacts/result.png?t=${artifactKey}`;
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() =>
+                        setPreviewModalImg({
+                          url: `${API_BASE}/gtm-assets/result.png?t=${artifactKey}`,
+                          title: 'Multi-Agent Swarm Infographic (result.png)'
+                        })
+                      }
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-mono font-bold transition-opacity cursor-pointer gap-1.5"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Click to Enlarge</span>
+                    </button>
+                  </div>
+                </div>
 
-            {/* Audio Voiceover */}
-            <div className="p-3.5 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="font-bold text-[#0F172A]">Voiceover Audio</span>
-                <span className="text-[#0D9488] font-bold text-[10px] px-1.5 py-0.2 rounded bg-[#00F2FE]/10 border border-[#D5CEBF]/30">TTS Synthesis</span>
+                <div className="pt-2 border-t border-[#D5CEBF]/40 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">result.png</span>
+                  <a
+                    href={`${API_BASE}/artifacts/result.png`}
+                    download="result.png"
+                    className="text-[11px] text-[#0D9488] hover:text-[#00F2FE] hover:underline flex items-center gap-1 font-mono font-bold"
+                  >
+                    <span>Download PNG</span>
+                    <Download className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
-              <audio src="/artifacts/voiceover.mp3" controls className="w-full mt-4" />
-              <div className="p-2.5 rounded-lg bg-[#F4EFE6] text-[10px] font-sans text-slate-700 leading-snug font-medium border border-[#D5CEBF]/20">
-                Audio synthesized from launch narration brief and muxed with high-res canvas poster into complete MP4 package.
+
+              {/* Card 2: Promotional Launch Poster (hero_frame.png) */}
+              <div className="p-3 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs font-mono mb-1">
+                    <span className="font-bold text-[#0F172A]">Launch Poster (HD)</span>
+                    <span className="text-[#0D9488] font-bold text-[9px] px-1.5 py-0.2 rounded bg-[#00F2FE]/10 border border-[#D5CEBF]">Playwright</span>
+                  </div>
+                  <div className="w-full aspect-video rounded-lg bg-[#ECE5D8] border border-[#D5CEBF] overflow-hidden relative group flex items-center justify-center">
+                    <img
+                      key={`hero-${artifactKey}`}
+                      src={`${API_BASE}/gtm-assets/hero_frame.png?t=${artifactKey}`}
+                      alt="Launch Poster"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (!target.src.includes('/artifacts/')) {
+                          target.src = `${API_BASE}/artifacts/hero_frame.png?t=${artifactKey}`;
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() =>
+                        setPreviewModalImg({
+                          url: `${API_BASE}/gtm-assets/hero_frame.png?t=${artifactKey}`,
+                          title: 'Launch Poster (hero_frame.png)'
+                        })
+                      }
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-mono font-bold transition-opacity cursor-pointer gap-1.5"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Click to Enlarge</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[#D5CEBF]/40 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">1280x720 PNG</span>
+                  <a
+                    href={`${API_BASE}/artifacts/hero_frame.png`}
+                    download="hero_frame.png"
+                    className="text-[11px] text-[#0D9488] hover:text-[#00F2FE] hover:underline flex items-center gap-1 font-mono font-bold"
+                  >
+                    <span>Download</span>
+                    <Download className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Card 3: 1080p Launch Video (launch_video.mp4) */}
+              <div className="p-3 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs font-mono mb-1">
+                    <span className="font-bold text-[#0F172A]">Launch Video (1080p)</span>
+                    <span className="text-purple-700 font-bold text-[9px] px-1.5 py-0.2 rounded bg-purple-100 border border-[#D5CEBF]">FFmpeg Muxed</span>
+                  </div>
+                  <div className="w-full aspect-video rounded-lg bg-[#ECE5D8] border border-[#D5CEBF] overflow-hidden">
+                    <video
+                      key={`video-${artifactKey}`}
+                      src={`${API_BASE}/gtm-assets/launch_video.mp4?t=${artifactKey}`}
+                      controls
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[#D5CEBF]/40 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">H.264 MP4</span>
+                  <a
+                    href={`${API_BASE}/artifacts/launch_video.mp4`}
+                    download="launch_video.mp4"
+                    className="text-[11px] text-purple-700 hover:underline flex items-center gap-1 font-mono font-bold"
+                  >
+                    <span>Download</span>
+                    <Download className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Card 4: Audio Narration (voiceover.mp3) */}
+              <div className="p-3 rounded-xl bg-white border-[1.5px] border-[#D5CEBF] shadow-xs space-y-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between text-xs font-mono mb-1">
+                    <span className="font-bold text-[#0F172A]">Narration Voiceover</span>
+                    <span className="text-[#0D9488] font-bold text-[9px] px-1.5 py-0.2 rounded bg-[#00F2FE]/10 border border-[#D5CEBF]">TTS</span>
+                  </div>
+                  <audio
+                    key={`audio-${artifactKey}`}
+                    src={`${API_BASE}/gtm-assets/voiceover.mp3?t=${artifactKey}`}
+                    controls
+                    className="w-full mt-2"
+                  />
+                  <div className="p-2 mt-2 rounded bg-[#F4EFE6] text-[10px] font-sans text-slate-700 leading-snug border border-[#D5CEBF]/30">
+                    Narration synthesized from launch brief and muxed with high-res poster into MP4.
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[#D5CEBF]/40 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">MP3 Audio</span>
+                  <a
+                    href={`${API_BASE}/artifacts/voiceover.mp3`}
+                    download="voiceover.mp3"
+                    className="text-[11px] text-[#0D9488] hover:underline flex items-center gap-1 font-mono font-bold"
+                  >
+                    <span>Download</span>
+                    <Download className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -472,6 +745,36 @@ export const WorkspaceDrawer: React.FC<WorkspaceDrawerProps> = ({
           </div>
         )}
       </div>
+
+      {/* Lightbox Image Preview Modal */}
+      {previewModalImg && (
+        <div
+          onClick={() => setPreviewModalImg(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in cursor-zoom-out"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-4xl max-h-[90vh] bg-[#0F121C] border border-white/20 rounded-2xl overflow-hidden shadow-2xl flex flex-col cursor-default"
+          >
+            <div className="flex items-center justify-between px-4 py-3 bg-[#0A0D14] border-b border-white/10 text-white text-xs font-mono font-bold">
+              <span>{previewModalImg.title}</span>
+              <button
+                onClick={() => setPreviewModalImg(null)}
+                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 flex items-center justify-center overflow-auto max-h-[80vh]">
+              <img
+                src={previewModalImg.url}
+                alt={previewModalImg.title}
+                className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

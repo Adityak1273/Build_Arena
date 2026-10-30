@@ -31,7 +31,7 @@ export const CreateMode: React.FC = () => {
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [videoResult, setVideoResult] = useState<GTMResult | null>(null);
   const [mediaKey, setMediaKey] = useState(Date.now());
-  const [cinemaView, setCinemaView] = useState<'video' | 'poster'>('video');
+  const [cinemaView, setCinemaView] = useState<'infographic' | 'poster' | 'video'>('infographic');
 
   // Image Generation State
   const [imageTitle, setImageTitle] = useState('AutoForge v2.0');
@@ -336,16 +336,16 @@ export const CreateMode: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 p-0.5 bg-[#06080D] border border-white/[0.08] rounded-lg text-[10px] font-mono font-bold">
+                    <div className="flex items-center gap-1 p-0.5 bg-[#06080D] border border-white/[0.08] rounded-lg text-[10px] font-mono font-bold flex-wrap">
                       <button
-                        onClick={() => setCinemaView('video')}
+                        onClick={() => setCinemaView('infographic')}
                         className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                          cinemaView === 'video'
-                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs'
+                          cinemaView === 'infographic'
+                            ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-2xs font-extrabold'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        Play Video (MP4)
+                        Swarm Infographic (PNG)
                       </button>
                       <button
                         onClick={() => setCinemaView('poster')}
@@ -357,6 +357,16 @@ export const CreateMode: React.FC = () => {
                       >
                         High-Res Poster (PNG)
                       </button>
+                      <button
+                        onClick={() => setCinemaView('video')}
+                        className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                          cinemaView === 'video'
+                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-white shadow-2xs'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        Play Video (MP4)
+                      </button>
                     </div>
                   </div>
 
@@ -367,16 +377,35 @@ export const CreateMode: React.FC = () => {
                         key={`gtm-video-${mediaKey}`}
                         controls
                         className="w-full h-full object-cover"
-                        src={`http://127.0.0.1:4000/public/gtm-assets/launch_video.mp4?v=${mediaKey}`}
+                        src={`http://127.0.0.1:4000/gtm-assets/launch_video.mp4?v=${mediaKey}`}
                       >
                         Your browser does not support video playback.
                       </video>
+                    ) : cinemaView === 'infographic' ? (
+                      <img
+                        key={`gtm-infographic-${mediaKey}`}
+                        src={`http://127.0.0.1:4000/gtm-assets/result.png?v=${mediaKey}`}
+                        alt="Multi-Agent Swarm Infographic"
+                        className="w-full h-full object-contain bg-[#0F121C]"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (!target.src.includes('/artifacts/')) {
+                            target.src = `http://127.0.0.1:4000/artifacts/result.png?v=${mediaKey}`;
+                          }
+                        }}
+                      />
                     ) : (
                       <img
                         key={`gtm-poster-${mediaKey}`}
-                        src={`http://127.0.0.1:4000/public/gtm-assets/hero_frame.png?v=${mediaKey}`}
+                        src={`http://127.0.0.1:4000/gtm-assets/hero_frame.png?v=${mediaKey}`}
                         alt="High-Res Promotional Launch Poster"
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (!target.src.includes('/artifacts/')) {
+                            target.src = `http://127.0.0.1:4000/artifacts/hero_frame.png?v=${mediaKey}`;
+                          }
+                        }}
                       />
                     )}
                   </div>
@@ -386,16 +415,24 @@ export const CreateMode: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        1280x720 HD Verified
+                        Swarm Verified Asset
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold">
-                        H.264 / AAC Muxed
+                        PNG / H.264
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <a
-                        href={`http://127.0.0.1:4000/public/gtm-assets/hero_frame.png?v=${mediaKey}`}
+                        href={`http://127.0.0.1:4000/artifacts/result.png?v=${mediaKey}`}
+                        download="result.png"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white text-xs font-mono font-bold transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] cursor-pointer"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>Infographic PNG</span>
+                      </a>
+                      <a
+                        href={`http://127.0.0.1:4000/artifacts/hero_frame.png?v=${mediaKey}`}
                         download="hero_frame.png"
                         className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-mono font-bold transition-colors border border-white/[0.1] cursor-pointer"
                       >
@@ -403,7 +440,7 @@ export const CreateMode: React.FC = () => {
                         <span>Poster PNG</span>
                       </a>
                       <a
-                        href={`http://127.0.0.1:4000/public/gtm-assets/launch_video.mp4?v=${mediaKey}`}
+                        href={`http://127.0.0.1:4000/artifacts/launch_video.mp4?v=${mediaKey}`}
                         download="launch_video.mp4"
                         className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white text-xs font-mono font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] cursor-pointer"
                       >
