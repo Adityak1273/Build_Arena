@@ -10,7 +10,13 @@
   --ivory-border: #E5DEC9;
   --ivory-border-subtle: rgba(13, 17, 23, 0.08);
 
-  /* Ink Black Palette */
+  /* Bark Black Structural Border Palette */
+  --bark-black: #0D1117;
+  --bark-border: #0D1117;
+  --bark-border-subtle: rgba(13, 17, 23, 0.4);
+  --bark-border-muted: rgba(13, 17, 23, 0.2);
+
+  /* Ink Black Foundation */
   --ink-950: #07090D;
   --ink-900: #0D1117;
   --ink-850: #121620;
@@ -30,9 +36,9 @@
   --forge-surface: #FAF7F2;
   --forge-elevated: #F4EFE6;
   --forge-hover: #EAE4D8;
-  --forge-border: rgba(0, 242, 254, 0.25);
-  --forge-border-subtle: rgba(0, 242, 254, 0.12);
-  --forge-border-hover: rgba(0, 242, 254, 0.5);
+  --forge-border: #0D1117;
+  --forge-border-subtle: rgba(13, 17, 23, 0.3);
+  --forge-border-hover: #00F2FE;
   --forge-accent: #00F2FE;
   --forge-cyan: #00F2FE;
   --forge-emerald: #10B981;
@@ -73,7 +79,7 @@ html, body, #root {
 .teal-texture-grid {
   background-size: 24px 24px;
   background-image: 
-    radial-gradient(circle, rgba(0, 242, 254, 0.15) 1px, transparent 1px);
+    radial-gradient(circle, rgba(0, 242, 254, 0.18) 1px, transparent 1px);
 }
 
 /* Custom Electric Teal Slim Scrollbars */
@@ -85,40 +91,53 @@ html, body, #root {
   background: #FAF7F2;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 242, 254, 0.35);
+  background: rgba(13, 17, 23, 0.4);
   border-radius: 9999px;
-  border: 1px solid rgba(0, 242, 254, 0.15);
+  border: 1px solid rgba(0, 242, 254, 0.3);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #00F2FE;
   box-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
 }
 
-/* Warm Ivory Light Cards with Electric Teal Texture */
+/* Crisp Bark Black Structural Borders */
+.bark-border {
+  border: 1px solid #0D1117;
+}
+
+.bark-border-subtle {
+  border: 1px solid rgba(13, 17, 23, 0.35);
+}
+
+.bark-border-strong {
+  border: 1.5px solid #0D1117;
+}
+
+/* Warm Ivory Light Cards with Crisp Bark Black Borders & Subtle Teal Glow */
 .ivory-card {
   background: #FAF7F2;
-  border: 1px solid rgba(0, 242, 254, 0.25);
+  border: 1.5px solid #0D1117;
   border-radius: 0.875rem;
-  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.05), 0 0 12px -2px rgba(0, 242, 254, 0.12);
+  box-shadow: 2px 2px 0px rgba(13, 17, 23, 0.1), 0 0 12px -2px rgba(0, 242, 254, 0.15);
   color: #0D1117;
 }
 
 .ivory-card:hover {
-  border-color: rgba(0, 242, 254, 0.55);
-  box-shadow: 0 6px 22px -2px rgba(0, 0, 0, 0.08), 0 0 18px -2px rgba(0, 242, 254, 0.22);
+  border-color: #00F2FE;
+  box-shadow: 2px 2px 0px rgba(13, 17, 23, 0.15), 0 0 18px -2px rgba(0, 242, 254, 0.3);
 }
 
 .ivory-card-elevated {
   background: #FFFFFF;
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  border: 1.5px solid #0D1117;
   border-radius: 0.875rem;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.07), 0 0 16px -2px rgba(0, 242, 254, 0.18);
+  box-shadow: 3px 3px 0px rgba(13, 17, 23, 0.12), 0 0 16px -2px rgba(0, 242, 254, 0.2);
   color: #0D1117;
 }
 
 .ink-card {
   background: #0D1117;
-  border: 1px solid rgba(0, 242, 254, 0.2);
+  border: 1px solid rgba(0, 242, 254, 0.3);
   border-radius: 0.875rem;
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 15px -3px rgba(0, 242, 254, 0.15);
   color: #F8FAFC;

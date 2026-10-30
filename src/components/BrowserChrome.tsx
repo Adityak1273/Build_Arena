@@ -86,9 +86,9 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
   };
 
   return (
-    <div className="flex flex-col bg-[#07090D] border-b border-[#00F2FE]/20 select-none z-20">
-      {/* 1. Multi-Tab Strip */}
-      <div className="flex items-center px-2 pt-2 gap-1.5 overflow-x-auto no-scrollbar bg-[#090C13]">
+    <div className="flex flex-col bg-[#07090D] border-b-2 border-[#0D1117] select-none z-20">
+      {/* 1. Multi-Tab Strip (Framed in Bark Black) */}
+      <div className="flex items-center px-2 pt-2 gap-1.5 overflow-x-auto no-scrollbar bg-[#090C13] border-b border-[#0D1117]">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
           const hasAgent = Boolean(tab.activeAgent);
@@ -97,10 +97,10 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
             <div
               key={tab.id}
               onClick={() => onSelectTab(tab.id)}
-              className={`group relative flex items-center gap-2 px-3.5 py-1.5 rounded-t-xl text-xs font-sans transition-all cursor-pointer border-t border-x ${
+              className={`group relative flex items-center gap-2 px-3.5 py-1.5 rounded-t-xl text-xs font-sans transition-all cursor-pointer border-t-2 border-x-2 ${
                 isActive
-                  ? 'bg-[#FAF7F2] text-[#0D1117] border-[#00F2FE]/40 shadow-[0_-2px_12px_rgba(0,242,254,0.15)] font-semibold'
-                  : 'bg-[#121622]/90 text-slate-400 border-white/[0.04] hover:bg-[#181E2D] hover:text-[#FAF7F2]'
+                  ? 'bg-[#FAF7F2] text-[#0D1117] border-[#0D1117] shadow-[0_-2px_10px_rgba(0,0,0,0.15)] font-bold'
+                  : 'bg-[#121622]/90 text-slate-400 border-[#0D1117]/80 hover:bg-[#181E2D] hover:text-[#FAF7F2] hover:border-[#0D1117]'
               }`}
               style={{ minWidth: '150px', maxWidth: '240px' }}
             >
@@ -125,7 +125,7 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
 
               {/* Live Worker Agent Pill on Tab */}
               {tab.activeAgent && (
-                <span className="px-1.5 py-0.2 rounded bg-[#00F2FE]/15 text-[#0D9488] text-[9px] font-mono border border-[#00F2FE]/40 flex items-center gap-1 shrink-0">
+                <span className="px-1.5 py-0.2 rounded bg-[#00F2FE]/15 text-[#0D9488] text-[9px] font-mono border border-[#0D1117] flex items-center gap-1 shrink-0 font-bold">
                   <Sparkles className="w-2 h-2 text-[#00F2FE] animate-spin" />
                   <span className="capitalize">{tab.activeAgent}</span>
                 </span>
@@ -152,43 +152,43 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
         {/* New Tab Button */}
         <button
           onClick={onNewTab}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 transition-colors cursor-pointer ml-1"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 border border-[#0D1117]/80 hover:border-[#00F2FE] transition-colors cursor-pointer ml-1"
           title="Open New Browser Tab"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* 2. Browser Navigation & Omnibar */}
-      <div className="flex items-center gap-2.5 px-3 py-2 bg-[#0C0F17]/95 backdrop-blur-xl border-t border-[#00F2FE]/15">
+      {/* 2. Browser Navigation & Omnibar (Highlighted with Bark Black Borders) */}
+      <div className="flex items-center gap-2.5 px-3 py-2 bg-[#0C0F17]/95 backdrop-blur-xl">
         {/* Navigation History Controls */}
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={onGoBack}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 border border-[#0D1117] hover:border-[#00F2FE] transition-colors cursor-pointer"
             title="Go Back"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={onGoForward}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 border border-[#0D1117] hover:border-[#00F2FE] transition-colors cursor-pointer"
             title="Go Forward"
           >
             <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={onReload}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-[#00F2FE] hover:bg-[#00F2FE]/10 border border-[#0D1117] hover:border-[#00F2FE] transition-colors cursor-pointer"
             title="Reload Page"
           >
             <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#00F2FE]' : ''}`} />
           </button>
         </div>
 
-        {/* Omnibar (Warm Ivory Surface with Electric Teal Ring & Ink Black Text) */}
+        {/* Omnibar (Warm Ivory Surface with Bark Black 1.5px Border & Electric Teal Ring) */}
         <form onSubmit={handleSubmit} className="flex-1 flex items-center relative">
-          <div className="w-full flex items-center bg-[#FAF7F2] border border-[#00F2FE]/40 hover:border-[#00F2FE]/70 focus-within:border-[#00F2FE] focus-within:ring-2 focus-within:ring-[#00F2FE]/30 rounded-xl px-3.5 py-1.5 gap-2 transition-all shadow-[0_2px_10px_rgba(0,0,0,0.15)]">
+          <div className="w-full flex items-center bg-[#FAF7F2] border-[1.5px] border-[#0D1117] hover:border-[#0D1117] focus-within:border-[#00F2FE] focus-within:ring-2 focus-within:ring-[#00F2FE]/30 rounded-xl px-3.5 py-1.5 gap-2 transition-all shadow-[2px_2px_0px_rgba(13,17,23,0.15)]">
             {/* Security & CDP Lock Badge */}
             <div className="flex items-center gap-1.5 shrink-0 select-none">
               <Lock className={`w-3.5 h-3.5 ${cdpConnected ? 'text-[#0D9488]' : 'text-slate-400'}`} />
@@ -210,7 +210,7 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
             {/* Quick Action Pill on right of omnibar */}
             <button
               type="submit"
-              className="px-2.5 py-1 rounded-lg bg-[#07090D] hover:bg-[#121622] text-[#00F2FE] hover:text-[#00F2FE] text-[10px] font-mono font-bold border border-[#00F2FE]/40 shadow-[0_0_8px_rgba(0,242,254,0.25)] transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="px-2.5 py-1 rounded-lg bg-[#07090D] hover:bg-[#121622] text-[#00F2FE] hover:text-[#00F2FE] text-[10px] font-mono font-bold border border-[#0D1117] shadow-[0_0_8px_rgba(0,242,254,0.25)] transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
             >
               <Bot className="w-3 h-3 text-[#00F2FE]" />
               <span>Go / Swarm</span>
@@ -218,14 +218,14 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
           </div>
         </form>
 
-        {/* 3. Quick Workspace Drawer Toggle Chips */}
+        {/* 3. Quick Workspace Drawer Toggle Chips with Bark Black Borders */}
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => onToggleDrawer('spreadsheet')}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
               activeDrawerTab === 'spreadsheet'
-                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#00F2FE] shadow-[0_0_12px_rgba(0,242,254,0.35)]'
-                : 'bg-[#121622] text-[#FAF7F2] border-[#00F2FE]/20 hover:border-[#00F2FE]/60'
+                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#0D1117] shadow-[2px_2px_0px_rgba(13,17,23,0.2),0_0_12px_rgba(0,242,254,0.35)]'
+                : 'bg-[#121622] text-[#FAF7F2] border-[#0D1117] hover:border-[#00F2FE]/60'
             }`}
             title="Toggle Live Competitive Startups Spreadsheet"
           >
@@ -237,8 +237,8 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
             onClick={() => onToggleDrawer('council')}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
               activeDrawerTab === 'council'
-                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#00F2FE] shadow-[0_0_12px_rgba(0,242,254,0.35)]'
-                : 'bg-[#121622] text-[#FAF7F2] border-[#00F2FE]/20 hover:border-[#00F2FE]/60'
+                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#0D1117] shadow-[2px_2px_0px_rgba(13,17,23,0.2),0_0_12px_rgba(0,242,254,0.35)]'
+                : 'bg-[#121622] text-[#FAF7F2] border-[#0D1117] hover:border-[#00F2FE]/60'
             }`}
             title="Toggle 7-Critic Code Review Council"
           >
@@ -250,8 +250,8 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
             onClick={() => onToggleDrawer('gtm')}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
               activeDrawerTab === 'gtm'
-                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#00F2FE] shadow-[0_0_12px_rgba(0,242,254,0.35)]'
-                : 'bg-[#121622] text-[#FAF7F2] border-[#00F2FE]/20 hover:border-[#00F2FE]/60'
+                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#0D1117] shadow-[2px_2px_0px_rgba(13,17,23,0.2),0_0_12px_rgba(0,242,254,0.35)]'
+                : 'bg-[#121622] text-[#FAF7F2] border-[#0D1117] hover:border-[#00F2FE]/60'
             }`}
             title="Toggle GTM Multimodal Studio (Poster & Video)"
           >
@@ -263,8 +263,8 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
             onClick={() => onToggleDrawer('ax')}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer border ${
               activeDrawerTab === 'ax'
-                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#00F2FE] shadow-[0_0_12px_rgba(0,242,254,0.35)]'
-                : 'bg-[#121622] text-[#FAF7F2] border-[#00F2FE]/20 hover:border-[#00F2FE]/60'
+                ? 'bg-[#FAF7F2] text-[#0D1117] border-[#0D1117] shadow-[2px_2px_0px_rgba(13,17,23,0.2),0_0_12px_rgba(0,242,254,0.35)]'
+                : 'bg-[#121622] text-[#FAF7F2] border-[#0D1117] hover:border-[#00F2FE]/60'
             }`}
             title="Toggle CDP Accessibility Tree Inspector"
           >
@@ -272,12 +272,12 @@ export const BrowserChrome: React.FC<BrowserChromeProps> = ({
             <span className="hidden lg:inline text-[11px]">AX Tree</span>
           </button>
 
-          <div className="w-[1px] h-5 bg-[#00F2FE]/20 mx-0.5" />
+          <div className="w-[1.5px] h-5 bg-[#0D1117] mx-0.5" />
 
           {/* Telemetry Drawer Toggle */}
           <button
             onClick={onToggleTelemetry}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#07090D] text-[#00F2FE] text-xs font-mono font-bold border border-[#00F2FE]/40 hover:border-[#00F2FE] shadow-[0_0_8px_rgba(0,242,254,0.25)] transition-all cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#07090D] text-[#00F2FE] text-xs font-mono font-bold border border-[#0D1117] hover:border-[#00F2FE] shadow-[2px_2px_0px_rgba(13,17,23,0.2)] transition-all cursor-pointer"
             title="View Real-Time Swarm Telemetry & WebSocket Event Bus"
           >
             <Activity className="w-3 h-3 text-[#00F2FE]" />

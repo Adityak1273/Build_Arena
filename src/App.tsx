@@ -537,7 +537,7 @@ export const App: React.FC = () => {
       {/* 2. MAIN WORKSPACE: 68% Browser Viewport + 32% Multi-Agent Swarm Sidebar */}
       <div className="flex-1 flex overflow-hidden relative forge-ambient-bg">
         {/* Left / Center: Interactive Browser Viewport (68%) */}
-        <div className="flex-1 relative flex flex-col overflow-hidden bg-[#FAF7F2]">
+        <div className="flex-1 relative flex flex-col overflow-hidden bg-[#FAF7F2] border-r-2 border-[#0D1117]">
           <InteractiveViewport
             url={activeTab.url}
             onUrlChange={(newUrl) => handleNavigate(newUrl)}

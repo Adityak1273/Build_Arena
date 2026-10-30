@@ -1,5 +1,22 @@
 [
   {
+    "task_id": "test-task-1793347209829",
+    "goal": "Test Plan Persistence",
+    "status": "COMPLETED",
+    "start_time": "2026-10-30T08:00:09.829Z",
+    "duration_ms": 1250,
+    "steps_count": 5,
+    "verified_steps": 5,
+    "artifacts": [
+      {
+        "name": "Test Artifact",
+        "path": "artifacts/test.csv",
+        "type": "text/csv"
+      }
+    ],
+    "outcome_summary": "All steps verified successfully."
+  },
+  {
     "task_id": "test-task-1793346879900",
     "goal": "Test Plan Persistence",
     "status": "COMPLETED",
