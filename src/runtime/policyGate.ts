@@ -25,6 +25,14 @@ export class PolicyApprovalGate extends EventEmitter {
     super();
   }
 
+  public getIsCancelled(): boolean {
+    return this.isCancelled;
+  }
+
+  public resetCancel(): void {
+    this.isCancelled = false;
+  }
+
   public assessRisk(action: ActionRequest): {
     riskLevel: PolicyRiskLevel;
     requiresApproval: boolean;

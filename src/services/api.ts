@@ -182,6 +182,36 @@ export const api = {
     return await res.json();
   },
 
+  pauseAutonomousPlan: async () => {
+    const res = await fetch(`${API_BASE}/api/autonomous/pause`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await res.json();
+  },
+
+  resumeAutonomousPlan: async () => {
+    const res = await fetch(`${API_BASE}/api/autonomous/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await res.json();
+  },
+
+  getTaskHistory: async (): Promise<{ history: any[] }> => {
+    const res = await fetch(`${API_BASE}/api/tasks/history`);
+    if (!res.ok) throw new Error('Failed to fetch task history');
+    return await res.json();
+  },
+
+  clearTaskHistory: async () => {
+    const res = await fetch(`${API_BASE}/api/tasks/history`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to clear task history');
+    return await res.json();
+  },
+
   // Multimodal Intelligence Services (Images, Audio, Video)
   generateImageBanner: async (title: string, tagline: string, badge?: string, theme?: string) => {
     const res = await fetch(`${API_BASE}/api/multimodal/image/generate`, {

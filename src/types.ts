@@ -112,8 +112,21 @@ export interface TaskStep {
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
   result?: any;
   verified?: boolean;
+  verification_state?: 'VERIFIED' | 'FAILED' | 'UNKNOWN';
   error?: string;
   execution_time_ms?: number;
+}
+
+export interface TaskHistoryEntry {
+  task_id: string;
+  goal: string;
+  status: 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'PARTIAL_SUCCESS';
+  start_time: string;
+  duration_ms: number;
+  steps_count: number;
+  verified_steps: number;
+  artifacts: Array<{ name: string; path: string; type: string }>;
+  outcome_summary: string;
 }
 
 export interface AutonomousPlanResult {
