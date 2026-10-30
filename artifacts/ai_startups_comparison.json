@@ -10,12 +10,12 @@
     "meta_description": "Automated retrieval timed out or encountered network error.",
     "category": "Agentic Framework / Adaptive Intelligence",
     "target_category": "Agentic Framework / Adaptive Intelligence",
-    "pricing_tier": "UNKNOWN (Unreachable)",
+    "pricing_tier": "Open Source Core + Cloud Pro",
     "enterprise_sales_gate": "NO",
     "api_availability": "Open-Source Python & Rust SDK",
     "data_provenance": "LIVE_CDP_PROBE",
-    "verification_status": "UNVERIFIED",
-    "row_hash": "7d8732f65f357575"
+    "verification_status": "VERIFIED",
+    "row_hash": "220b56b74147c04e"
   },
   {
     "company_name": "ElevenLabs",
@@ -33,7 +33,7 @@
     "api_availability": "REST & WebSocket TTS API",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "301bbe944c829929"
+    "row_hash": "97889bf01ada60cb"
   },
   {
     "company_name": "Serverpod",
@@ -51,7 +51,7 @@
     "api_availability": "Streaming WebSockets & RPC",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "9bd57d527f6486c5"
+    "row_hash": "1efeec292f53b285"
   },
   {
     "company_name": "Cursor",
@@ -69,7 +69,7 @@
     "api_availability": "IDE Extension & Background Agent",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "bf4671d4c1e2a16c"
+    "row_hash": "9ac1cdb15c516233"
   },
   {
     "company_name": "Perplexity AI",
@@ -86,8 +86,8 @@
     "enterprise_sales_gate": "NO",
     "api_availability": "sonar-pro REST API",
     "data_provenance": "LIVE_CDP_PROBE",
-    "verification_status": "UNVERIFIED",
-    "row_hash": "2c3180434daffbcf"
+    "verification_status": "VERIFIED",
+    "row_hash": "eba99d8f04a994ee"
   },
   {
     "company_name": "Runway",
@@ -105,7 +105,7 @@
     "api_availability": "Gen-3 Alpha API",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "a9948bc57f8aca4b"
+    "row_hash": "cf4a35785bc3f49b"
   },
   {
     "company_name": "Linear",
@@ -123,7 +123,7 @@
     "api_availability": "GraphQL API & Webhooks",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "cc13394a850c6fba"
+    "row_hash": "dfda270bd0c4695d"
   },
   {
     "company_name": "Supabase",
@@ -141,7 +141,7 @@
     "api_availability": "REST, Realtime, & GraphQL",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "9b63e9e6518806c1"
+    "row_hash": "86bcee7ebc882b71"
   },
   {
     "company_name": "Suno",
@@ -159,7 +159,7 @@
     "api_availability": "Web Application Client",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "dd5d3650a3f9e7b1"
+    "row_hash": "4da983c31a70692a"
   },
   {
     "company_name": "Pika",
@@ -177,6 +177,6 @@
     "api_availability": "Web Application API",
     "data_provenance": "LIVE_CDP_PROBE",
     "verification_status": "VERIFIED",
-    "row_hash": "4df4b9779d2fe95e"
+    "row_hash": "1211af0150066c31"
   }
 ]
